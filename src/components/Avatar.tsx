@@ -1,6 +1,6 @@
 import { useReducedMotion } from 'motion/react'
 
-export type Prop = 'laptop' | 'guitar' | 'rest'
+export type Prop = 'laptop' | 'guitar' | 'rest' | 'none'
 
 export function propForHour(h: number): Prop {
   if (h >= 8 && h < 17) return 'laptop'

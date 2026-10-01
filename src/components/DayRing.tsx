@@ -46,7 +46,7 @@ export default function DayRing() {
           })}
         </g>
         <g transform={`rotate(${angle} 140 140)`}>
-          <circle cx="140" cy="22" r="7" fill="#f1ebdd" />
+          <circle cx="140" cy="22" r="7" fill="#f1ebdd" /><circle cx="140" cy="22" r="7" fill="none" stroke="#f1ebdd" strokeWidth="2" className="ping" />
         </g>
       </svg>
       <div className="absolute inset-0 grid place-items-center">
