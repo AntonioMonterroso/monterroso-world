@@ -10,17 +10,16 @@ export function propForHour(h: number): Prop {
   return 'rest'
 }
 
-const HAIR = 'url(#av-hair)'
-const SKIN = 'url(#av-skin)'
-const SLEEVE = '#244879'
+const SKIN = '#f0c39b'
+const SLEEVE = '#2a5089'
 const SLEEVE_EDGE = '#14294f'
 const BRASS = '#d9c7a0'
 
 function Arm({ d }: { d: string }) {
   return (
     <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <path d={d} stroke={SLEEVE_EDGE} strokeWidth="17" />
-      <path d={d} stroke={SLEEVE} strokeWidth="14" />
+      <path d={d} stroke={SLEEVE_EDGE} strokeWidth="13" />
+      <path d={d} stroke={SLEEVE} strokeWidth="10" />
     </g>
   )
 }
@@ -28,8 +27,8 @@ function Arm({ d }: { d: string }) {
 function Hand({ x, y, cls, style }: { x: number; y: number; cls?: string; style?: React.CSSProperties }) {
   return (
     <g className={cls} style={style}>
-      <ellipse cx={x} cy={y} rx="6.4" ry="6.8" fill={SKIN} stroke="#b98660" strokeWidth=".6" />
-      <ellipse cx={x + 5} cy={y - 2} rx="2.3" ry="3.6" fill={SKIN} transform={`rotate(25 ${x + 5} ${y - 2})`} />
+      <ellipse cx={x} cy={y} rx="5.4" ry="5.8" fill={SKIN} />
+      <ellipse cx={x + 4.4} cy={y - 2} rx="2" ry="3.1" fill={SKIN} transform={`rotate(25 ${x + 4.4} ${y - 2})`} />
     </g>
   )
 }
@@ -53,8 +52,8 @@ function Scene({ prop }: { prop: Prop }) {
           <ellipse cx="100" cy="148" rx="3" ry="7" fill="none" stroke={BRASS} strokeWidth="1" />
           <path d="M93 148h14" stroke={BRASS} strokeWidth="1" />
           <path d="M42 167h116l-7 7H49z" fill="#8fb3d9" />
-          <Arm d="M60 152C52 162 54 172 62 177" />
-          <Arm d="M140 152C148 162 146 172 138 177" />
+          <Arm d="M72 152C52 162 54 172 62 177" />
+          <Arm d="M128 152C148 162 146 172 138 177" />
           <Hand x={63} y={178} cls="av-hand-a" />
           <Hand x={131} y={178} cls="av-hand-b" />
         </g>
@@ -73,9 +72,9 @@ function Scene({ prop }: { prop: Prop }) {
               <line key={x} className="av-string" x1={x} y1="100" x2={x} y2="198" stroke="#f1ebdd" strokeWidth=".7" opacity=".85" />
             ))}
           </g>
-          <Arm d="M60 152C56 146 60 140 67 135" />
+          <Arm d="M72 152C56 146 60 140 67 135" />
           <Hand x={69} y={133} />
-          <Arm d="M140 152C142 166 134 172 126 178" />
+          <Arm d="M128 152C142 166 134 172 126 178" />
           <Hand x={124} y={180} cls="av-strum" />
           <Note x={150} y={100} d={0} />
           <Note x={164} y={122} d={1.1} />
@@ -93,8 +92,8 @@ function Scene({ prop }: { prop: Prop }) {
           <path d="M110 168v14M154 168v14" stroke="#2b4776" strokeWidth="3" />
           <rect x="110" y="166" width="44" height="14" rx="3" fill="#17305a" />
           <ellipse className="av-drum b" cx="132" cy="166" rx="22" ry="8" fill="#f1ebdd" stroke="#8fb3d9" strokeWidth="2" />
-          <Arm d="M60 152C54 142 56 132 62 124" />
-          <Arm d="M140 152C146 142 144 132 138 124" />
+          <Arm d="M72 152C54 142 56 132 62 124" />
+          <Arm d="M128 152C146 142 144 132 138 124" />
           <g className="av-stick-l"><line x1="62" y1="124" x2="72" y2="164" stroke="#f1ebdd" strokeWidth="3" strokeLinecap="round" /></g>
           <g className="av-stick-r"><line x1="138" y1="124" x2="130" y2="160" stroke="#f1ebdd" strokeWidth="3" strokeLinecap="round" /></g>
           <Hand x={61} y={123} />
@@ -111,8 +110,8 @@ function Scene({ prop }: { prop: Prop }) {
           {[0, 1, 3, 4, 5, 7, 8].map((i, n) => (
             <rect key={i} className="av-key" x={40 + i * 13.6} y="160" width="9" height="20" rx="1.5" fill="#0b1730" style={{ animationDelay: `${n * 0.17}s` }} />
           ))}
-          <Arm d="M60 152C60 160 70 160 76 156" />
-          <Arm d="M140 152C140 160 130 160 124 156" />
+          <Arm d="M72 152C60 160 70 160 76 156" />
+          <Arm d="M128 152C140 160 130 160 124 156" />
           <Hand x={77} y={156} cls="av-hand-a" />
           <Hand x={121} y={156} cls="av-hand-b" />
           <Note x={152} y={110} d={0.4} />
@@ -122,20 +121,20 @@ function Scene({ prop }: { prop: Prop }) {
     case 'wave':
       return (
         <g>
-          <Arm d="M58 152C52 172 50 190 52 204" />
-          <Arm d="M140 152C150 150 156 146 158 138" />
+          <Arm d="M72 152C68 172 66 190 68 204" />
+          <Arm d="M128 152C140 152 150 146 152 136" />
           <g className="av-wave">
-            <path d="M158 138L160 108" fill="none" stroke={SLEEVE_EDGE} strokeWidth="17" strokeLinecap="round" />
-            <path d="M158 138L160 108" fill="none" stroke={SLEEVE} strokeWidth="14" strokeLinecap="round" />
-            <Hand x={160} y={99} />
+            <path d="M152 136L156 108" fill="none" stroke={SLEEVE_EDGE} strokeWidth="13" strokeLinecap="round" />
+            <path d="M152 136L156 108" fill="none" stroke={SLEEVE} strokeWidth="10" strokeLinecap="round" />
+            <Hand x={156} y={99} />
           </g>
         </g>
       )
     default:
       return (
         <g>
-          <Arm d="M58 152C52 172 50 190 52 204" />
-          <Arm d="M142 152C148 172 150 190 148 204" />
+          <Arm d="M72 152C68 172 66 190 68 204" />
+          <Arm d="M128 152C132 172 134 190 132 204" />
           <g fontFamily="Fraunces, serif" fill="#8fb3d9">
             <text className="av-float" x="146" y="64" fontSize="15">z</text>
             <text className="av-float" x="156" y="50" fontSize="12" style={{ animationDelay: '1s' }}>z</text>
@@ -171,62 +170,40 @@ export default function Avatar({ prop = 'laptop', size = 220, hop = false }: { p
 
   return (
     <svg ref={ref} viewBox="0 0 200 200" width={size} height={size} role="img" aria-label="Avatar de Monterroso" className={hop ? 'av-hop' : undefined} style={{ maxWidth: '100%', height: 'auto' }}>
-      <defs>
-        <linearGradient id="av-skin" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="#eec6a0" />
-          <stop offset="1" stopColor="#dcae86" />
-        </linearGradient>
-        <linearGradient id="av-hair" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#33271f" />
-          <stop offset="1" stopColor="#120d0a" />
-        </linearGradient>
-        <linearGradient id="av-shirt" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#274b80" />
-          <stop offset="1" stopColor="#14294f" />
-        </linearGradient>
-        <linearGradient id="av-neck" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#a9774f" />
-          <stop offset="0.5" stopColor="#cf9f78" />
-          <stop offset="1" stopColor="#d8aa84" />
-        </linearGradient>
-      </defs>
-
-      {/* Torso y cuello */}
+      {/* Torso y cuello (delgado, color plano) */}
       <g className="av-body">
-        <path d="M14 204C16 168 44 146 80 140h40c36 6 64 28 66 64z" fill="url(#av-shirt)" />
-        <path d="M44 162c12-12 26-18 38-21" fill="none" stroke="#ffffff" strokeOpacity=".12" strokeWidth="3" strokeLinecap="round" />
-        <path d="M70 172c8 8 16 12 30 12M130 172c-8 8-16 12-30 12" fill="none" stroke="#0b1730" strokeOpacity=".25" strokeWidth="2" strokeLinecap="round" />
-        <rect x="87" y="112" width="26" height="30" rx="12" fill="url(#av-neck)" />
-        <path d="M78 139l22 27 22-27-8-3-14 16-14-16z" fill="#e9dfc8" />
-        <path d="M100 152v40" stroke="#14294f" strokeOpacity=".5" strokeWidth="1.5" />
+        <path d="M44 204C46 172 62 150 84 144h32c22 6 38 28 40 60z" fill="#1f4073" />
+        <path d="M60 170c4-12 12-20 24-24" fill="none" stroke="#ffffff" strokeOpacity=".12" strokeWidth="3" strokeLinecap="round" />
+        <rect x="92" y="112" width="16" height="34" rx="8" fill="#e2a97f" />
+        <path d="M84 143l16 22 16-22-6-2-10 12-10-12z" fill="#e9dfc8" />
       </g>
 
-      {/* Cabeza: estilo ilustrado, redondeado y amable */}
+      {/* Cabeza: estilo animado, colores planos */}
       <g className="av-head">
-        <ellipse cx="65" cy="88" rx="6" ry="8.5" fill={SKIN} />
-        <ellipse cx="135" cy="88" rx="6" ry="8.5" fill={SKIN} />
-        <ellipse cx="100" cy="84" rx="36" ry="37" fill={SKIN} />
-        <path d="M64 76C60 48 80 34 102 34c24 0 40 16 36 42-4-12-10-18-20-20-12 4-30 4-40 2-8 2-12 10-14 18z" fill={HAIR} />
-        <path d="M80 48c10-6 22-7 34-3" fill="none" stroke="#ffffff" strokeOpacity=".16" strokeWidth="2.5" strokeLinecap="round" />
-        <ellipse cx="78" cy="98" rx="9" ry="6" fill="#ee9a8a" opacity=".38" />
-        <ellipse cx="122" cy="98" rx="9" ry="6" fill="#ee9a8a" opacity=".38" />
-        <path d="M78 72q8-4 15-1M107 71q7-3 15 1" stroke="#2a1d16" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <circle cx="71" cy="84" r="6" fill="#e2a97f" />
+        <circle cx="129" cy="84" r="6" fill="#e2a97f" />
+        <path d="M70 76C70 52 84 44 100 44s30 8 30 32c0 22-12 42-30 42S70 98 70 76z" fill="#f0c39b" />
+        <path d="M67 76C62 50 80 36 102 36c20 0 38 12 33 40-4-12-10-18-18-20-10 4-26 4-36 2-6 2-10 8-14 18z" fill="#1c1612" />
+        <path d="M84 46c8-5 18-6 28-3" fill="none" stroke="#ffffff" strokeOpacity=".18" strokeWidth="2.5" strokeLinecap="round" />
+        <ellipse cx="81" cy="96" rx="6" ry="4" fill="#f08f86" opacity=".45" />
+        <ellipse cx="119" cy="96" rx="6" ry="4" fill="#f08f86" opacity=".45" />
+        <path d="M81 72q7-3 13-1M106 71q6-2 13 1" stroke="#1c1612" strokeWidth="2.4" strokeLinecap="round" fill="none" />
         {sleeping ? (
-          <g stroke="#2a1d16" strokeWidth="2.6" strokeLinecap="round" fill="none">
-            <path d="M80 86q7 5 14 0M106 86q7 5 14 0" />
+          <g stroke="#1c1612" strokeWidth="2.4" strokeLinecap="round" fill="none">
+            <path d="M82 83q6 4 12 0M106 83q6 4 12 0" />
           </g>
         ) : (
           <g className="av-blink">
             <g className="av-pupil">
-              <ellipse cx="87" cy="86" rx="4.6" ry="5.4" fill="#2a1d16" />
-              <ellipse cx="113" cy="86" rx="4.6" ry="5.4" fill="#2a1d16" />
-              <circle cx="88.8" cy="84" r="1.7" fill="#fff" />
-              <circle cx="114.8" cy="84" r="1.7" fill="#fff" />
+              <ellipse cx="88" cy="83" rx="3.6" ry="4.6" fill="#1c1612" />
+              <ellipse cx="112" cy="83" rx="3.6" ry="4.6" fill="#1c1612" />
+              <circle cx="89.3" cy="81.4" r="1.4" fill="#fff" />
+              <circle cx="113.3" cy="81.4" r="1.4" fill="#fff" />
             </g>
           </g>
         )}
-        <path d="M97 93q3 3 6 0" fill="none" stroke="#b7805a" strokeWidth="2" strokeLinecap="round" />
-        <path d={sleeping ? 'M92 108h16' : 'M88 106q12 11 24 0'} fill="none" stroke="#8a3f33" strokeWidth="2.8" strokeLinecap="round" />
+        <path d="M98 92q2 2.4 4 0" fill="none" stroke="#c98d68" strokeWidth="1.8" strokeLinecap="round" />
+        <path d={sleeping ? 'M93 104h14' : 'M90 100q10 9 20 0'} fill="none" stroke="#9a3f35" strokeWidth="2.6" strokeLinecap="round" />
       </g>
 
       <Scene prop={prop} />
