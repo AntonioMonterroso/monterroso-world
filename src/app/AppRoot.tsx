@@ -18,6 +18,11 @@ import Setlists from './music/Setlists'
 import SongPage from './music/SongPage'
 import Songs from './music/Songs'
 import Stage from './music/Stage'
+import FaithNotes from './pulpit/FaithNotes'
+import Presenter from './pulpit/Presenter'
+import PulpitLayout from './pulpit/PulpitLayout'
+import Sermons from './pulpit/Sermons'
+import SermonPage from './pulpit/SermonPage'
 import Projects from './work/Projects'
 import Shell from './Shell'
 import Today from './Today'
@@ -77,6 +82,12 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
+        <Route path="pulpito" element={<PulpitLayout />}>
+          <Route index element={<Sermons />} />
+          <Route path="predica/:id" element={<SermonPage />} />
+          <Route path="notas" element={<FaithNotes />} />
+        </Route>
         <Route path="musica/cancion/:id/escenario" element={<Stage />} />
         <Route path="musica" element={<MusicLayout />}>
           <Route index element={<Songs />} />
