@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b1730;
+  --bg-raised: #112244;
+  --bg-high: #17305a;
+  --ink: #f1ebdd;
+  --ink-soft: #b9bfce;
+  --accent: #d9c7a0;
+  --accent-soft: #8fb3d9;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Instrument Sans", ui-sans-serif, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+input, textarea, select { font-size: 16px; }
