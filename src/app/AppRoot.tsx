@@ -40,6 +40,7 @@ import MoneyLayout from './money/MoneyLayout'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
 import Transactions from './money/Transactions'
+import Vault from './vault/Vault'
 import Projects from './work/Projects'
 import Shell from './Shell'
 import Today from './Today'
@@ -99,6 +100,7 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="boveda" element={<Vault />} />
         <Route path="mente" element={<MindLayout />}>
           <Route index element={<Habits />} />
           <Route path="enfoque" element={<Focus />} />

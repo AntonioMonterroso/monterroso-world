@@ -49,5 +49,5 @@ export function useTable<T extends { id: string }>(table: string, order: { col: 
     }
   }, [table])
 
-  return { rows, loading, error, ...actions }
+  return { rows, loading, error, reload: load, ...actions }
 }

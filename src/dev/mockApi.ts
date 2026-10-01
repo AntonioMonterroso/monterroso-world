@@ -1,6 +1,6 @@
 // Solo desarrollo: imita lo mínimo de PostgREST en memoria para probar la interfaz sin sesión real.
 type Row = Record<string, unknown>
-const db: Record<string, Row[]> = { schedule_blocks: [], settings: [], tasks: [], inbox_items: [], events: [], occurrence_state: [], projects: [], payments: [], songs: [], setlists: [], practice_logs: [], sermons: [], sermon_phases: [], sermon_slides: [], faith_notes: [], fin_transactions: [], fin_budgets: [], savings_goals: [], subscriptions: [], loans: [], loan_payments: [], workouts: [], workout_items: [], training_partners: [], workout_logs: [], body_metrics: [], health_days: [], share_links: [], habits: [], habit_logs: [], focus_sessions: [] }
+const db: Record<string, Row[]> = { schedule_blocks: [], settings: [], tasks: [], inbox_items: [], events: [], occurrence_state: [], projects: [], payments: [], songs: [], setlists: [], practice_logs: [], sermons: [], sermon_phases: [], sermon_slides: [], faith_notes: [], fin_transactions: [], fin_budgets: [], savings_goals: [], subscriptions: [], loans: [], loan_payments: [], workouts: [], workout_items: [], training_partners: [], workout_logs: [], body_metrics: [], health_days: [], share_links: [], habits: [], habit_logs: [], focus_sessions: [], vault_meta: [], vault_items: [] }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 export function installMockApi() {
