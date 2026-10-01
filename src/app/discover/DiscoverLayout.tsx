@@ -7,6 +7,9 @@ export default function DiscoverLayout() {
         <NavLink to="/app/descubrir" end className="plan-tab shrink-0">Aprender</NavLink>
         <NavLink to="/app/descubrir/links" className="plan-tab shrink-0">Links</NavLink>
         <NavLink to="/app/descubrir/portafolio" className="plan-tab shrink-0">Portafolio</NavLink>
+        <NavLink to="/app/descubrir/inspiracion" className="plan-tab shrink-0">Inspiración</NavLink>
+        <NavLink to="/app/descubrir/lugares" className="plan-tab shrink-0">Lugares</NavLink>
+        <NavLink to="/app/descubrir/compras" className="plan-tab shrink-0">Compras</NavLink>
       </nav>
       <Outlet />
     </div>
