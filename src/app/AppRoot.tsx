@@ -23,6 +23,13 @@ import Presenter from './pulpit/Presenter'
 import PulpitLayout from './pulpit/PulpitLayout'
 import Sermons from './pulpit/Sermons'
 import SermonPage from './pulpit/SermonPage'
+import Budget from './money/Budget'
+import Goals from './money/Goals'
+import Loans from './money/Loans'
+import MoneyLayout from './money/MoneyLayout'
+import Overview from './money/Overview'
+import Subscriptions from './money/Subscriptions'
+import Transactions from './money/Transactions'
 import Projects from './work/Projects'
 import Shell from './Shell'
 import Today from './Today'
@@ -82,6 +89,14 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="dinero" element={<MoneyLayout />}>
+          <Route index element={<Overview />} />
+          <Route path="movimientos" element={<Transactions />} />
+          <Route path="presupuesto" element={<Budget />} />
+          <Route path="metas" element={<Goals />} />
+          <Route path="suscripciones" element={<Subscriptions />} />
+          <Route path="prestamos" element={<Loans />} />
+        </Route>
         <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
         <Route path="pulpito" element={<PulpitLayout />}>
           <Route index element={<Sermons />} />
