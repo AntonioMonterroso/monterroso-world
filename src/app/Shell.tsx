@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Globe from '../components/Globe'
 import { centers } from '../lib/modules'
 import { useTone } from '../lib/tone'
+import NotificationActions from './NotificationActions'
 import Palette from './Palette'
 
 const mobileMain = ['hoy', 'planear', 'trabajo', 'musica']
@@ -59,6 +60,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
         <NavLink to="/app/mas" className="tab-link"><LayoutGrid size={20} aria-hidden /><span>Más</span></NavLink>
       </nav>
 
+      <NotificationActions />
       <Palette open={open} onClose={() => setOpen(false)} onLock={onLock} onSignOut={onSignOut} />
     </div>
   )
