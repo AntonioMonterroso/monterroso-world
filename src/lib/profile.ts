@@ -47,3 +47,9 @@ export function buildVCard(focus: FocusKey): string {
     'END:VCARD',
   ].join('\r\n')
 }
+
+export function availability(hour: number): string {
+  if (hour >= 8 && hour < 17) return 'Disponible por mensaje · respondo hoy'
+  if (hour >= 17 && hour < 22) return 'Disponible por la tarde'
+  return 'Fuera de horario · respondo mañana'
+}
