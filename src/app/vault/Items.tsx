@@ -1,5 +1,6 @@
 import { Briefcase, Check, Cloud, Copy, Eye, EyeOff, ExternalLink, KeyRound, Loader2, Lock, Mail, Pencil, Plus, Search, Settings as Cog, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
@@ -48,6 +49,15 @@ export default function Items({ dk, meta, onMeta, userName }: { dk: DataKey; met
   const [err, setErr] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [sp, setSp] = useSearchParams()
+
+  // Viene del buscador (bóveda desbloqueada): abre ese elemento
+  useEffect(() => {
+    const id = sp.get('abrir')
+    if (!id || !ready) return
+    if (items.some((x) => x.id === id)) { setOpenId(id); setConfirm(false) }
+    setSp({}, { replace: true })
+  }, [sp, ready, items, setSp])
 
   // Descifra en este dispositivo todo lo que llega del servidor
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { Check, ChevronDown, ExternalLink, Loader2, MapPin, Plus, Repeat as RepeatIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { eventKinds, mapsUrl, reminderMeta, useEvents, type Occurrence } from '../../lib/events'
 import { isoFromNum, dayNum } from '../../lib/recur'
 import { fmtMin, localISO } from '../../lib/time'
@@ -70,6 +71,16 @@ export default function Agenda() {
   const ev = useEvents()
   const [filter, setFilter] = useState<'all' | 'event' | 'reminder'>('all')
   const [target, setTarget] = useState<EditorTarget | null>(null)
+  const [sp, setSp] = useSearchParams()
+
+  // Viene del buscador: abre ese evento
+  useEffect(() => {
+    const id = sp.get('e')
+    if (!id || ev.loading) return
+    const found = ev.events.find((x) => x.id === id)
+    if (found) setTarget({ event: found, date: found.start_date })
+    setSp({}, { replace: true })
+  }, [sp, ev.loading, ev.events, setSp])
 
   const today = localISO()
   const list = useMemo(() => {

@@ -1,4 +1,4 @@
-import { Check, Plus } from 'lucide-react'
+import { Check, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -49,6 +49,9 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
   const error = pr.error || inbox.error || evs.error || habits.error
+
+  const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
+  useEffect(() => { if (!undo) return; const t = setTimeout(() => setUndo(null), 6000); return () => clearTimeout(t) }, [undo])
 
   const addPriority = (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,11 +133,12 @@ export default function Today() {
         <h2 id="prio" className="font-display text-2xl">Tres prioridades</h2>
         <ul className="mt-4 grid gap-2">
           {pr.tasks.map((t) => (
-            <li key={t.id}>
-              <button className="flex min-h-12 w-full items-center gap-3 rounded-xl border px-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }} onClick={() => pr.toggle(t.id)} aria-pressed={t.done}>
+            <li key={t.id} className="flex items-center rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
+              <button className="flex min-h-12 min-w-0 flex-1 items-center gap-3 px-3 text-left" onClick={() => pr.toggle(t.id)} aria-pressed={t.done}>
                 <span className="grid size-6 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--accent)', background: t.done ? 'var(--accent)' : 'transparent', color: 'var(--bg)' }}>{t.done && <Check size={14} aria-hidden />}</span>
-                <span style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--ink-faint)' : 'var(--ink)' }}>{t.title}</span>
+                <span className="truncate" style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--ink-faint)' : 'var(--ink)' }}>{t.title}</span>
               </button>
+              <button className="grid size-11 shrink-0 place-items-center" aria-label={`Borrar prioridad: ${t.title}`} onClick={() => { pr.remove(t.id); setUndo({ label: 'Prioridad borrada', restore: () => pr.add(t.title) }) }}><Trash2 size={16} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>
             </li>
           ))}
         </ul>
@@ -157,10 +161,21 @@ export default function Today() {
         </form>
         {inbox.items.length > 0 && (
           <ul className="mt-3 grid gap-2 text-sm">
-            {inbox.items.map((x) => <li key={x.id} className="rounded-xl px-3 py-2" style={{ background: 'var(--surface)', color: 'var(--ink-soft)' }}>{x.text}</li>)}
+            {inbox.items.map((x) => (
+              <li key={x.id} className="flex items-center gap-1 rounded-xl pl-3" style={{ background: 'var(--surface)', color: 'var(--ink-soft)' }}>
+                <span className="min-w-0 flex-1 break-words py-2">{x.text}</span>
+                <button className="grid size-11 shrink-0 place-items-center" aria-label={`Borrar captura: ${x.text}`} onClick={() => { inbox.remove(x.id); setUndo({ label: 'Captura borrada', restore: () => inbox.add(x.text) }) }}><Trash2 size={16} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>
+              </li>
+            ))}
           </ul>
         )}
       </section>
+      {undo && (
+        <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))', background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
+          {undo.label}
+          <button className="min-h-11 rounded-full px-3 font-semibold underline" style={{ color: 'var(--accent)' }} onClick={() => { undo.restore(); setUndo(null) }}>Deshacer</button>
+        </div>
+      )}
       <EventEditor target={evTarget} onClose={() => setEvTarget(null)}
         onSave={async (id, v) => { if (id) await evs.update(id, v); else await evs.add(v); setEvTarget(null) }}
         onDelete={(id) => { evs.remove(id); setEvTarget(null) }}

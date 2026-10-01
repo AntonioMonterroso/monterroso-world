@@ -1,5 +1,6 @@
 import { Check, Loader2, Plus, Search, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTable } from '../../lib/table'
 import { NOTE_KINDS, type FaithNote, type NoteKind } from '../../lib/pulpit'
 import { localISO } from '../../lib/time'
@@ -36,6 +37,15 @@ export default function FaithNotes() {
   const [filter, setFilter] = useState<NoteKind | 'all'>('all')
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<string | null>(null)
+  const [sp, setSp] = useSearchParams()
+
+  // Viene del buscador: abre esa nota
+  useEffect(() => {
+    const id = sp.get('n')
+    if (!id || db.loading) return
+    if (db.rows.some((n) => n.id === id)) { setOpen(id); setFilter('all'); setQ('') }
+    setSp({}, { replace: true })
+  }, [sp, db.loading, db.rows, setSp])
 
   const list = useMemo(() => {
     const t = q.trim().toLowerCase()

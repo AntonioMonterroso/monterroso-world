@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { STATUSES, currentMonth, money, monthLabel, receivedOf, shiftMonth, statusMeta, summarize, useProjects, type Payment, type Project, type Status } from '../../lib/projects'
 import { dayNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
@@ -49,6 +50,16 @@ export default function Projects() {
   const [filter, setFilter] = useState<Status | 'all'>('all')
   const [editing, setEditing] = useState<string | null>(null)
   const [showCarry, setShowCarry] = useState(false)
+  const [sp, setSp] = useSearchParams()
+
+  // Viene del buscador: abre ese trabajo en su mes
+  useEffect(() => {
+    const id = sp.get('abrir')
+    if (!id || db.loading) return
+    const p = db.projects.find((x) => x.id === id)
+    if (p) { setMonth(p.month); setEditing(id) }
+    setSp({}, { replace: true })
+  }, [sp, db.loading, db.projects, setSp])
 
   const inMonth = useMemo(() => db.projects.filter((p) => p.month === month), [db.projects, month])
   const carry = useMemo(() => (month === currentMonth() ? db.projects.filter((p) => p.month < month && p.status !== 'closed') : []), [db.projects, month])

@@ -124,7 +124,12 @@ export function usePriorities() {
     const { error } = await supabase.from('tasks').update({ done: !cur.done }).eq('id', id)
     if (error) { setError('No se guardó el cambio.'); load() }
   }
-  return { tasks, error, add, toggle }
+  const remove = async (id: string) => {
+    setTasks((t) => t.filter((x) => x.id !== id))
+    const { error } = await supabase.from('tasks').delete().eq('id', id)
+    if (error) { setError('No se pudo borrar.'); load() }
+  }
+  return { tasks, error, add, toggle, remove }
 }
 
 export type InboxItem = { id: string; text: string }
@@ -148,5 +153,11 @@ export function useInbox() {
     if (error || !data) return setError('No se pudo guardar la captura.')
     setItems((i) => [data as InboxItem, ...i].slice(0, 5))
   }
-  return { items, error, add }
+  const remove = async (id: string) => {
+    setItems((i) => i.filter((x) => x.id !== id))
+    const { error } = await supabase.from('inbox_items').delete().eq('id', id)
+    if (error) setError('No se pudo borrar.')
+    load() // vuelve a traer hasta 5, por si había más guardadas
+  }
+  return { items, error, add, remove }
 }
