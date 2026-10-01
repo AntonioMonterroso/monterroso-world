@@ -23,6 +23,13 @@ import Presenter from './pulpit/Presenter'
 import PulpitLayout from './pulpit/PulpitLayout'
 import Sermons from './pulpit/Sermons'
 import SermonPage from './pulpit/SermonPage'
+import Body from './fit/Body'
+import FitLayout from './fit/FitLayout'
+import History from './fit/History'
+import Partners from './fit/Partners'
+import RoutinePage from './fit/RoutinePage'
+import Routines from './fit/Routines'
+import Session from './fit/Session'
 import Budget from './money/Budget'
 import Goals from './money/Goals'
 import Loans from './money/Loans'
@@ -89,6 +96,14 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="ejercicio/entrenar/:id" element={<Session />} />
+        <Route path="ejercicio" element={<FitLayout />}>
+          <Route index element={<Routines />} />
+          <Route path="rutina/:id" element={<RoutinePage />} />
+          <Route path="historial" element={<History />} />
+          <Route path="cuerpo" element={<Body />} />
+          <Route path="companeros" element={<Partners />} />
+        </Route>
         <Route path="dinero" element={<MoneyLayout />}>
           <Route index element={<Overview />} />
           <Route path="movimientos" element={<Transactions />} />

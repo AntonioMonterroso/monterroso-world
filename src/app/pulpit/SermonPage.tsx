@@ -1,24 +1,10 @@
 import { ArrowDown, ArrowLeft, ArrowUp, Plus, Presentation, Share2, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PHASES, SLIDE_KINDS, isHttps, normalizeEmbed, phaseLabel, type Phase, type PhaseKind, type Sermon, type SermonStatus, type Slide, type SlideKind } from '../../lib/pulpit'
 import { shareQuote } from '../../lib/shareImage'
+import Field from '../../components/Field'
 import { useTable } from '../../lib/table'
-
-/** Campo que guarda al salir de él, para no escribir en la base en cada tecla. */
-function Field({ value, onCommit, multiline, ...rest }: { value: string; onCommit: (v: string) => void; multiline?: boolean } & Record<string, unknown>) {
-  const [v, setV] = useState(value)
-  const latest = useRef(value)
-  useEffect(() => { setV(value); latest.current = value }, [value])
-  const common = {
-    value: v,
-    onChange: (e: { target: { value: string } }) => { latest.current = e.target.value; setV(e.target.value) },
-    onBlur: () => { if (latest.current !== value) onCommit(latest.current) },
-    className: 'field',
-    ...rest,
-  }
-  return multiline ? <textarea {...(common as object)} className="field py-3" /> : <input {...(common as object)} />
-}
 
 const chip = (on: boolean, color = 'var(--accent)') => ({ borderColor: on ? color : 'var(--line)', color: on ? color : 'var(--ink-soft)', background: on ? `color-mix(in oklab, ${color} 14%, transparent)` : 'transparent' })
 
