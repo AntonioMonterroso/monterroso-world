@@ -182,3 +182,11 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 .tab-link { display: grid; place-items: center; gap: 2px; min-height: 58px; font-size: 11px; color: var(--ink-faint); padding-top: 6px; transition: color 160ms var(--ease-out); }
 .tab-link[aria-current="page"] { color: var(--accent); }
 .tab-link:active { transform: scale(0.97); }
+
+/* Bloques del horario */
+.blk { cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.blk:active { cursor: grabbing; }
+.blk-code, .blk-eq { position: absolute; right: 8px; top: 8px; width: 38%; opacity: .35; pointer-events: none; }
+.blk-code { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; color: currentColor; }
+.blk-eq { display: flex; align-items: flex-end; gap: 3px; height: calc(100% - 28px); max-height: 56px; top: auto; bottom: 14px; }
+@media (prefers-reduced-motion: reduce) { .blk { transition: none !important; } }
