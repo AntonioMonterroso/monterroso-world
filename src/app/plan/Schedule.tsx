@@ -1,5 +1,8 @@
-import { Loader2, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { weekStart } from '../../lib/habits'
+import { dayNum, isoFromNum, weekdayOf } from '../../lib/recur'
 import { kindMeta, useBlocks, type Block } from '../../lib/data'
 import { eventKinds, reminderMeta, useEvents } from '../../lib/events'
 import { DAYS, fmtMin, localISO, nowMin } from '../../lib/time'
@@ -51,23 +54,33 @@ export default function Schedule() {
   const { blocks, loading, error, update, add, remove, clearError } = useBlocks()
   const ev = useEvents()
   const [evTarget, setEvTarget] = useState<EditorTarget | null>(null)
-  const [day, setDay] = useState(() => new Date().getDay())
+  const todayISO = localISO()
+  const [sp, setSp] = useSearchParams()
+  const [date, setDate] = useState(() => (/^\d{4}-\d{2}-\d{2}$/.test(sp.get('fecha') ?? '') ? sp.get('fecha')! : localISO()))
+  const day = weekdayOf(dayNum(date))
   const [now, setNow] = useState(() => nowMin())
   const [editing, setEditing] = useState<Block | null>(null)
   const [drag, setDrag] = useState<Drag | null>(null)
   const dragRef = useRef<Drag | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
-  const isToday = day === new Date().getDay()
+  const isToday = date === todayISO
+
+  // Viene del calendario: ?fecha=YYYY-MM-DD
+  useEffect(() => {
+    const f = sp.get('fecha')
+    if (f && /^\d{4}-\d{2}-\d{2}$/.test(f)) { setDate(f); setSp({}, { replace: true }) }
+  }, [sp, setSp])
+
+  // Los 7 días de la semana de la fecha elegida (lunes a domingo)
+  const monday = dayNum(weekStart(date))
+  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => isoFromNum(monday + i)), [monday])
+  const fmtShort = (iso: string) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('es', { day: 'numeric', month: 'short' }) }
+  const shiftWeek = (n: number) => setDate(isoFromNum(dayNum(date) + n * 7))
 
   useEffect(() => { const t = setInterval(() => setNow(nowMin()), 30_000); return () => clearInterval(t) }, [])
 
   const dayBlocks = useMemo(() => blocks.filter((b) => b.days.includes(day)), [blocks, day])
-  // Fecha concreta del día elegido dentro de la semana en curso (lunes a domingo)
-  const dayDate = useMemo(() => {
-    const t = new Date()
-    const delta = ((day + 6) % 7) - ((t.getDay() + 6) % 7)
-    return localISO(new Date(t.getFullYear(), t.getMonth(), t.getDate() + delta))
-  }, [day])
+  const dayDate = date
   const dayEvents = useMemo(() => ev.between(dayDate, dayDate), [ev, dayDate])
   const spans = useMemo<Span[]>(() => [
     ...dayBlocks,
@@ -81,7 +94,7 @@ export default function Schedule() {
     const target = isToday ? Math.max(0, now - 90) : 7 * 60
     scroller.current.scrollTo({ top: target * PX, behavior: 'auto' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, day])
+  }, [loading, date])
 
   const setDragBoth = (d: Drag | null) => { dragRef.current = d; setDrag(d) }
 
@@ -153,21 +166,34 @@ export default function Schedule() {
         <button className="btn btn-primary" onClick={newBlock}><Plus size={18} aria-hidden /> Bloque</button>
       </div>
 
-      <div role="tablist" aria-label="Día de la semana" className="mt-6 flex gap-1.5">
-        {DAYS.map((d) => {
-          const on = d.n === day
-          const isNow = d.n === new Date().getDay()
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => shiftWeek(-1)} aria-label="Semana anterior"><ChevronLeft size={18} aria-hidden /></button>
+        <p className="min-w-44 text-center font-semibold" aria-live="polite">{week.includes(todayISO) ? 'Esta semana' : 'Semana'} <span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}>· {fmtShort(week[0])} – {fmtShort(week[6])}</span></p>
+        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => shiftWeek(1)} aria-label="Semana siguiente"><ChevronRight size={18} aria-hidden /></button>
+        {!week.includes(todayISO) && <button className="min-h-11 rounded-full border px-4 text-sm" style={{ borderColor: 'var(--line)' }} onClick={() => setDate(todayISO)}>Hoy</button>}
+        <label className="ml-auto flex min-h-11 items-center gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
+          <span className="sr-only sm:not-sr-only">Ir a</span>
+          <input type="date" className="field !h-11 !w-auto" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Ir a una fecha" />
+        </label>
+      </div>
+
+      <div role="tablist" aria-label="Día de la semana" className="mt-3 flex gap-1.5">
+        {DAYS.map((d, i) => {
+          const iso = week[i]
+          const on = iso === date
+          const isNow = iso === todayISO
           return (
-            <button key={d.n} role="tab" aria-selected={on} aria-label={d.long} onClick={() => setDay(d.n)} className="relative grid min-h-12 flex-1 place-items-center rounded-xl border text-sm font-semibold"
+            <button key={d.n} role="tab" aria-selected={on} aria-label={`${d.long} ${fmtShort(iso)}`} onClick={() => setDate(iso)} className="relative grid min-h-14 flex-1 place-items-center rounded-xl border py-1 text-sm font-semibold leading-tight"
               style={{ borderColor: on ? 'var(--accent)' : 'var(--line-soft)', background: on ? 'var(--accent)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--ink-soft)' }}>
-              {d.short}
+              <span>{d.short}</span>
+              <span className="text-xs font-normal" style={{ opacity: 0.85 }}>{Number(iso.slice(8))}</span>
               {isNow && <span className="absolute bottom-1 size-1 rounded-full" style={{ background: on ? 'var(--bg)' : 'var(--accent)' }} aria-hidden />}
             </button>
           )
         })}
       </div>
       <p className="mt-3 text-xs" style={{ color: 'var(--ink-faint)' }}>
-        Toca un bloque para editarlo. Arrástralo para moverlo (en el teléfono, mantenlo presionado) y estira el borde de abajo para cambiar su duración. Un cambio afecta todos los días del bloque; usa “Solo este día” para separarlo.
+        Toca un bloque para editarlo. Arrástralo para moverlo (en el teléfono, mantenlo presionado) y estira el borde de abajo para cambiar su duración. Los bloques se repiten cada semana: un cambio afecta todos los días del bloque; usa “Solo este día” para separarlo. Los eventos sí son de la fecha exacta.
       </p>
 
       {error && (

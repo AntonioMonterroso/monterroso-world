@@ -9,6 +9,7 @@ import Login from './Login'
 import More from './More'
 import { PinSetup, PinUnlock } from './PinGate'
 import Agenda from './plan/Agenda'
+import Calendar from './plan/Calendar'
 import PlanLayout from './plan/PlanLayout'
 import Schedule from './plan/Schedule'
 import Settings from './Settings'
@@ -111,6 +112,7 @@ function Gate() {
         <Route path="planear" element={<PlanLayout />}>
           <Route index element={<Schedule />} />
           <Route path="agenda" element={<Agenda />} />
+          <Route path="calendario" element={<Calendar />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
         <Route path="descubrir" element={<DiscoverLayout />}>
