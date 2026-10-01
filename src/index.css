@@ -100,15 +100,15 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 @keyframes strum { from { transform: translate(0, -7px) } to { transform: translate(0, 9px) } }
 .av-string { animation: vib .14s linear infinite alternate; }
 @keyframes vib { from { transform: translateY(-.6px) } to { transform: translateY(.6px) } }
-.av-stick-l { transform-box: fill-box; transform-origin: left top; animation: stick .46s ease-in infinite alternate; }
-.av-stick-r { transform-box: fill-box; transform-origin: right top; animation: stick .46s ease-in .23s infinite alternate-reverse; }
+.av-stick-l { transform-box: fill-box; transform-origin: left bottom; animation: stick .46s ease-in infinite alternate; }
+.av-stick-r { transform-box: fill-box; transform-origin: right bottom; animation: stick .46s ease-in .23s infinite alternate-reverse; }
 @keyframes stick { from { transform: rotate(-14deg) } to { transform: rotate(10deg) } }
 .av-drum { transform-box: fill-box; transform-origin: center; animation: drumhit .46s ease-out infinite; }
 .av-drum.b { animation-delay: .23s; }
 @keyframes drumhit { 0%,100% { transform: scale(1) } 12% { transform: scale(1.04, .94) } }
 .av-key { transform-box: fill-box; transform-origin: top; animation: key 1.2s ease-in-out infinite; }
 @keyframes key { 0%,70%,100% { transform: translateY(0) } 80% { transform: translateY(3px) } }
-.av-wave { transform-box: fill-box; transform-origin: 50% 100%; animation: wave 1.1s ease-in-out infinite; }
+.av-wave { transform-box: fill-box; transform-origin: 20% 100%; animation: wave 1.1s ease-in-out infinite; }
 @keyframes wave { 0%,100% { transform: rotate(-12deg) } 50% { transform: rotate(22deg) } }
 .av-float { animation: floatup 3.2s var(--ease-out) infinite; opacity: 0; }
 @keyframes floatup { 0% { transform: translateY(8px); opacity: 0 } 25% { opacity: .9 } 100% { transform: translateY(-26px); opacity: 0 } }
