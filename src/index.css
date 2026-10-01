@@ -192,3 +192,13 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 @media (prefers-reduced-motion: reduce) { .blk { transition: none !important; } }
 .plan-tab { display: grid; place-items: center; min-height: 44px; padding: 0 1.25rem; border-radius: 999px; font-weight: 600; font-size: .9rem; color: var(--ink-soft); transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out); }
 .plan-tab[aria-current="page"] { background: var(--accent); color: var(--bg); }
+
+/* Impresión / PDF: solo el contenido, en blanco y negro */
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  aside, header, nav, .no-print, [role="status"] { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .print-area, .print-area * { color: #000 !important; background: transparent !important; border-color: #999 !important; }
+  .print-area .sheet span { color: #000 !important; }
+  .print-area h3 { color: #000 !important; }
+}

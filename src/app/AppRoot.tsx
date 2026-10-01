@@ -12,6 +12,12 @@ import Agenda from './plan/Agenda'
 import PlanLayout from './plan/PlanLayout'
 import Schedule from './plan/Schedule'
 import Settings from './Settings'
+import MusicLayout from './music/MusicLayout'
+import Practice from './music/Practice'
+import Setlists from './music/Setlists'
+import SongPage from './music/SongPage'
+import Songs from './music/Songs'
+import Stage from './music/Stage'
 import Projects from './work/Projects'
 import Shell from './Shell'
 import Today from './Today'
@@ -71,6 +77,13 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="musica/cancion/:id/escenario" element={<Stage />} />
+        <Route path="musica" element={<MusicLayout />}>
+          <Route index element={<Songs />} />
+          <Route path="cancion/:id" element={<SongPage />} />
+          <Route path="setlists" element={<Setlists />} />
+          <Route path="practica" element={<Practice />} />
+        </Route>
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>
