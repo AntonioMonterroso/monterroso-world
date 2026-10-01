@@ -202,3 +202,8 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
   .print-area .sheet span { color: #000 !important; }
   .print-area h3 { color: #000 !important; }
 }
+
+/* iPhone: la barra de estado es translúcida y el contenido llega hasta arriba, así que se respeta la muesca */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-top-sticky { padding-top: max(env(safe-area-inset-top), 0.5rem); }
+.sheet-max { max-height: calc(100dvh - env(safe-area-inset-top) - 12px); }

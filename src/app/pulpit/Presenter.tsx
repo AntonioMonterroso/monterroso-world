@@ -138,7 +138,7 @@ export default function Presenter() {
   const over = planned[pi] !== undefined && planned[pi] > 0 && elapsed > planned[pi]
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: '#08111f' }}>
+    <div className="safe-top fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: '#08111f' }}>
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav(`/app/pulpito/predica/${sermon.id}`)} aria-label="Salir"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1"><p className="truncate font-semibold">{sermon.title}</p><p className="text-xs" style={{ color: displays ? '#8fd1a4' : 'var(--ink-faint)' }}>{displays ? `${displays} ${displays === 1 ? 'pantalla conectada' : 'pantallas conectadas'}` : 'Ninguna pantalla conectada'}</p></div>

@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { centerById } from '../lib/modules'
 
 export default function CenterPage() {
@@ -12,9 +12,17 @@ export default function CenterPage() {
       <p className="mt-3 max-w-md" style={{ color: 'var(--ink-soft)' }}>{c.blurb}</p>
       <ul className="mt-8 grid gap-2 sm:grid-cols-2">
         {c.modules.map((m) => (
-          <li key={m} className="flex items-center justify-between rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-            <span>{m}</span>
-            <span className="rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--surface-2)', color: 'var(--ink-faint)' }}>Pronto</span>
+          <li key={m.name}>
+            {m.to ? (
+              <Link to={m.to} className="flex min-h-12 items-center justify-between rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--line)' }}>
+                <span>{m.name}</span><span aria-hidden style={{ color: 'var(--tone)' }}>→</span>
+              </Link>
+            ) : (
+              <div className="flex min-h-12 items-center justify-between rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>{m.name}</span>
+                <span className="rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--surface-2)', color: 'var(--ink-faint)' }}>Pronto</span>
+              </div>
+            )}
           </li>
         ))}
       </ul>

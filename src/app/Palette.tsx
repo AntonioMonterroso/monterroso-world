@@ -14,7 +14,7 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
   const items = useMemo<Item[]>(() => {
     const all: Item[] = [
       ...centers.map((c) => ({ label: c.label, hint: c.blurb, run: () => nav(c.id === 'hoy' ? '/app' : `/app/${c.id}`) })),
-      ...centers.flatMap((c) => c.modules.map((m) => ({ label: m, hint: c.label, run: () => nav(`/app/${c.id}`) }))),
+      ...centers.flatMap((c) => c.modules.map((m) => ({ label: m.name, hint: c.label, run: () => nav(m.to ?? (c.id === 'hoy' ? '/app' : `/app/${c.id}`)) }))),
       { label: 'Ajustes', hint: 'Cuenta y PIN', run: () => nav('/app/ajustes') },
       { label: 'Bloquear ahora', hint: 'Pedir PIN', run: onLock },
       { label: 'Cerrar sesión', hint: 'Salir de este dispositivo', run: onSignOut },

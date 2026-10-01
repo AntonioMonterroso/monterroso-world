@@ -66,7 +66,7 @@ export default function Landing() {
   return (
     <>
       <header
-        className="sticky top-0 z-20 transition-colors"
+        className="safe-top-sticky sticky top-0 z-20 transition-colors"
         style={{
           background: scrolled ? 'color-mix(in oklab, var(--bg) 92%, transparent)' : 'transparent',
           borderBottom: `1px solid ${scrolled ? 'var(--line-soft)' : 'transparent'}`,

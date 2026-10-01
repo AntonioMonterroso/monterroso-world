@@ -63,7 +63,7 @@ export function PinSetup({ onDone }: { onDone: () => void }) {
   }, [value, len, first, onDone])
 
   return (
-    <main className="grid min-h-dvh place-items-center px-5 py-10">
+    <main className="safe-top grid min-h-dvh place-items-center px-5 py-10">
       <div className="w-full max-w-sm text-center">
         <Globe size={40} />
         <h1 className="mt-4 font-display text-3xl">{first ? 'Confírmalo' : 'Crea tu PIN'}</h1>
@@ -117,7 +117,7 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
   }, [value, len, onUnlock])
 
   return (
-    <main className="grid min-h-dvh place-items-center px-5 py-10">
+    <main className="safe-top grid min-h-dvh place-items-center px-5 py-10">
       <div className="w-full max-w-sm text-center">
         <Globe size={40} />
         <h1 className="mt-4 font-display text-3xl">Monterroso World</h1>

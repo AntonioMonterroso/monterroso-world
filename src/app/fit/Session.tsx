@@ -98,7 +98,7 @@ export default function Session() {
   const total = rows.flat().length
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#08111f' }}>
+    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#08111f' }}>
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav(`/app/ejercicio/rutina/${w.id}`)} aria-label="Salir sin guardar"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1"><p className="truncate font-semibold">{w.title}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{mmss(Math.floor((now - start) / 1000))} · {doneCount}/{total} series</p></div>

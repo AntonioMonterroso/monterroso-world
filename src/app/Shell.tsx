@@ -43,7 +43,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
       </aside>
 
       <div className="min-w-0 pb-24 md:pb-0">
-        <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 md:hidden" style={{ background: 'color-mix(in oklab, var(--bg) 92%, transparent)', backdropFilter: 'blur(8px)' }}>
+        <header className="safe-top-sticky sticky top-0 z-10 flex items-center justify-between px-4 pb-2 md:hidden" style={{ background: 'color-mix(in oklab, var(--bg) 92%, transparent)', backdropFilter: 'blur(8px)' }}>
           <span className="flex items-center gap-2 font-display text-lg"><Globe size={26} /> Monterroso World</span>
           <button className="grid size-11 place-items-center rounded-full" onClick={() => setOpen(true)} aria-label="Buscar"><Search size={20} aria-hidden /></button>
         </header>

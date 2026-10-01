@@ -59,7 +59,7 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
           <motion.form
             role="dialog" aria-modal="true" aria-label="Editar bloque"
             onSubmit={submit} onMouseDown={(e) => e.stopPropagation()}
-            className="max-h-[92dvh] w-full max-w-lg overflow-auto rounded-t-3xl border p-5 md:rounded-3xl"
+            className="sheet-max w-full max-w-lg overflow-auto rounded-t-3xl border p-5 md:rounded-3xl"
             style={{ background: 'var(--surface)', borderColor: 'var(--line)', paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
             initial={{ transform: 'translateY(40px)', opacity: 0 }} animate={{ transform: 'translateY(0px)', opacity: 1 }} exit={{ transform: 'translateY(40px)', opacity: 0 }} transition={{ duration: 0.28, ease }}
           >

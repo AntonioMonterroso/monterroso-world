@@ -22,7 +22,7 @@ export default function Login() {
   }
 
   return (
-    <main className="grid min-h-dvh place-items-center px-5">
+    <main className="safe-top grid min-h-dvh place-items-center px-5">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 inline-flex min-h-11 items-center gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
           <ArrowLeft size={16} aria-hidden /> Volver

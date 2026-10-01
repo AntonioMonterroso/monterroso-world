@@ -2,7 +2,10 @@ import { Check, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
+import { Check as CheckIcon } from 'lucide-react'
 import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
+import { weekDone, type Habit, type HabitLog } from '../lib/habits'
+import { useTable } from '../lib/table'
 import { useEvents } from '../lib/events'
 import { localISO } from '../lib/time'
 import { OccurrenceCard } from './plan/Agenda'
@@ -33,11 +36,19 @@ export default function Today() {
   const todayISO = localISO(now)
   const agenda = useMemo(() => evs.between(todayISO, todayISO), [evs, todayISO])
 
+  const habits = useTable<Habit>('habits', { col: 'position', asc: true })
+  const hlogs = useTable<HabitLog>('habit_logs', { col: 'day', asc: false })
+  const activeHabits = habits.rows.filter((h) => !h.archived)
+  const toggleHabit = async (h: Habit) => {
+    const ex = hlogs.rows.find((l) => l.habit_id === h.id && l.day === todayISO)
+    if (ex) await hlogs.remove(ex.id); else await hlogs.add({ habit_id: h.id, day: todayISO })
+  }
+
   const pr = usePriorities()
   const inbox = useInbox()
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
-  const error = pr.error || inbox.error || evs.error
+  const error = pr.error || inbox.error || evs.error || habits.error
 
   const addPriority = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,7 +76,10 @@ export default function Today() {
               'No hay más bloques hoy. Es tu tiempo.'
             )}
           </p>
-          <Link to="/app/planear" className="mt-3 inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver mi horario</Link>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4">
+            <Link to="/app/mente/enfoque" className="btn btn-primary">Enfocarme</Link>
+            <Link to="/app/planear" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver mi horario</Link>
+          </div>
         </div>
         <div className="w-28 shrink-0 sm:w-36"><Avatar prop={propFor(current?.kind, now.getHours())} size={150} /></div>
       </section>
@@ -85,6 +99,29 @@ export default function Today() {
                 onToggleDone={() => evs.setState(o.event.id, o.date, { done: !o.state.done })}
                 onToggleCheck={(id) => evs.setState(o.event.id, o.date, { checked: o.state.checked.includes(id) ? o.state.checked.filter((x) => x !== id) : [...o.state.checked, id] })} />
             ))}
+          </ul>
+        </section>
+      )}
+
+      {activeHabits.length > 0 && (
+        <section aria-labelledby="hab">
+          <div className="flex items-center justify-between">
+            <h2 id="hab" className="font-display text-2xl">Hábitos de hoy</h2>
+            <Link to="/app/mente" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver todo</Link>
+          </div>
+          <ul className="mt-4 grid gap-2">
+            {activeHabits.map((h) => {
+              const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
+              return (
+                <li key={h.id}>
+                  <button className="flex min-h-12 w-full items-center gap-3 rounded-xl border px-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }} onClick={() => toggleHabit(h)} aria-pressed={done}>
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full border" style={{ borderColor: '#8fd1a4', background: done ? '#8fd1a4' : 'transparent', color: 'var(--bg)' }}>{done && <CheckIcon size={14} aria-hidden />}</span>
+                    <span className="flex-1" style={{ color: done ? 'var(--ink-faint)' : 'var(--ink)' }}>{h.name}</span>
+                    <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>{weekDone(h.id, hlogs.rows, todayISO)}/{h.target_per_week} sem.</span>
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}

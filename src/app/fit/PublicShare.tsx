@@ -46,7 +46,7 @@ export default function PublicShare() {
   useEffect(() => { if (isValidToken(token)) load(pin); else { setLoading(false); setFail('invalid') } }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const shell = (children: React.ReactNode) => (
-    <main className="mx-auto min-h-dvh max-w-xl px-4 py-8">
+    <main className="safe-top mx-auto min-h-dvh max-w-xl px-4 py-8">
       <div className="mb-6 flex items-center gap-2 font-display text-lg"><Globe size={26} /> Entrenamiento</div>
       {children}
     </main>
