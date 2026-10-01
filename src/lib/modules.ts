@@ -14,7 +14,7 @@ export const centers: Center[] = [
   { id: 'ejercicio', label: 'Ejercicio', icon: Dumbbell, tone: 'personal', blurb: 'Rutinas, entrenamientos, progreso y compañeros.', modules: [m('Rutinas', '/app/ejercicio'), m('Historial y progreso', '/app/ejercicio/historial'), m('Cuerpo, agua y sueño', '/app/ejercicio/cuerpo'), m('Compañeros', '/app/ejercicio/companeros')] },
   { id: 'dinero', label: 'Dinero', icon: Wallet, tone: 'dev', blurb: 'Ingresos, cobros, deudas y metas.', modules: [m('Ingresos y gastos', '/app/dinero/movimientos'), m('Por cobrar', '/app/trabajo'), m('Préstamos', '/app/dinero/prestamos'), m('Suscripciones', '/app/dinero/suscripciones'), m('Metas de ahorro', '/app/dinero/metas')] },
   { id: 'boveda', label: 'Bóveda', icon: KeyRound, tone: 'personal', blurb: 'Contraseñas y accesos cifrados.', modules: [m('Contraseñas', '/app/boveda'), m('Correos y cuentas', '/app/boveda'), m('Accesos de clientes', '/app/boveda')] },
-  { id: 'descubrir', label: 'Descubrir', icon: Compass, tone: 'music', blurb: 'Aprender, inspirarte y guardar lugares.', modules: [m('Aprender (YouTube)'), m('Links'), m('Inspiración'), m('Lugares y compras')] },
+  { id: 'descubrir', label: 'Descubrir', icon: Compass, tone: 'music', blurb: 'Aprender, inspirarte y guardar lugares.', modules: [m('Aprender (YouTube)', '/app/descubrir'), m('Links', '/app/descubrir/links'), m('Portafolio', '/app/descubrir/portafolio'), m('Inspiración'), m('Lugares y compras')] },
   { id: 'compartir', label: 'Compartir', icon: Share2, tone: 'music', blurb: 'Tarjetas y enlaces públicos.', modules: [m('Tarjetas digitales'), m('Canciones públicas'), m('Panel de compañeros', '/app/ejercicio/companeros')] },
 ]
 

@@ -37,6 +37,8 @@ const SOURCES: Source[] = [
   { type: 'Evento', table: 'events', select: 'id,title,action', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.action), to: `/app/planear/agenda?e=${r.id}` }) },
   { type: 'Prédica', table: 'sermons', select: 'id,title,scripture', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.scripture), to: `/app/pulpito/predica/${r.id}` }) },
   { type: 'Nota de fe', table: 'faith_notes', select: 'id,title,body,reference', map: (r) => ({ id: String(r.id), title: String(r.title), sub: [cut(r.reference, 40), cut(r.body, 120)].filter(Boolean).join(' · ') || undefined, to: `/app/pulpito/notas?n=${r.id}` }) },
+  { type: 'Video', table: 'videos', select: 'id,title,topic', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.topic), to: `/app/descubrir/video/${r.id}` }) },
+  { type: 'Link', table: 'links', select: 'id,title,url,description', map: (r) => ({ id: String(r.id), title: String(r.title), sub: [cut(r.description, 80), cut(String(r.url).replace(/^https?:\/\/(www\.)?/, ''), 60)].filter(Boolean).join(' · ') || undefined, to: `/app/descubrir/links?q=${encodeURIComponent(String(r.title))}` }) },
   { type: 'Rutina', table: 'workouts', select: 'id,title', map: (r) => ({ id: String(r.id), title: String(r.title), to: `/app/ejercicio/rutina/${r.id}` }) },
   { type: 'Compañero', table: 'training_partners', select: 'id,name', map: (r) => ({ id: String(r.id), title: String(r.name), to: '/app/ejercicio/companeros' }) },
   { type: 'Hábito', table: 'habits', select: 'id,name', map: (r) => ({ id: String(r.id), title: String(r.name), to: '/app/mente' }) },

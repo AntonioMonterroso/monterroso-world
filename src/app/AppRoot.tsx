@@ -30,6 +30,11 @@ import Partners from './fit/Partners'
 import RoutinePage from './fit/RoutinePage'
 import Routines from './fit/Routines'
 import Session from './fit/Session'
+import DiscoverLayout from './discover/DiscoverLayout'
+import Learn from './discover/Learn'
+import Links from './discover/Links'
+import Portfolio from './discover/Portfolio'
+import VideoPage from './discover/VideoPage'
 import Focus from './mind/Focus'
 import Habits from './mind/Habits'
 import MindLayout from './mind/MindLayout'
@@ -100,6 +105,12 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
         <Route path="trabajo" element={<Projects />} />
+        <Route path="descubrir" element={<DiscoverLayout />}>
+          <Route index element={<Learn />} />
+          <Route path="video/:id" element={<VideoPage />} />
+          <Route path="links" element={<Links />} />
+          <Route path="portafolio" element={<Portfolio />} />
+        </Route>
         <Route path="boveda" element={<Vault />} />
         <Route path="mente" element={<MindLayout />}>
           <Route index element={<Habits />} />
