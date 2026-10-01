@@ -33,6 +33,7 @@ const cut = (v: unknown, n = 80) => str(v)?.slice(0, n)
 const SOURCES: Source[] = [
   { type: 'Canción', table: 'songs', select: 'id,title,artist', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.artist), to: `/app/musica/cancion/${r.id}` }) },
   { type: 'Setlist', table: 'setlists', select: 'id,title', map: (r) => ({ id: String(r.id), title: String(r.title), to: `/app/musica/setlists?s=${r.id}` }) },
+  { type: 'Envío', table: 'deliveries', select: 'id,title,recipient', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.recipient), to: '/app/envios' }) },
   { type: 'Trabajo', table: 'projects', select: 'id,title,client', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.client), to: `/app/trabajo?abrir=${r.id}` }) },
   { type: 'Evento', table: 'events', select: 'id,title,action', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.action), to: `/app/planear/agenda?e=${r.id}` }) },
   { type: 'Prédica', table: 'sermons', select: 'id,title,scripture', map: (r) => ({ id: String(r.id), title: String(r.title), sub: cut(r.scripture), to: `/app/pulpito/predica/${r.id}` }) },

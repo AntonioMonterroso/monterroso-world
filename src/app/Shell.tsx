@@ -1,4 +1,4 @@
-import { LayoutGrid, Search, Settings } from 'lucide-react'
+import { Bell, LayoutGrid, Search, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Globe from '../components/Globe'
@@ -45,7 +45,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
       <div className="min-w-0 pb-24 md:pb-0">
         <header className="safe-top-sticky sticky top-0 z-10 flex items-center justify-between px-4 pb-2 md:hidden" style={{ background: 'color-mix(in oklab, var(--bg) 92%, transparent)', backdropFilter: 'blur(8px)' }}>
           <span className="flex items-center gap-2 font-display text-lg"><Globe size={26} /> Monterroso World</span>
-          <button className="grid size-11 place-items-center rounded-full" onClick={() => setOpen(true)} aria-label="Buscar"><Search size={20} aria-hidden /></button>
+          <span className="flex"><NavLink to="/app/avisos" className="grid size-11 place-items-center rounded-full" aria-label="Centro de avisos"><Bell size={20} aria-hidden /></NavLink><button className="grid size-11 place-items-center rounded-full" onClick={() => setOpen(true)} aria-label="Buscar"><Search size={20} aria-hidden /></button></span>
         </header>
         <main className="mx-auto max-w-4xl px-4 py-6 md:px-10 md:py-10"><Outlet /></main>
       </div>
