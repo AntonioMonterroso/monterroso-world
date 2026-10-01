@@ -30,3 +30,22 @@ body {
 }
 
 input, textarea, select { font-size: 16px; }
+
+@keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
+@keyframes blink { 0%,94%,100% { transform: scaleY(1) } 97% { transform: scaleY(0.1) } }
+.avatar-bob { animation: bob 5s var(--ease-out) infinite; }
+.avatar-blink { animation: blink 6s infinite; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 1.25rem;
+  border-radius: 999px; font-weight: 600; cursor: pointer;
+  transition: transform 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-ghost { border: 1px solid #2b4776; color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover { background: #e6d7b6; }
+  .btn-ghost:hover { background: var(--bg-raised); }
+}
+:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
