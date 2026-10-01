@@ -68,7 +68,7 @@ export function PinSetup({ onDone }: { onDone: () => void }) {
         <Globe size={40} />
         <h1 className="mt-4 font-display text-3xl">{first ? 'Confírmalo' : 'Crea tu PIN'}</h1>
         <p className="mx-auto mt-2 max-w-xs text-sm" style={{ color: 'var(--ink-soft)' }}>
-          Sirve para abrir la app rápido en este dispositivo. Si lo olvidas, lo restableces con un código a tu correo.
+          Sirve para abrir la app rápido en este dispositivo. Si lo olvidas, vuelves a entrar con tu contraseña y creas uno nuevo.
         </p>
         {!first && (
           <div className="mt-5 inline-flex rounded-full p-1" style={{ background: 'var(--bg)' }} role="group" aria-label="Largo del PIN">
