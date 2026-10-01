@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault()
     setBusy(true)
     setError('')
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } })
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}app` } })
     setBusy(false)
     if (error) return setError(error.message)
     localStorage.setItem('mw_email', email.trim())
