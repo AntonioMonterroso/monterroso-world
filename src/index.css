@@ -190,3 +190,5 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 .blk-code { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; color: currentColor; }
 .blk-eq { display: flex; align-items: flex-end; gap: 3px; height: calc(100% - 28px); max-height: 56px; top: auto; bottom: 14px; }
 @media (prefers-reduced-motion: reduce) { .blk { transition: none !important; } }
+.plan-tab { display: grid; place-items: center; min-height: 44px; padding: 0 1.25rem; border-radius: 999px; font-weight: 600; font-size: .9rem; color: var(--ink-soft); transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out); }
+.plan-tab[aria-current="page"] { background: var(--accent); color: var(--bg); }

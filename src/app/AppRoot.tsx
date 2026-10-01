@@ -8,7 +8,9 @@ import CenterPage from './CenterPage'
 import Login from './Login'
 import More from './More'
 import { PinSetup, PinUnlock } from './PinGate'
-import Schedule from './schedule/Schedule'
+import Agenda from './plan/Agenda'
+import PlanLayout from './plan/PlanLayout'
+import Schedule from './plan/Schedule'
 import Settings from './Settings'
 import Shell from './Shell'
 import Today from './Today'
@@ -63,7 +65,10 @@ function Gate() {
         <Route index element={<Today />} />
         <Route path="mas" element={<More />} />
         <Route path="ajustes" element={<Settings onLock={lock} onResetPin={resetPin} />} />
-        <Route path="planear" element={<Schedule />} />
+        <Route path="planear" element={<PlanLayout />}>
+          <Route index element={<Schedule />} />
+          <Route path="agenda" element={<Agenda />} />
+        </Route>
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>

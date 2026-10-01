@@ -1,8 +1,10 @@
 import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { kindMeta, useBlocks, type Block } from '../../lib/data'
-import { DAYS, fmtMin, nowMin } from '../../lib/time'
+import { eventKinds, reminderMeta, useEvents } from '../../lib/events'
+import { DAYS, fmtMin, localISO, nowMin } from '../../lib/time'
 import BlockEditor from './BlockEditor'
+import EventEditor, { type EditorTarget } from './EventEditor'
 
 const HOUR_H = 60
 const SNAP = 15
@@ -13,9 +15,10 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v))
 type Drag = { id: string; mode: 'move' | 'resize'; startY: number; s0: number; e0: number; s: number; e: number; moved: boolean }
 
 /** Reparte los bloques que se traslapan en columnas. */
-function lanes(list: Block[]) {
+type Span = { id: string; start_min: number; end_min: number }
+function lanes(list: Span[]) {
   const out = new Map<string, { col: number; cols: number }>()
-  let group: Block[] = []
+  let group: Span[] = []
   let end = -1
   const flush = () => {
     const colEnds: number[] = []
@@ -46,6 +49,8 @@ function Scene({ kind }: { kind: Block['kind'] }) {
 
 export default function Schedule() {
   const { blocks, loading, error, update, add, remove, clearError } = useBlocks()
+  const ev = useEvents()
+  const [evTarget, setEvTarget] = useState<EditorTarget | null>(null)
   const [day, setDay] = useState(() => new Date().getDay())
   const [now, setNow] = useState(() => nowMin())
   const [editing, setEditing] = useState<Block | null>(null)
@@ -57,7 +62,18 @@ export default function Schedule() {
   useEffect(() => { const t = setInterval(() => setNow(nowMin()), 30_000); return () => clearInterval(t) }, [])
 
   const dayBlocks = useMemo(() => blocks.filter((b) => b.days.includes(day)), [blocks, day])
-  const laneMap = useMemo(() => lanes(dayBlocks), [dayBlocks])
+  // Fecha concreta del día elegido dentro de la semana en curso (lunes a domingo)
+  const dayDate = useMemo(() => {
+    const t = new Date()
+    const delta = ((day + 6) % 7) - ((t.getDay() + 6) % 7)
+    return localISO(new Date(t.getFullYear(), t.getMonth(), t.getDate() + delta))
+  }, [day])
+  const dayEvents = useMemo(() => ev.between(dayDate, dayDate), [ev, dayDate])
+  const spans = useMemo<Span[]>(() => [
+    ...dayBlocks,
+    ...dayEvents.map((o) => ({ id: `ev-${o.event.id}`, start_min: o.event.start_min, end_min: o.event.end_min ?? Math.min(o.event.start_min + 30, 1440) })),
+  ], [dayBlocks, dayEvents])
+  const laneMap = useMemo(() => lanes(spans), [spans])
 
   // Al abrir, lleva la vista a la hora actual (o a las 7 si no es hoy)
   useEffect(() => {
@@ -172,7 +188,7 @@ export default function Schedule() {
             ))}
 
             <div className="absolute inset-y-0 right-2 left-14">
-              {dayBlocks.length === 0 && <p className="absolute inset-x-0 top-1/3 text-center text-sm" style={{ color: 'var(--ink-faint)' }}>Día libre. Agrega un bloque con el botón de arriba.</p>}
+              {dayBlocks.length === 0 && dayEvents.length === 0 && <p className="absolute inset-x-0 top-1/3 text-center text-sm" style={{ color: 'var(--ink-faint)' }}>Día libre. Agrega un bloque con el botón de arriba.</p>}
               {dayBlocks.map((b) => {
                 const d = drag?.id === b.id ? drag : null
                 const s = d ? d.s : b.start_min
@@ -209,6 +225,24 @@ export default function Schedule() {
                 )
               })}
 
+              {dayEvents.map((o) => {
+                const e = o.event
+                const M = e.type === 'reminder' ? reminderMeta : eventKinds[e.kind]
+                const lane = laneMap.get(`ev-${e.id}`) ?? { col: 0, cols: 1 }
+                const end = e.end_min ?? Math.min(e.start_min + 30, 1440)
+                const h = (end - e.start_min) * PX
+                return (
+                  <button key={e.id + o.date} onClick={() => setEvTarget({ event: e, date: o.date })} aria-label={`${e.title}, ${fmtMin(e.start_min)}`}
+                    className="absolute overflow-hidden rounded-xl px-3 py-1.5 text-left"
+                    style={{ top: e.start_min * PX, height: Math.max(h, 28), left: `${(lane.col / lane.cols) * 100}%`, width: `calc(${100 / lane.cols}% - 4px)`, color: M.color, border: `1.5px dashed ${M.color}`, background: 'color-mix(in oklab, var(--bg) 82%, transparent)', opacity: o.state.done ? 0.5 : 1, zIndex: 2 }}>
+                    <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--ink)', textDecoration: o.state.done ? 'line-through' : 'none' }}>
+                      <M.icon size={14} aria-hidden style={{ color: M.color }} /> <span className="truncate">{e.title}</span>
+                    </span>
+                    {h >= 44 && <span className="block text-xs" style={{ color: 'var(--ink-soft)' }}>{fmtMin(e.start_min)}{e.end_min ? ` – ${fmtMin(e.end_min % 1440)}` : ''}</span>}
+                  </button>
+                )
+              })}
+
               {isToday && (
                 <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: now * PX }} aria-hidden>
                   <span className="-ml-1 size-2.5 rounded-full" style={{ background: '#e8a393' }} />
@@ -220,6 +254,10 @@ export default function Schedule() {
         </div>
       )}
 
+      <EventEditor target={evTarget} onClose={() => setEvTarget(null)}
+        onSave={async (id, v) => { if (id) await ev.update(id, v); else await ev.add(v); setEvTarget(null) }}
+        onDelete={(id) => { ev.remove(id); setEvTarget(null) }}
+        onSkip={(e, d) => { ev.skip(e, d); setEvTarget(null) }} />
       <BlockEditor block={editing} day={day} onClose={() => setEditing(null)} onSave={save} onSplit={split} onDelete={(id) => { remove(id); setEditing(null) }} />
     </div>
   )

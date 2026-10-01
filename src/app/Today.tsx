@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
 import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
+import { useEvents } from '../lib/events'
+import { localISO } from '../lib/time'
+import { OccurrenceCard } from './plan/Agenda'
+import EventEditor, { type EditorTarget } from './plan/EventEditor'
 import { fmtMin, nowMin } from '../lib/time'
 
 const greet = (h: number) => (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches')
@@ -24,11 +28,16 @@ export default function Today() {
   const current = todays.find((b) => m >= b.start_min && m < b.end_min)
   const next = todays.find((b) => b.start_min > m)
 
+  const evs = useEvents()
+  const [evTarget, setEvTarget] = useState<EditorTarget | null>(null)
+  const todayISO = localISO(now)
+  const agenda = useMemo(() => evs.between(todayISO, todayISO), [evs, todayISO])
+
   const pr = usePriorities()
   const inbox = useInbox()
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
-  const error = pr.error || inbox.error
+  const error = pr.error || inbox.error || evs.error
 
   const addPriority = (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,6 +71,23 @@ export default function Today() {
       </section>
 
       {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{error}</p>}
+
+      {agenda.length > 0 && (
+        <section aria-labelledby="agenda">
+          <div className="flex items-center justify-between">
+            <h2 id="agenda" className="font-display text-2xl">Tu agenda de hoy</h2>
+            <Link to="/app/planear/agenda" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver todo</Link>
+          </div>
+          <ul className="mt-4 grid gap-2">
+            {agenda.map((o) => (
+              <OccurrenceCard key={o.event.id + o.date} o={o}
+                onEdit={() => setEvTarget({ event: o.event, date: o.date })}
+                onToggleDone={() => evs.setState(o.event.id, o.date, { done: !o.state.done })}
+                onToggleCheck={(id) => evs.setState(o.event.id, o.date, { checked: o.state.checked.includes(id) ? o.state.checked.filter((x) => x !== id) : [...o.state.checked, id] })} />
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="prio">
         <h2 id="prio" className="font-display text-2xl">Tres prioridades</h2>
@@ -98,6 +124,10 @@ export default function Today() {
           </ul>
         )}
       </section>
+      <EventEditor target={evTarget} onClose={() => setEvTarget(null)}
+        onSave={async (id, v) => { if (id) await evs.update(id, v); else await evs.add(v); setEvTarget(null) }}
+        onDelete={(id) => { evs.remove(id); setEvTarget(null) }}
+        onSkip={(e, d) => { evs.skip(e, d); setEvTarget(null) }} />
     </div>
   )
 }
