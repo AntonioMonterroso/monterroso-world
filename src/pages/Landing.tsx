@@ -1,10 +1,10 @@
-import { motion, useReducedMotion, useScroll, useSpring } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { ArrowUpRight, Check, Copy, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Card from '../components/Card'
-import DayRing from '../components/DayRing'
 import Globe from '../components/Globe'
+import HeroAvatar from '../components/HeroAvatar'
 import { profile } from '../lib/profile'
 import { useTone } from '../lib/tone'
 
@@ -55,8 +55,6 @@ const hero = (delay: number, y = 14) => ({
 export default function Landing() {
   useTone()
   const [scrolled, setScrolled] = useState(false)
-  const { scrollYProgress } = useScroll()
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.4 })
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12)
@@ -67,7 +65,6 @@ export default function Landing() {
 
   return (
     <>
-      <motion.div className="progress" style={{ scaleX: progress }} aria-hidden />
       <header
         className="sticky top-0 z-20 transition-colors"
         style={{
@@ -91,7 +88,6 @@ export default function Landing() {
       <main>
         <section id="inicio" className="relative overflow-hidden">
           <div className="hero-glow" aria-hidden />
-          <div className="hero-grid" aria-hidden />
           <div className="relative mx-auto grid max-w-6xl gap-10 px-5 pt-8 pb-20 md:grid-cols-[1.25fr_1fr] md:items-center md:px-8 md:pt-16 md:pb-28">
             <div>
               <motion.p {...hero(0, 0)} className="eyebrow">Desarrollador web · Músico</motion.p>
@@ -109,7 +105,7 @@ export default function Landing() {
               </motion.div>
             </div>
             <motion.div initial={{ opacity: 0, transform: 'scale(0.95)' }} animate={{ opacity: 1, transform: 'scale(1)' }} transition={{ duration: 0.8, delay: 0.15, ease }}>
-              <DayRing />
+              <HeroAvatar />
             </motion.div>
           </div>
         </section>
