@@ -5,7 +5,7 @@ const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 // Solo desarrollo: con `mw_mock` en localStorage se usa un servidor falso en memoria
-if (import.meta.env.DEV && localStorage.getItem('mw_mock')) installMockApi()
+if (import.meta.env.DEV && typeof localStorage !== 'undefined' && localStorage.getItem('mw_mock')) installMockApi()
 
 export const configured = Boolean(url && key)
 

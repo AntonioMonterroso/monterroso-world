@@ -12,6 +12,7 @@ import Agenda from './plan/Agenda'
 import PlanLayout from './plan/PlanLayout'
 import Schedule from './plan/Schedule'
 import Settings from './Settings'
+import Projects from './work/Projects'
 import Shell from './Shell'
 import Today from './Today'
 
@@ -69,6 +70,7 @@ function Gate() {
           <Route index element={<Schedule />} />
           <Route path="agenda" element={<Agenda />} />
         </Route>
+        <Route path="trabajo" element={<Projects />} />
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>
