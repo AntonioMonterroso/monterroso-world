@@ -173,8 +173,8 @@ export default function Avatar({ prop = 'laptop', size = 220, hop = false }: { p
     <svg ref={ref} viewBox="0 0 200 200" width={size} height={size} role="img" aria-label="Avatar de Monterroso" className={hop ? 'av-hop' : undefined} style={{ maxWidth: '100%', height: 'auto' }}>
       <defs>
         <linearGradient id="av-skin" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0" stopColor="#e6bd98" />
-          <stop offset="1" stopColor="#cf9f78" />
+          <stop offset="0" stopColor="#eec6a0" />
+          <stop offset="1" stopColor="#dcae86" />
         </linearGradient>
         <linearGradient id="av-hair" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#33271f" />
@@ -196,51 +196,37 @@ export default function Avatar({ prop = 'laptop', size = 220, hop = false }: { p
         <path d="M14 204C16 168 44 146 80 140h40c36 6 64 28 66 64z" fill="url(#av-shirt)" />
         <path d="M44 162c12-12 26-18 38-21" fill="none" stroke="#ffffff" strokeOpacity=".12" strokeWidth="3" strokeLinecap="round" />
         <path d="M70 172c8 8 16 12 30 12M130 172c-8 8-16 12-30 12" fill="none" stroke="#0b1730" strokeOpacity=".25" strokeWidth="2" strokeLinecap="round" />
-        <path d="M89 104h22v28c0 6-4 12-11 14-7-2-11-8-11-14z" fill="url(#av-neck)" />
+        <rect x="87" y="112" width="26" height="30" rx="12" fill="url(#av-neck)" />
         <path d="M78 139l22 27 22-27-8-3-14 16-14-16z" fill="#e9dfc8" />
         <path d="M100 152v40" stroke="#14294f" strokeOpacity=".5" strokeWidth="1.5" />
       </g>
 
-      {/* Cabeza */}
+      {/* Cabeza: estilo ilustrado, redondeado y amable */}
       <g className="av-head">
-        <ellipse cx="69.5" cy="80" rx="4.6" ry="7.6" fill={SKIN} stroke="#b98660" strokeWidth=".6" />
-        <ellipse cx="130.5" cy="80" rx="4.6" ry="7.6" fill={SKIN} stroke="#b98660" strokeWidth=".6" />
-        <path d="M70 74C70 52 84 42 100 42s30 10 30 32c0 22-12 40-30 41-18-1-30-19-30-41z" fill={SKIN} />
-        <ellipse cx="80" cy="96" rx="8" ry="5" fill="#e0a08a" opacity=".22" />
-        <ellipse cx="120" cy="96" rx="8" ry="5" fill="#e0a08a" opacity=".22" />
-        <path d="M74 92c4 14 14 22 26 22s22-8 26-22" fill="none" stroke="#b98660" strokeOpacity=".28" strokeWidth="2" strokeLinecap="round" />
-        {/* Pelo */}
-        <path d="M67 78C62 48 80 32 102 32c24 0 40 18 33 46-2-12-8-20-18-24-12 4-24 4-36 0-8 4-12 12-14 24z" fill={HAIR} />
-        <path d="M76 52c14-12 32-12 48-2" fill="none" stroke="#ffffff" strokeOpacity=".14" strokeWidth="2" strokeLinecap="round" />
-        {/* Cejas */}
-        <path d="M78 66q9-5 17-1M105 65q8-4 17 1" stroke="#1d1410" strokeWidth="3" strokeLinecap="round" fill="none" />
-        {/* Ojos */}
+        <ellipse cx="65" cy="88" rx="6" ry="8.5" fill={SKIN} />
+        <ellipse cx="135" cy="88" rx="6" ry="8.5" fill={SKIN} />
+        <ellipse cx="100" cy="84" rx="36" ry="37" fill={SKIN} />
+        <path d="M64 76C60 48 80 34 102 34c24 0 40 16 36 42-4-12-10-18-20-20-12 4-30 4-40 2-8 2-12 10-14 18z" fill={HAIR} />
+        <path d="M80 48c10-6 22-7 34-3" fill="none" stroke="#ffffff" strokeOpacity=".16" strokeWidth="2.5" strokeLinecap="round" />
+        <ellipse cx="78" cy="98" rx="9" ry="6" fill="#ee9a8a" opacity=".38" />
+        <ellipse cx="122" cy="98" rx="9" ry="6" fill="#ee9a8a" opacity=".38" />
+        <path d="M78 72q8-4 15-1M107 71q7-3 15 1" stroke="#2a1d16" strokeWidth="3" strokeLinecap="round" fill="none" />
         {sleeping ? (
-          <g stroke="#3a2a22" strokeWidth="2.2" strokeLinecap="round" fill="none">
-            <path d="M81 76q6 4 12 0M107 76q6 4 12 0" />
+          <g stroke="#2a1d16" strokeWidth="2.6" strokeLinecap="round" fill="none">
+            <path d="M80 86q7 5 14 0M106 86q7 5 14 0" />
           </g>
         ) : (
           <g className="av-blink">
-            <ellipse cx="87.5" cy="76" rx="5.8" ry="3.9" fill="#f6f1e6" />
-            <ellipse cx="112.5" cy="76" rx="5.8" ry="3.9" fill="#f6f1e6" />
             <g className="av-pupil">
-              <circle cx="87.5" cy="76" r="3.1" fill="#4a3426" />
-              <circle cx="112.5" cy="76" r="3.1" fill="#4a3426" />
-              <circle cx="87.5" cy="76" r="1.6" fill="#0b0705" />
-              <circle cx="112.5" cy="76" r="1.6" fill="#0b0705" />
-              <circle cx="88.6" cy="74.8" r=".8" fill="#fff" />
-              <circle cx="113.6" cy="74.8" r=".8" fill="#fff" />
+              <ellipse cx="87" cy="86" rx="4.6" ry="5.4" fill="#2a1d16" />
+              <ellipse cx="113" cy="86" rx="4.6" ry="5.4" fill="#2a1d16" />
+              <circle cx="88.8" cy="84" r="1.7" fill="#fff" />
+              <circle cx="114.8" cy="84" r="1.7" fill="#fff" />
             </g>
-            <path d="M81.5 76q6-5.2 12 0M106.5 76q6-5.2 12 0" stroke="#3a2a22" strokeWidth="1.5" strokeLinecap="round" fill="none" />
           </g>
         )}
-        {/* Nariz */}
-        <path d="M100 78c-1 9-4 14-6 16q6 3 12 0c-2-2-5-7-6-16" fill="none" stroke="#a9744c" strokeOpacity=".55" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="96.5" cy="94" r="1" fill="#8a5a3a" opacity=".5" />
-        <circle cx="103.5" cy="94" r="1" fill="#8a5a3a" opacity=".5" />
-        {/* Boca */}
-        <path d={sleeping ? 'M93 104h14' : 'M91 102q9 7 18 0'} fill="none" stroke="#7a3f33" strokeWidth="2.3" strokeLinecap="round" />
-        {!sleeping && <path d="M95 106q5 3 10 0" fill="none" stroke="#c98d78" strokeWidth="1.6" strokeLinecap="round" opacity=".7" />}
+        <path d="M97 93q3 3 6 0" fill="none" stroke="#b7805a" strokeWidth="2" strokeLinecap="round" />
+        <path d={sleeping ? 'M92 108h16' : 'M88 106q12 11 24 0'} fill="none" stroke="#8a3f33" strokeWidth="2.8" strokeLinecap="round" />
       </g>
 
       <Scene prop={prop} />
