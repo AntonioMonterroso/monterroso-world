@@ -11,6 +11,8 @@ import { Empty, ErrorBar, chip } from '../money/shared'
 
 type Log = { id: string; event_id: string; occ_date: string; kind: string; sent_at: string; nag_count: number }
 type Ev = { id: string; title: string }
+type BLog = { id: string; block_id: string; occ_date: string; kind: string; sent_at: string }
+type Item = { id: string; title: string; kind: string; sent_at: string; nag_count: number }
 
 /** Centro de avisos: qué requiere tu acción y qué se te ha enviado. */
 export default function Notices() {
@@ -19,6 +21,8 @@ export default function Notices() {
   const deliveries = useTable<Delivery>('deliveries', { col: 'created_at', asc: false })
   const log = useTable<Log>('notification_log', { col: 'sent_at', asc: false })
   const events = useTable<Ev>('events', { col: 'created_at', asc: false })
+  const blockLog = useTable<BLog>('block_notification_log', { col: 'sent_at', asc: false })
+  const blocks = useTable<Ev>('schedule_blocks', { col: 'created_at', asc: false })
   const [tab, setTab] = useState<'pending' | 'history'>('pending')
   const [err, setErr] = useState('')
 
@@ -33,19 +37,23 @@ export default function Notices() {
   const waitingNoDate = deliveries.rows.filter((d) => isOpen(d) && d.status !== 'to_send' && !followUpDue(d, today)).length
   const pendingCount = overdue.length + toSend.length + follow.length
 
-  const titleOf = (id: string) => events.rows.find((e) => e.id === id)?.title ?? 'Recordatorio borrado'
   const grouped = useMemo(() => {
-    const m = new Map<string, Log[]>()
-    for (const l of log.rows) { const k = l.sent_at.slice(0, 10); m.set(k, [...(m.get(k) ?? []), l]) }
+    const items: Item[] = [
+      ...log.rows.map((l) => ({ id: l.id, title: events.rows.find((e) => e.id === l.event_id)?.title ?? 'Recordatorio borrado', kind: l.kind, sent_at: l.sent_at, nag_count: l.nag_count })),
+      ...blockLog.rows.map((l) => ({ id: l.id, title: blocks.rows.find((b) => b.id === l.block_id)?.title ?? 'Bloque borrado', kind: l.kind, sent_at: l.sent_at, nag_count: 1 })),
+    ].sort((a, b) => b.sent_at.localeCompare(a.sent_at))
+    const m = new Map<string, Item[]>()
+    for (const l of items) { const k = l.sent_at.slice(0, 10); m.set(k, [...(m.get(k) ?? []), l]) }
     return [...m.entries()]
-  }, [log.rows])
+  }, [log.rows, blockLog.rows, events.rows, blocks.rows])
 
   const clear = async () => {
-    const { error } = await supabase.from('notification_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    if (error) setErr('No pude limpiar el historial.'); else await log.reload()
+    const nil = '00000000-0000-0000-0000-000000000000'
+    const [a, b] = await Promise.all([supabase.from('notification_log').delete().neq('id', nil), supabase.from('block_notification_log').delete().neq('id', nil)])
+    if (a.error || b.error) setErr('No pude limpiar el historial.'); else await Promise.all([log.reload(), blockLog.reload()])
   }
   const dayLabel = (iso: string) => iso === today ? 'Hoy' : iso === isoFromNum(dayNum(today) - 1) ? 'Ayer' : new Date(iso + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })
-  const loading = ev.loading || deliveries.loading || log.loading
+  const loading = ev.loading || deliveries.loading || log.loading || blockLog.loading
 
   return (
     <div>
@@ -72,7 +80,7 @@ export default function Notices() {
                 <ul className="mt-2 grid gap-2">{items.map((l) => { const d = describeLog(l.kind); return (
                   <li key={l.id} className="flex items-center gap-3 rounded-xl border px-4 py-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
                     <BellRing size={16} aria-hidden style={{ color: d.tone === 'alert' ? 'var(--sky)' : 'var(--accent)' }} />
-                    <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{titleOf(l.event_id)}</span><span className="block text-sm" style={{ color: 'var(--ink-soft)' }}>{d.text}{l.kind === 'nag' && l.nag_count > 1 ? ` (${l.nag_count} veces)` : ''}</span></span>
+                    <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{l.title}</span><span className="block text-sm" style={{ color: 'var(--ink-soft)' }}>{d.text}{l.kind === 'nag' && l.nag_count > 1 ? ` (${l.nag_count} veces)` : ''}</span></span>
                     <span className="shrink-0 text-sm" style={{ color: 'var(--ink-faint)' }}>{new Date(l.sent_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
                   </li>) })}</ul>
               </section>))}</div>

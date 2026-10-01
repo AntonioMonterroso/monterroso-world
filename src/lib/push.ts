@@ -57,12 +57,17 @@ export async function sendTest(): Promise<number> {
 }
 
 export type Quiet = { start: number; end: number } | null
+export type BlockAlerts = { enabled?: boolean; lead?: number[] }
 
-export async function loadSettings(): Promise<{ tz?: string; quiet?: Quiet }> {
+export async function loadSettings(): Promise<{ tz?: string; quiet?: Quiet; blockAlerts?: BlockAlerts }> {
   const { data } = await supabase.from('settings').select('data').maybeSingle()
-  return (data?.data ?? {}) as { tz?: string; quiet?: Quiet }
+  return (data?.data ?? {}) as { tz?: string; quiet?: Quiet; blockAlerts?: BlockAlerts }
 }
 export async function saveQuiet(quiet: Quiet): Promise<void> {
   const { data } = await supabase.from('settings').select('data').maybeSingle()
   await supabase.from('settings').upsert({ data: { ...(data?.data ?? {}), quiet } })
+}
+export async function saveBlockAlerts(blockAlerts: BlockAlerts): Promise<void> {
+  const { data } = await supabase.from('settings').select('data').maybeSingle()
+  await supabase.from('settings').upsert({ data: { ...(data?.data ?? {}), blockAlerts } })
 }

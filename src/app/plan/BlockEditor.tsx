@@ -22,13 +22,14 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
   const [start, setStart] = useState('09:00')
   const [end, setEnd] = useState('10:00')
   const [notes, setNotes] = useState('')
+  const [notify, setNotify] = useState(true)
   const [confirm, setConfirm] = useState(false)
   const [err, setErr] = useState('')
 
   useEffect(() => {
     if (!block) return
     setTitle(block.title); setKind(block.kind); setDays(block.days)
-    setStart(fmtMin(block.start_min)); setEnd(block.end_min >= 1440 ? '23:59' : fmtMin(block.end_min)); setNotes(block.notes ?? '')
+    setStart(fmtMin(block.start_min)); setEnd(block.end_min >= 1440 ? '23:59' : fmtMin(block.end_min)); setNotes(block.notes ?? ''); setNotify(block.notify !== false)
     setConfirm(false); setErr('')
   }, [block])
 
@@ -43,7 +44,7 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
     if (!title.trim()) { setErr('Ponle un nombre al bloque.'); return null }
     if (e <= s) { setErr('La hora de fin debe ser después del inicio.'); return null }
     if (days.length === 0) { setErr('Elige al menos un día.'); return null }
-    return { title: title.trim(), kind, days, start_min: s, end_min: e, notes: notes.trim() || null }
+    return { title: title.trim(), kind, days, start_min: s, end_min: e, notes: notes.trim() || null, notify }
   }
 
   const submit = (ev: React.FormEvent) => {
@@ -113,6 +114,7 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
               <label className="grid gap-2 text-sm">Notas
                 <textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
               </label>
+              <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Avisarme cuando empiece</label>
             </div>
 
             {err && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{err}</p>}

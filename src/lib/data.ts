@@ -25,6 +25,7 @@ export type Block = {
   start_min: number
   end_min: number
   notes: string | null
+  notify?: boolean
   active: boolean
 }
 export type NewBlock = Omit<Block, 'id' | 'active'>

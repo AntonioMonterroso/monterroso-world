@@ -54,6 +54,20 @@ async function sendToUser(userId: string, payload: Payload) {
 type EventRow = Recurrence & { id: string; title: string; action: string | null; start_min: number; location: string | null; alerts: number[]; persistent: boolean; checklist: { id: string; text: string }[]; type: string }
 type State = { event_id: string; occ_date: string; done: boolean; snoozed_until: string | null }
 
+type BlockRow = { id: string; title: string; kind: string; days: number[]; start_min: number; end_min: number; notes: string | null }
+type BlockAlerts = { enabled?: boolean; lead?: number[] }
+
+const blockLead = (a: number) => (a === 0 ? 'Ahora' : a >= 60 && a % 60 === 0 ? `En ${a / 60} h` : `En ${a} min`)
+const weekdayOfISO = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
+
+function buildBlock(b: BlockRow, date: string, lead: number, next?: BlockRow): Payload {
+  const dur = b.end_min - b.start_min
+  const lines = [`${fmt(b.start_min)}–${fmt(b.end_min === 1440 ? 0 : b.end_min)} · ${dur >= 60 ? `${Math.floor(dur / 60)} h${dur % 60 ? ` ${dur % 60} min` : ''}` : `${dur} min`}`]
+  if (b.notes) lines.push(b.notes.slice(0, 140))
+  if (next) lines.push(`Después: ${next.title} a las ${fmt(next.start_min)}`)
+  return { title: `${blockLead(lead)}: ${b.title}`, body: lines.join('\n'), tag: `block|${b.id}|${date}`, url: `${APP_URL}app/planear?fecha=${date}` }
+}
+
 const alertLabel = (a: number) => (a === 0 ? 'Es ahora' : a >= 1440 ? 'Mañana' : a >= 60 ? `En ${a / 60} h` : `En ${a} min`)
 
 function build(ev: EventRow, date: string, lead: string): Payload {
@@ -73,7 +87,7 @@ async function processUser(userId: string, now: number) {
     admin.from('occurrence_state').select('event_id,occ_date,done,snoozed_until').eq('user_id', userId),
     admin.from('notification_log').select('id,event_id,occ_date,kind,sent_at,nag_count').eq('user_id', userId).gte('sent_at', new Date(now - 3 * 86_400_000).toISOString()),
   ])
-  const settings = (st?.data ?? {}) as { tz?: string; quiet?: { start: number; end: number } | null }
+  const settings = (st?.data ?? {}) as { tz?: string; quiet?: { start: number; end: number } | null; blockAlerts?: BlockAlerts }
   const tz = settings.tz || 'UTC'
   const quiet = settings.quiet
   const m = localMinutes(now, tz)
@@ -123,6 +137,33 @@ async function processUser(userId: string, now: number) {
         if (t <= now && now - t < 60 * 60_000) {
           await admin.from('occurrence_state').update({ snoozed_until: null }).eq('event_id', ev.id).eq('occ_date', date)
           count += await sendToUser(userId, build(ev, date, 'Recordatorio'))
+        }
+      }
+    }
+  }
+
+  // 4) Bloques del horario: avisan al empezar (o antes), según Ajustes
+  const ba = settings.blockAlerts ?? {}
+  if (ba.enabled !== false && !inQuiet) {
+    const leads = ba.lead?.length ? ba.lead : [0]
+    const [{ data: blocks }, { data: blogs }] = await Promise.all([
+      admin.from('schedule_blocks').select('id,title,kind,days,start_min,end_min,notes').eq('user_id', userId).eq('active', true).eq('notify', true),
+      admin.from('block_notification_log').select('block_id,occ_date,kind').eq('user_id', userId).gte('sent_at', new Date(now - 3 * 86_400_000).toISOString()),
+    ])
+    const sentBlocks = new Set((blogs ?? []).map((l) => `${l.block_id}|${l.occ_date}|${l.kind}`))
+    const all = (blocks ?? []) as BlockRow[]
+    for (const date of dates) {
+      const wd = weekdayOfISO(date)
+      const today = all.filter((b) => b.days.includes(wd)).sort((a, b) => a.start_min - b.start_min)
+      for (const [i, b] of today.entries()) {
+        const start = zonedToUtc(date, b.start_min, tz)
+        for (const lead of leads) {
+          const fireAt = start - lead * 60_000
+          if (now < fireAt || now >= fireAt + 20 * 60_000) continue
+          const kind = `alert:${lead}`
+          if (sentBlocks.has(`${b.id}|${date}|${kind}`)) continue
+          const { error } = await admin.from('block_notification_log').insert({ user_id: userId, block_id: b.id, occ_date: date, kind })
+          if (!error) count += await sendToUser(userId, buildBlock(b, date, lead, today[i + 1]))
         }
       }
     }

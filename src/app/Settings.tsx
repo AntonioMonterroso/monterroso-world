@@ -1,8 +1,11 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
-import { disablePush, enablePush, loadSettings, pushStatus, saveQuiet, sendTest, type PushStatus, type Quiet } from '../lib/push'
+import { disablePush, enablePush, loadSettings, pushStatus, saveBlockAlerts, saveQuiet, sendTest, type BlockAlerts, type PushStatus, type Quiet } from '../lib/push'
 import { fmtMin, toMin } from '../lib/time'
+import { chip } from './money/shared'
+
+const LEADS = [{ min: 0, label: 'A la hora' }, { min: 5, label: '5 min antes' }, { min: 10, label: '10 min antes' }, { min: 15, label: '15 min antes' }, { min: 30, label: '30 min antes' }]
 
 const notes: Record<PushStatus, string> = {
   unsupported: 'Este navegador no admite notificaciones.',
@@ -18,10 +21,11 @@ function Alerts() {
   const [msg, setMsg] = useState('')
   const [quiet, setQuiet] = useState<Quiet>(null)
   const [tz, setTz] = useState('')
+  const [blocks, setBlocks] = useState<BlockAlerts>({})
 
   useEffect(() => {
     pushStatus().then(setStatus)
-    loadSettings().then((s) => { setQuiet(s.quiet ?? null); setTz(s.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone) })
+    loadSettings().then((s) => { setQuiet(s.quiet ?? null); setTz(s.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone); setBlocks(s.blockAlerts ?? {}) })
   }, [])
 
   const run = async (fn: () => Promise<void>, ok: string) => {
@@ -35,6 +39,13 @@ function Alerts() {
     if (!v) return
     const next = { start: quiet?.start ?? 22 * 60, end: quiet?.end ?? 7 * 60, [key]: toMin(v) }
     setQuiet(next); saveQuiet(next)
+  }
+
+  const setBlockAlerts = (next: BlockAlerts) => { setBlocks(next); void saveBlockAlerts(next) }
+  const leads = blocks.lead?.length ? blocks.lead : [0]
+  const toggleLead = (min: number) => {
+    const next = leads.includes(min) ? leads.filter((x) => x !== min) : [...leads, min].sort((a, b) => a - b)
+    if (next.length) setBlockAlerts({ ...blocks, lead: next })
   }
 
   return (
@@ -52,6 +63,19 @@ function Alerts() {
         )}
       </div>
       {msg && <p role="status" className="mt-3 text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
+
+      <fieldset className="mt-6">
+        <legend className="text-sm font-semibold">Avisos del horario</legend>
+        <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Te aviso cuando empieza cada bloque de tu horario (trabajo, ensayo, ejercicio…). Cada bloque se puede silenciar desde su edición.</p>
+        <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
+          <input type="checkbox" className="size-5" checked={blocks.enabled !== false} onChange={(e) => setBlockAlerts({ ...blocks, enabled: e.target.checked })} /> Avisarme cuando empiece una actividad
+        </label>
+        {blocks.enabled !== false && (
+          <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Cuándo avisar">
+            {LEADS.map((l) => <button key={l.min} type="button" aria-pressed={leads.includes(l.min)} onClick={() => toggleLead(l.min)} className="min-h-11 rounded-full border px-4 text-sm" style={chip(leads.includes(l.min))}>{l.label}</button>)}
+          </div>
+        )}
+      </fieldset>
 
       <fieldset className="mt-6">
         <legend className="text-sm font-semibold">Horas de silencio</legend>
