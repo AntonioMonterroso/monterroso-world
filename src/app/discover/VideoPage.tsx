@@ -25,7 +25,7 @@ export default function VideoPage() {
   const topics = useMemo(() => [...new Set(db.rows.map((x) => x.topic).filter((t): t is string => Boolean(t)))], [db.rows])
 
   if (db.loading) return <p style={{ color: 'var(--ink-soft)' }}>Cargando…</p>
-  if (!v) return <div><Link to="/app/descubrir" className="underline">Volver a Aprender</Link><p className="mt-4">No encontré este video.</p></div>
+  if (!v) return <div><Link to="/app/descubrir/aprender" className="underline">Volver a Aprender</Link><p className="mt-4">No encontré este video.</p></div>
 
   const dueNow = v.next_review !== null && v.next_review <= today
 
@@ -50,7 +50,7 @@ export default function VideoPage() {
 
   return (
     <div>
-      <Link to="/app/descubrir" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}><ArrowLeft size={16} aria-hidden /> Aprender</Link>
+      <Link to="/app/descubrir/aprender" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}><ArrowLeft size={16} aria-hidden /> Aprender</Link>
 
       <div className="aspect-video w-full overflow-hidden rounded-2xl" style={{ background: '#000' }}>
         {v.provider === 'youtube'
@@ -105,7 +105,7 @@ export default function VideoPage() {
       </section>
 
       <div className="mt-10">
-        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await db.remove(v.id); nav('/app/descubrir') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran también sus notas' : 'Quitar video'}</button>
+        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await db.remove(v.id); nav('/app/descubrir/aprender') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran también sus notas' : 'Quitar video'}</button>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { Check, ExternalLink, Loader2, MapPin, Plus, Star, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { PLACE_CATEGORIES, mapsSearchUrl, type Place, type Trip } from '../../lib/inspire'
 import { useTable } from '../../lib/table'
@@ -21,6 +22,8 @@ export default function Places() {
   const [t, setT] = useState<TDraft | null>(null)
   const [err, setErr] = useState('')
   const [confirm, setConfirm] = useState(false)
+  const [sp, setSp] = useSearchParams()
+  useEffect(() => { if (sp.get('nuevo')) { setP(blankP()); setSp({}, { replace: true }) } }, [sp, setSp])
 
   const cats = useMemo(() => [...new Set(places.rows.map((x) => x.category))].sort((a, b) => a.localeCompare(b, 'es')), [places.rows])
   const list = useMemo(() => places.rows.filter((x) => (status === 'all' || x.status === status) && (!cat || x.category === cat) && (!trip || x.trip_id === trip)), [places.rows, status, cat, trip])

@@ -207,3 +207,7 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 .safe-top { padding-top: env(safe-area-inset-top); }
 .safe-top-sticky { padding-top: max(env(safe-area-inset-top), 0.5rem); }
 .sheet-max { max-height: calc(100dvh - env(safe-area-inset-top) - 12px); }
+
+/* Segundo nivel de navegación: texto con subrayado, más liviano que las pastillas */
+.sub-tab { display: grid; place-items: center; min-height: 44px; padding: 0 .1rem; font-size: .9rem; font-weight: 600; color: var(--ink-faint); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 180ms var(--ease-out), border-color 180ms var(--ease-out); }
+.sub-tab[aria-current="page"] { color: var(--ink); border-color: var(--accent); }

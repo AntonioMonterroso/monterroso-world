@@ -1,5 +1,6 @@
 import { Camera, ExternalLink, ImagePlus, Loader2, Play, Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { useAuth } from '../../lib/auth'
 import { inspirationEmbed, normalizeTags, type Board, type InspKind, type Inspiration } from '../../lib/inspire'
@@ -49,6 +50,8 @@ export default function Inspiration() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [confirm, setConfirm] = useState(false)
+  const [sp, setSp] = useSearchParams()
+  useEffect(() => { if (sp.get('nuevo')) { setDraft(blank()); setSp({}, { replace: true }) } }, [sp, setSp])
   const pick = useRef<HTMLInputElement>(null)
   const cam = useRef<HTMLInputElement>(null)
 

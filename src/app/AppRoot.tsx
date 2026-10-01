@@ -32,6 +32,7 @@ import RoutinePage from './fit/RoutinePage'
 import Routines from './fit/Routines'
 import Session from './fit/Session'
 import DiscoverLayout from './discover/DiscoverLayout'
+import Hub from './discover/Hub'
 import Inspiration from './discover/Inspiration'
 import Learn from './discover/Learn'
 import Links from './discover/Links'
@@ -110,7 +111,8 @@ function Gate() {
         </Route>
         <Route path="trabajo" element={<Projects />} />
         <Route path="descubrir" element={<DiscoverLayout />}>
-          <Route index element={<Learn />} />
+          <Route index element={<Hub />} />
+          <Route path="aprender" element={<Learn />} />
           <Route path="video/:id" element={<VideoPage />} />
           <Route path="links" element={<Links />} />
           <Route path="portafolio" element={<Portfolio />} />

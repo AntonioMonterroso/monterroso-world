@@ -1,6 +1,6 @@
 import { Loader2, Plus, Repeat } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { STATUS, dueReviews, finishedThisWeek, parseVideoUrl, thumbUrl, type Video, type VideoNote, type VideoStatus } from '../../lib/learn'
 import { getSettings, patchSettings } from '../../lib/settings'
 import { useTable } from '../../lib/table'
@@ -34,6 +34,9 @@ export default function Learn() {
   const [topicFilter, setTopicFilter] = useState('')
   const [q, setQ] = useState('')
   const [goal, setGoal] = useState(3)
+  const urlInput = useRef<HTMLInputElement>(null)
+  const [sp, setSp] = useSearchParams()
+  useEffect(() => { if (sp.get('nuevo')) { setTimeout(() => { urlInput.current?.focus(); urlInput.current?.scrollIntoView({ block: 'center' }) }, 300); setSp({}, { replace: true }) } }, [sp, setSp])
 
   useEffect(() => { getSettings().then((s) => { const g = (s as { learnGoal?: number }).learnGoal; if (g) setGoal(g) }) }, [])
 
@@ -91,7 +94,7 @@ export default function Learn() {
 
       <form onSubmit={add} className="mt-8 grid gap-3 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
         <h2 className="font-display text-2xl">Agregar un video</h2>
-        <input className="field" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Enlace de YouTube o Vimeo" aria-label="Enlace del video" autoComplete="off" />
+        <input ref={urlInput} className="field" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Enlace de YouTube o Vimeo" aria-label="Enlace del video" autoComplete="off" />
         <div className="grid gap-3 sm:grid-cols-2">
           <input className="field" value={topic} onChange={(e) => setTopic(e.target.value)} list="topics" placeholder="Tema o ruta (React, piano…)" aria-label="Tema" maxLength={80} />
           <datalist id="topics">{topics.map((t) => <option key={t} value={t} />)}</datalist>

@@ -62,8 +62,12 @@ export default function Links() {
   const [favs, setFavs] = useState(false)
   const [draft, setDraft] = useState<Draft | null>(null)
 
-  // Viene del buscador general
-  useEffect(() => { const s = sp.get('q'); if (s) { setQ(s); setSp({}, { replace: true }) } }, [sp, setSp])
+  // Viene del buscador general o de un acceso rápido
+  useEffect(() => {
+    const s = sp.get('q')
+    if (s) { setQ(s); setSp({}, { replace: true }) }
+    if (sp.get('nuevo')) { setDraft(blankLink()); setSp({}, { replace: true }) }
+  }, [sp, setSp])
 
   const cats = useMemo(() => [...new Set(db.rows.map((l) => l.category))].sort((a, b) => a.localeCompare(b, 'es')), [db.rows])
   const list = useMemo(() => {

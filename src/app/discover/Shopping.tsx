@@ -1,5 +1,6 @@
 import { Check, ExternalLink, Loader2, PiggyBank, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import type { Goal, Tx } from '../../lib/finance'
 import { PRIORITIES, SHOP_CATEGORIES, expenseCategoryFor, pendingTotals, sortShopping, type ShopItem } from '../../lib/inspire'
@@ -24,6 +25,8 @@ export default function Shopping() {
   const [msg, setMsg] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [showBought, setShowBought] = useState(false)
+  const [sp, setSp] = useSearchParams()
+  useEffect(() => { if (sp.get('nuevo')) { setD(blank()); setSp({}, { replace: true }) } }, [sp, setSp])
 
   const pending = useMemo(() => sortShopping(db.rows.filter((i) => i.status === 'pending')), [db.rows])
   const bought = useMemo(() => db.rows.filter((i) => i.status === 'bought'), [db.rows])
