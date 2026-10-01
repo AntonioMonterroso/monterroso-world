@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowUp, Loader2, Play, Plus, Printer, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Loader2, Play, Plus, Printer, Share2, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTable } from '../../lib/table'
 import { fmtDuration, type Setlist, type Song } from '../../lib/music'
+import ShareSheet from './ShareSheet'
 
 function Detail({ set, songs, onChange, onDelete, onBack }: { set: Setlist; songs: Song[]; onChange: (p: Partial<Omit<Setlist, 'id'>>) => void; onDelete: () => void; onBack: () => void }) {
   const byId = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs])
@@ -11,6 +12,7 @@ function Detail({ set, songs, onChange, onDelete, onBack }: { set: Setlist; song
   const missing = items.filter((s) => !s.duration_sec).length
   const available = songs.filter((s) => !set.song_ids.includes(s.id))
   const [confirm, setConfirm] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   const move = (i: number, d: number) => {
     const ids = [...set.song_ids]
@@ -54,9 +56,11 @@ function Detail({ set, songs, onChange, onDelete, onBack }: { set: Setlist; song
           </select>
         )}
         {items.length > 0 && <Link to={`/app/musica/cancion/${items[0].id}/escenario?s=${set.id}&i=0`} className="btn btn-primary"><Play size={16} aria-hidden /> Tocar</Link>}
+        <button className="btn btn-ghost" onClick={() => setSharing(true)}><Share2 size={16} aria-hidden /> Compartir</button>
         <button className="btn btn-ghost" onClick={() => window.print()}><Printer size={16} aria-hidden /> Imprimir</button>
         <button className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
       </div>
+      <ShareSheet open={sharing} onClose={() => setSharing(false)} kind="setlist" id={set.id} title={set.title} />
       <label className="no-print mt-6 grid gap-2 text-sm">Notas<textarea className="field py-3" rows={3} value={set.notes ?? ''} onChange={(e) => onChange({ notes: e.target.value || null })} maxLength={2000} /></label>
     </div>
   )

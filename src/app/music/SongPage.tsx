@@ -1,9 +1,11 @@
-import { ArrowLeft, Maximize2, Minus, Pencil, Plus, Printer, Trash2 } from 'lucide-react'
+import { ArrowLeft, Maximize2, Minus, Pencil, Plus, Printer, Share2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { KEYS, diatonic, prefersFlats, transposeKey } from '../../lib/chords'
 import { INSTRUMENTS, SONG_STATUS, TIME_SIGS, beatsOf, fmtDuration, instrumentLabel, parseDuration, statusOf, type Song } from '../../lib/music'
 import { useTable } from '../../lib/table'
+import VoiceNotes from '../../components/VoiceNotes'
+import ShareSheet from './ShareSheet'
 import ChordSheet from './ChordSheet'
 import Metronome from './Metronome'
 
@@ -87,6 +89,7 @@ export default function SongPage() {
   const song = db.rows.find((s) => s.id === id)
   const [semis, setSemis] = useState(0)
   const [bpm, setBpm] = useState<number | null>(null)
+  const [sharing, setSharing] = useState(false)
   const editing = sp.get('editar') === '1'
 
   useEffect(() => { if (song && bpm === null) setBpm(song.bpm ?? 100) }, [song, bpm])
@@ -122,6 +125,7 @@ export default function SongPage() {
             </div>
             <div className="no-print flex shrink-0 gap-2">
               <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => setSp({ editar: '1' })} aria-label="Editar"><Pencil size={18} aria-hidden /></button>
+              <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => setSharing(true)} aria-label="Compartir con un enlace público"><Share2 size={18} aria-hidden /></button>
               <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => window.print()} aria-label="Imprimir o guardar en PDF"><Printer size={18} aria-hidden /></button>
             </div>
           </div>
@@ -142,6 +146,9 @@ export default function SongPage() {
           <div className="no-print mt-8"><Metronome bpm={bpm ?? 100} onBpm={setBpm} beats={beatsOf(song.time_sig)} /></div>
         </div>
       )}
+
+      {!editing && <div className="no-print mt-10"><VoiceNotes songId={song.id} /></div>}
+      <ShareSheet open={sharing} onClose={() => setSharing(false)} kind="song" id={song.id} title={song.title} />
     </div>
   )
 }

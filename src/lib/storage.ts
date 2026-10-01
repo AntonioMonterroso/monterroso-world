@@ -46,3 +46,23 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl
   return out
 }
+
+// ───────── genérico por bucket (notas de voz, etc.) ─────────
+export async function uploadBlob(bucket: string, userId: string | undefined, blob: Blob, ext: string, contentType: string): Promise<string> {
+  const path = `${userId ?? 'dev'}/${crypto.randomUUID()}.${ext}`
+  if (mocked()) { mem.set(`${bucket}/${path}`, URL.createObjectURL(blob)); return path }
+  const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType, upsert: false })
+  if (error) throw error
+  return path
+}
+
+export async function removeObject(bucket: string, path: string): Promise<void> {
+  if (mocked()) { mem.delete(`${bucket}/${path}`); return }
+  await supabase.storage.from(bucket).remove([path])
+}
+
+export async function signedUrlFor(bucket: string, path: string): Promise<string | null> {
+  if (mocked()) return mem.get(`${bucket}/${path}`) ?? null
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 3600)
+  return data?.signedUrl ?? null
+}
