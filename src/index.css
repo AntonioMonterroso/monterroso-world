@@ -153,6 +153,32 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
   .globe .mer, .globe .orbit, .av-body, .av-blink, .av-hand-a, .av-hand-b, .av-strum, .av-string, .av-stick-l, .av-stick-r, .av-drum,
   .av-key, .av-wave, .av-float, .av-cursor, .code-line, .eq-bar, .arc, .status-dot { animation: none !important; }
   .card-sheen { animation: none; opacity: 0; }
+  .pin-shake { animation: none; }
   .code-line { transform: scaleX(1); } .eq-bar { transform: scaleY(.5); } .av-float { opacity: .6; }
   .hero-glow { transition: none; }
 }
+
+/* App */
+.field {
+  min-height: 48px; width: 100%; border-radius: 12px; padding: 0 14px; font-size: 16px;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  transition: border-color 160ms var(--ease-out);
+}
+.field:focus { outline: none; border-color: var(--sky); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.pin-key {
+  height: 64px; border-radius: 999px; font-size: 22px; font-weight: 500; cursor: pointer;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-soft);
+  display: grid; place-items: center;
+  transition: transform 120ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+.pin-key:active { transform: scale(0.95); background: var(--surface-2); }
+@keyframes shake { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-7px) } 75% { transform: translateX(7px) } }
+.pin-shake { animation: shake 380ms var(--ease-out); }
+.nav-link { display: flex; align-items: center; gap: .75rem; min-height: 44px; padding: 0 .75rem; border-radius: 12px; color: var(--ink-soft); transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out); }
+.nav-link[aria-current="page"] { background: var(--surface-2); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .nav-link:hover { background: var(--surface); color: var(--ink); } }
+.tone-dev { --tone: var(--dev); } .tone-music { --tone: var(--music); } .tone-personal { --tone: var(--personal); }
+.tab-link { display: grid; place-items: center; gap: 2px; min-height: 58px; font-size: 11px; color: var(--ink-faint); padding-top: 6px; transition: color 160ms var(--ease-out); }
+.tab-link[aria-current="page"] { color: var(--accent); }
+.tab-link:active { transform: scale(0.97); }
