@@ -43,6 +43,9 @@ import VideoPage from './discover/VideoPage'
 import Focus from './mind/Focus'
 import Habits from './mind/Habits'
 import MindLayout from './mind/MindLayout'
+import RoutineEditor from './mind/RoutineEditor'
+import RoutineRun from './mind/RoutineRun'
+import DailyRoutines from './mind/Routines'
 import Budget from './money/Budget'
 import Goals from './money/Goals'
 import Loans from './money/Loans'
@@ -121,9 +124,12 @@ function Gate() {
           <Route path="compras" element={<Shopping />} />
         </Route>
         <Route path="boveda" element={<Vault />} />
+        <Route path="mente/rutinas/:id/hacer" element={<RoutineRun />} />
         <Route path="mente" element={<MindLayout />}>
           <Route index element={<Habits />} />
           <Route path="enfoque" element={<Focus />} />
+          <Route path="rutinas" element={<DailyRoutines />} />
+          <Route path="rutinas/:id" element={<RoutineEditor />} />
         </Route>
         <Route path="ejercicio/entrenar/:id" element={<Session />} />
         <Route path="ejercicio" element={<FitLayout />}>

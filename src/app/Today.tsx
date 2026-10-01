@@ -5,6 +5,7 @@ import Avatar, { propForHour, type Prop } from '../components/Avatar'
 import { Check as CheckIcon } from 'lucide-react'
 import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
 import { weekDone, type Habit, type HabitLog } from '../lib/habits'
+import { KIND_LABEL, currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
 import { useTable } from '../lib/table'
 import { useEvents } from '../lib/events'
 import { localISO } from '../lib/time'
@@ -44,11 +45,20 @@ export default function Today() {
     if (ex) await hlogs.remove(ex.id); else await hlogs.add({ habit_id: h.id, day: todayISO })
   }
 
+  const routinesDb = useTable<Routine>('routines', { col: 'position', asc: true })
+  const routineSteps = useTable<Step>('routine_steps', { col: 'position', asc: true })
+  const routineRuns = useTable<Run>('routine_runs', { col: 'day', asc: false })
+  const kindNow = currentKind(now.getHours())
+  const routineNow = kindNow ? routinesDb.rows.find((x) => x.kind === kindNow && isScheduled(x, now.getDay())) : undefined
+  const routineStepsNow = routineNow ? routineSteps.rows.filter((x) => x.routine_id === routineNow.id) : []
+  const routineRunNow = routineNow ? routineRuns.rows.find((x) => x.routine_id === routineNow.id && x.day === todayISO) : undefined
+  const routineProgress = progressOf(routineRunNow, routineStepsNow)
+
   const pr = usePriorities()
   const inbox = useInbox()
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
-  const error = pr.error || inbox.error || evs.error || habits.error
+  const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
   useEffect(() => { if (!undo) return; const t = setTimeout(() => setUndo(null), 6000); return () => clearTimeout(t) }, [undo])
@@ -88,6 +98,15 @@ export default function Today() {
       </section>
 
       {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{error}</p>}
+
+      {routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed && (
+        <section aria-labelledby="rut-hoy" className="rounded-2xl border p-4" style={{ borderColor: 'var(--accent)', background: 'var(--surface)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0"><p className="eyebrow">Rutina de {KIND_LABEL[routineNow.kind].toLowerCase()}</p><h2 id="rut-hoy" className="mt-1 truncate font-display text-2xl">{routineNow.name}</h2><p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{routineProgress.done > 0 ? `${routineProgress.done} de ${routineProgress.total} pasos` : `${routineProgress.total} pasos`}</p></div>
+            <Link to={`/app/mente/rutinas/${routineNow.id}/hacer`} className="btn btn-primary shrink-0">{routineProgress.done > 0 ? 'Seguir' : 'Empezar'}</Link>
+          </div>
+        </section>
+      )}
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">
