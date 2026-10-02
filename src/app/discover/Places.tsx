@@ -51,7 +51,7 @@ export default function Places() {
 
   return (
     <div>
-      <PageHeader eyebrow="Descubrir" title="Lugares" action={<button className="btn btn-primary" onClick={() => { setErr(''); setP(blankP(trip)) }}><Plus size={18} aria-hidden /> Lugar</button>} />
+      <PageHeader eyebrow="Salir y comprar" title="Lugares" action={<button className="btn btn-primary" onClick={() => { setErr(''); setP(blankP(trip)) }}><Plus size={18} aria-hidden /> Lugar</button>} />
       <ErrorBar msg={places.error || trips.error} onClose={places.clearError} />
 
       <section className="mt-6" aria-labelledby="viajes">

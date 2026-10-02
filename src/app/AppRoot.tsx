@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from '../lib/auth'
 import { clearPin, hasPin } from '../lib/pin'
 import { supabase } from '../lib/supabase'
@@ -127,8 +127,8 @@ function Gate() {
           <Route path="links" element={<Links />} />
           <Route path="portafolio" element={<Portfolio />} />
           <Route path="inspiracion" element={<Inspiration />} />
-          <Route path="lugares" element={<Places />} />
-          <Route path="compras" element={<Shopping />} />
+          <Route path="lugares" element={<Moved to="/app/lugares" />} />
+          <Route path="compras" element={<Moved to="/app/compras" />} />
         </Route>
         <Route path="boveda" element={<Vault />} />
         <Route path="mente/rutinas/:id/hacer" element={<RoutineRun />} />
@@ -169,10 +169,18 @@ function Gate() {
           <Route path="practica" element={<Practice />} />
           <Route path="ideas" element={<Ideas />} />
         </Route>
+        <Route path="lugares" element={<Places />} />
+        <Route path="compras" element={<Shopping />} />
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>
   )
+}
+
+/** Lugares y Por comprar ahora son secciones propias; los enlaces viejos siguen funcionando. */
+function Moved({ to }: { to: string }) {
+  const { search } = useLocation()
+  return <Navigate to={`${to}${search}`} replace />
 }
 
 export default function AppRoot() {

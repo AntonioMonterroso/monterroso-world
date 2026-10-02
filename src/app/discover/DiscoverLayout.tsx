@@ -6,7 +6,6 @@ type Sub = { to: string; label: string }
 const GROUPS: { id: string; label: string; match: string[]; to: string; subs: Sub[] }[] = [
   { id: 'aprender', label: 'Aprender', match: ['aprender', 'video'], to: '/app/descubrir/aprender', subs: [] },
   { id: 'guardar', label: 'Guardar', match: ['links', 'inspiracion', 'portafolio'], to: '/app/descubrir/links', subs: [{ to: '/app/descubrir/links', label: 'Links' }, { to: '/app/descubrir/inspiracion', label: 'Inspiración' }, { to: '/app/descubrir/portafolio', label: 'Portafolio' }] },
-  { id: 'salir', label: 'Salir y comprar', match: ['lugares', 'compras'], to: '/app/descubrir/lugares', subs: [{ to: '/app/descubrir/lugares', label: 'Lugares' }, { to: '/app/descubrir/compras', label: 'Por comprar' }] },
 ]
 
 /** Descubrir: una pantalla de inicio y tres grupos. Los grupos con varias secciones muestran un segundo nivel. */

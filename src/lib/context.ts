@@ -15,11 +15,11 @@ export const modeForKind = (kind?: string | null): Mode | null => (kind ? KIND_M
 export function modeForRoute(pathname: string): Mode | null {
   const seg = pathname.replace(/^.*\/app\/?/, '').split('/')[0]
   switch (seg) {
-    case 'musica': return 'music'
+    case 'musica': case 'lugares': return 'music'
     case 'pulpito': return 'faith'
     case 'ejercicio': return 'body'
     case 'mente': return 'calm'
-    case 'trabajo': case 'dinero': case 'planear': case 'envios': return 'dev'
+    case 'trabajo': case 'compras': case 'dinero': case 'planear': case 'envios': return 'dev'
     default: return null // Hoy, Más, Ajustes…: manda lo que toca ahora
   }
 }

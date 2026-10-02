@@ -82,7 +82,7 @@ export default function Shopping() {
 
   return (
     <div>
-      <PageHeader eyebrow="Descubrir" title="Por comprar" sub={<>Pendiente: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</>} action={<button className="btn btn-primary" onClick={() => { setErr(''); setD(blank()) }}><Plus size={18} aria-hidden /> Artículo</button>} />
+      <PageHeader eyebrow="Salir y comprar" title="Por comprar" sub={<>Pendiente: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</>} action={<button className="btn btn-primary" onClick={() => { setErr(''); setD(blank()) }}><Plus size={18} aria-hidden /> Artículo</button>} />
       <ErrorBar msg={db.error || txs.error || goals.error} onClose={db.clearError} />
       {msg && <p role="status" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--sky) 14%, transparent)', color: 'var(--sky)' }}>{msg}</p>}
 

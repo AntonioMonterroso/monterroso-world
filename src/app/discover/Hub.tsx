@@ -1,10 +1,9 @@
-import { BookmarkCheck, Lightbulb, Link2, MapPin, PlayCircle, Plus, Repeat, ShoppingBag, Briefcase } from 'lucide-react'
+import {Lightbulb, Link2, PlayCircle, Plus, Repeat, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Group, PageHeader, Row } from '../../components/ui'
-import { pendingTotals, type Board, type Inspiration, type Place, type ShopItem } from '../../lib/inspire'
+import type { Board, Inspiration } from '../../lib/inspire'
 import { STATUS, dueReviews, finishedThisWeek, thumbUrl, type LinkRow, type Video } from '../../lib/learn'
-import { money } from '../../lib/projects'
 import { getSettings } from '../../lib/settings'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
@@ -13,8 +12,8 @@ const QUICK = [
   { label: 'Video', to: '/app/descubrir/aprender?nuevo=1' },
   { label: 'Link', to: '/app/descubrir/links?nuevo=1' },
   { label: 'Idea', to: '/app/descubrir/inspiracion?nuevo=1' },
-  { label: 'Lugar', to: '/app/descubrir/lugares?nuevo=1' },
-  { label: 'Compra', to: '/app/descubrir/compras?nuevo=1' },
+  { label: 'Lugar', to: '/app/lugares?nuevo=1' },
+  { label: 'Compra', to: '/app/compras?nuevo=1' },
 ]
 
 const HubRow = ({ to, icon: Icon, title, line, color }: { to: string; icon: typeof Link2; title: string; line: string; color: string }) => (
@@ -28,8 +27,6 @@ export default function Hub() {
   const links = useTable<LinkRow>('links', { col: 'created_at', asc: false })
   const insp = useTable<Inspiration>('inspirations', { col: 'created_at', asc: false })
   const boards = useTable<Board>('boards', { col: 'name', asc: true })
-  const places = useTable<Place>('places', { col: 'created_at', asc: false })
-  const shop = useTable<ShopItem>('shopping_items', { col: 'created_at', asc: false })
   const [goal, setGoal] = useState(3)
   useEffect(() => { getSettings().then((s) => { const g = (s as { learnGoal?: number }).learnGoal; if (g) setGoal(g) }) }, [])
 
@@ -37,9 +34,6 @@ export default function Hub() {
   const watching = videos.rows.find((v) => v.status === 'watching') ?? videos.rows.find((v) => v.status === 'queue')
   const week = finishedThisWeek(videos.rows, today)
   const queue = videos.rows.filter((v) => v.status === 'queue').length
-  const pendingShop = shop.rows.filter((i) => i.status === 'pending')
-  const totals = pendingTotals(shop.rows)
-  const want = places.rows.filter((p) => p.status === 'want').length
   const portfolio = links.rows.filter((l) => l.portfolio).length
   const favs = links.rows.filter((l) => l.favorite).length
 
@@ -91,10 +85,6 @@ export default function Hub() {
               <HubRow to="/app/descubrir/portafolio" icon={Briefcase} color="var(--personal)" title="Portafolio" line={portfolio ? summary(portfolio, 'trabajo para mostrar', 'trabajos para mostrar') : 'Tu página y lo que ya publicaste'} />
           </Group>
 
-          <Group title="Salir y comprar">
-              <HubRow to="/app/descubrir/lugares" icon={MapPin} color="var(--music)" title="Lugares" line={places.rows.length ? `${want} por visitar · ${places.rows.length - want} ${places.rows.length - want === 1 ? 'visitado' : 'visitados'}` : 'Sitios que quieres conocer'} />
-              <HubRow to="/app/descubrir/compras" icon={pendingShop.length ? ShoppingBag : BookmarkCheck} color="var(--dev)" title="Por comprar" line={pendingShop.length ? `${summary(pendingShop.length, 'pendiente', 'pendientes')}${Object.keys(totals).length ? ` · ${Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}` : ''}` : shop.rows.length ? 'Todo comprado' : 'Instrumentos, equipo y más'} />
-          </Group>
         </div>
       </div>
     </div>

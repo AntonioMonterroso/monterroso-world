@@ -1,4 +1,4 @@
-import { Briefcase, CalendarDays, Compass, Dumbbell, HeartPulse, KeyRound, Music, Share2, Sun, Wallet, BookOpen, type LucideIcon } from 'lucide-react'
+import { Briefcase, CalendarDays, Compass, Dumbbell, HeartPulse, KeyRound, MapPin, Music, Share2, ShoppingBag, Sun, Wallet, BookOpen, type LucideIcon } from 'lucide-react'
 
 export type Mod = { name: string; to?: string }
 export type Center = { id: string; label: string; icon: LucideIcon; blurb: string; modules: Mod[]; tone: 'dev' | 'music' | 'personal' }
@@ -14,7 +14,9 @@ export const centers: Center[] = [
   { id: 'ejercicio', label: 'Ejercicio', icon: Dumbbell, tone: 'personal', blurb: 'Rutinas, entrenamientos, progreso y compañeros.', modules: [m('Rutinas', '/app/ejercicio'), m('Historial y progreso', '/app/ejercicio/historial'), m('Cuerpo, agua y sueño', '/app/ejercicio/cuerpo'), m('Compañeros', '/app/ejercicio/companeros')] },
   { id: 'dinero', label: 'Dinero', icon: Wallet, tone: 'dev', blurb: 'Ingresos, cobros, deudas y metas.', modules: [m('Ingresos y gastos', '/app/dinero/movimientos'), m('Por cobrar', '/app/trabajo'), m('Préstamos', '/app/dinero/prestamos'), m('Suscripciones', '/app/dinero/suscripciones'), m('Metas de ahorro', '/app/dinero/metas'), m('Áreas y categorías', '/app/dinero/categorias')] },
   { id: 'boveda', label: 'Bóveda', icon: KeyRound, tone: 'personal', blurb: 'Contraseñas y accesos cifrados.', modules: [m('Contraseñas', '/app/boveda'), m('Correos y cuentas', '/app/boveda'), m('Accesos de clientes', '/app/boveda')] },
-  { id: 'descubrir', label: 'Descubrir', icon: Compass, tone: 'music', blurb: 'Aprender, inspirarte y guardar lugares.', modules: [m('Aprender (YouTube)', '/app/descubrir/aprender'), m('Links', '/app/descubrir/links'), m('Portafolio', '/app/descubrir/portafolio'), m('Inspiración', '/app/descubrir/inspiracion'), m('Lugares', '/app/descubrir/lugares'), m('Por comprar', '/app/descubrir/compras')] },
+  { id: 'descubrir', label: 'Descubrir', icon: Compass, tone: 'music', blurb: 'Aprender, inspirarte y guardar lo que te sirve.', modules: [m('Aprender (YouTube)', '/app/descubrir/aprender'), m('Links', '/app/descubrir/links'), m('Portafolio', '/app/descubrir/portafolio'), m('Inspiración', '/app/descubrir/inspiracion')] },
+  { id: 'lugares', label: 'Lugares', icon: MapPin, tone: 'music', blurb: 'Sitios que quieres conocer, viajes y salidas.', modules: [m('Por visitar', '/app/lugares'), m('Viajes y salidas', '/app/lugares')] },
+  { id: 'compras', label: 'Por comprar', icon: ShoppingBag, tone: 'dev', blurb: 'Instrumentos, equipo y lo que necesitas.', modules: [m('Lista de compras', '/app/compras')] },
   { id: 'compartir', label: 'Compartir', icon: Share2, tone: 'music', blurb: 'Tarjetas y enlaces públicos.', modules: [m('Tarjetas digitales'), m('Canciones públicas'), m('Panel de compañeros', '/app/ejercicio/companeros')] },
 ]
 
@@ -25,6 +27,7 @@ export const centerGroups: { label?: string; ids: string[] }[] = [
   { ids: ['hoy'] },
   { label: 'Organizar', ids: ['planear', 'trabajo', 'dinero'] },
   { label: 'Crear', ids: ['musica', 'pulpito', 'descubrir'] },
+  { label: 'Salir y comprar', ids: ['lugares', 'compras'] },
   { label: 'Cuidarme', ids: ['mente', 'ejercicio'] },
   { label: 'Privado', ids: ['boveda', 'compartir'] },
 ]
