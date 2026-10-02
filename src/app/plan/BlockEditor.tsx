@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { kindMeta, type Block, type Kind, type NewBlock } from '../../lib/data'
@@ -54,15 +54,15 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
   }
 
   return (
-    <AnimatePresence>
+    <>
       {block && (
-        <motion.div className="fixed inset-0 z-40 grid items-end justify-items-center md:items-center" style={{ background: 'rgba(5,10,24,.6)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onMouseDown={onClose}>
+        <motion.div className="fixed inset-0 z-40 grid items-end justify-items-center md:items-center" style={{ background: 'rgba(5,10,24,.6)' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onMouseDown={onClose}>
           <motion.form
             role="dialog" aria-modal="true" aria-label="Editar bloque"
             onSubmit={submit} onMouseDown={(e) => e.stopPropagation()}
             className="sheet-max w-full max-w-lg overflow-auto rounded-t-3xl border p-5 md:rounded-3xl"
             style={{ background: 'var(--surface)', borderColor: 'var(--line)', paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
-            initial={{ transform: 'translateY(40px)', opacity: 0 }} animate={{ transform: 'translateY(0px)', opacity: 1 }} exit={{ transform: 'translateY(40px)', opacity: 0 }} transition={{ duration: 0.28, ease }}
+            initial={{ transform: 'translateY(40px)', opacity: 0 }} animate={{ transform: 'translateY(0px)', opacity: 1 }} transition={{ duration: 0.28, ease }}
           >
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl">Bloque</h2>
@@ -131,6 +131,6 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
           </motion.form>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   )
 }
