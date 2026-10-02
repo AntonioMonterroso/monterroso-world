@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { weekStart } from '../../lib/habits'
 import { dayNum, isoFromNum, weekdayOf } from '../../lib/recur'
-import { kindMeta, useBlocks, type Block } from '../../lib/data'
+import { blockApplies, kindMeta, useBlocks, type Block } from '../../lib/data'
 import { eventKinds, reminderMeta, useEvents } from '../../lib/events'
 import { DAYS, fmtMin, localISO, nowMin } from '../../lib/time'
 import BlockEditor from './BlockEditor'
@@ -80,7 +80,7 @@ export default function Schedule() {
 
   useEffect(() => { const t = setInterval(() => setNow(nowMin()), 30_000); return () => clearInterval(t) }, [])
 
-  const dayBlocks = useMemo(() => blocks.filter((b) => b.days.includes(day)), [blocks, day])
+  const dayBlocks = useMemo(() => blocks.filter((b) => blockApplies(b, date)), [blocks, date])
   const dayDate = date
   const dayEvents = useMemo(() => ev.between(dayDate, dayDate), [ev, dayDate])
   const spans = useMemo<Span[]>(() => [
@@ -144,14 +144,15 @@ export default function Schedule() {
 
   const newBlock = async () => {
     const start = isToday ? clamp(Math.ceil(now / 30) * 30, 0, 1380) : 9 * 60
-    const b = await add({ title: 'Nuevo bloque', kind: 'other', days: [day], start_min: start, end_min: Math.min(start + 60, 1440), notes: null })
+    const b = await add({ title: 'Nuevo bloque', kind: 'other', days: [day], start_min: start, end_min: Math.min(start + 60, 1440), notes: null, on_date: null })
     if (b) setEditing(b)
   }
 
   const save = (id: string | null, v: Parameters<typeof add>[0]) => { if (id) update(id, v); setEditing(null) }
   const split = async (b: Block, v: Parameters<typeof add>[0]) => {
-    await update(b.id, { days: b.days.filter((d) => d !== day) })
-    await add({ ...v, days: [day] })
+    // Solo esta fecha: el bloque original se queda en los demás días y este queda atado a la fecha exacta
+    if (b.on_date) await update(b.id, { ...v, days: [day] })
+    else { await update(b.id, { days: b.days.filter((d) => d !== day) }); await add({ ...v, days: [day], on_date: date }) }
     setEditing(null)
   }
 
@@ -278,7 +279,7 @@ export default function Schedule() {
         onSave={async (id, v) => { if (id) await ev.update(id, v); else await ev.add(v); setEvTarget(null) }}
         onDelete={(id) => { ev.remove(id); setEvTarget(null) }}
         onSkip={(e, d) => { ev.skip(e, d); setEvTarget(null) }} />
-      <BlockEditor block={editing} day={day} onClose={() => setEditing(null)} onSave={save} onSplit={split} onDelete={(id) => { remove(id); setEditing(null) }} />
+      <BlockEditor block={editing} day={day} date={date} onClose={() => setEditing(null)} onSave={save} onSplit={split} onDelete={(id) => { remove(id); setEditing(null) }} />
     </div>
   )
 }

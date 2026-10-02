@@ -7,6 +7,8 @@ import { DAYS, fmtMin, toMin } from '../../lib/time'
 type Props = {
   block: Block | null
   day: number
+  /** Fecha que se está viendo en el horario (AAAA-MM-DD): sugerida para un bloque de un solo día. */
+  date: string
   onClose: () => void
   onSave: (id: string | null, v: NewBlock) => void
   onDelete: (id: string) => void
@@ -15,7 +17,7 @@ type Props = {
 
 const ease = [0.23, 1, 0.32, 1] as const
 
-export default function BlockEditor({ block, day, onClose, onSave, onDelete, onSplit }: Props) {
+export default function BlockEditor({ block, day, date, onClose, onSave, onDelete, onSplit }: Props) {
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<Kind>('other')
   const [days, setDays] = useState<number[]>([])
@@ -23,6 +25,8 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
   const [end, setEnd] = useState('10:00')
   const [notes, setNotes] = useState('')
   const [notify, setNotify] = useState(true)
+  const [once, setOnce] = useState(false)
+  const [onDate, setOnDate] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [err, setErr] = useState('')
 
@@ -30,6 +34,7 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
     if (!block) return
     setTitle(block.title); setKind(block.kind); setDays(block.days)
     setStart(fmtMin(block.start_min)); setEnd(block.end_min >= 1440 ? '23:59' : fmtMin(block.end_min)); setNotes(block.notes ?? ''); setNotify(block.notify !== false)
+    setOnce(Boolean(block.on_date)); setOnDate(block.on_date ?? date)
     setConfirm(false); setErr('')
   }, [block])
 
@@ -43,8 +48,10 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
     const s = toMin(start), e = toMin(end)
     if (!title.trim()) { setErr('Ponle un nombre al bloque.'); return null }
     if (e <= s) { setErr('La hora de fin debe ser después del inicio.'); return null }
-    if (days.length === 0) { setErr('Elige al menos un día.'); return null }
-    return { title: title.trim(), kind, days, start_min: s, end_min: e, notes: notes.trim() || null, notify }
+    if (once && !/^\d{4}-\d{2}-\d{2}$/.test(onDate)) { setErr('Elige la fecha del bloque.'); return null }
+    if (!once && days.length === 0) { setErr('Elige al menos un día.'); return null }
+    const wd = once ? new Date(Number(onDate.slice(0, 4)), Number(onDate.slice(5, 7)) - 1, Number(onDate.slice(8, 10))).getDay() : 0
+    return { title: title.trim(), kind, days: once ? [wd] : days, on_date: once ? onDate : null, start_min: s, end_min: e, notes: notes.trim() || null, notify }
   }
 
   const submit = (ev: React.FormEvent) => {
@@ -96,19 +103,29 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
               </div>
 
               <fieldset>
-                <legend className="mb-2 text-sm">Se repite</legend>
-                <div className="flex gap-2">
-                  {DAYS.map((d) => {
-                    const on = days.includes(d.n)
-                    return (
-                      <button key={d.n} type="button" aria-pressed={on} aria-label={d.long} onClick={() => setDays(on ? days.filter((x) => x !== d.n) : [...days, d.n])}
-                        className="grid size-11 place-items-center rounded-full border text-sm font-semibold"
-                        style={{ borderColor: on ? 'var(--accent)' : 'var(--line)', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--bg)' : 'var(--ink-soft)' }}>
-                        {d.short}
-                      </button>
-                    )
-                  })}
+                <legend className="mb-2 text-sm">Cuándo</legend>
+                <div className="seg" role="group" aria-label="Frecuencia">
+                  <button type="button" className="seg-item" aria-pressed={!once} onClick={() => setOnce(false)}><span className="seg-label">Cada semana</span></button>
+                  <button type="button" className="seg-item" aria-pressed={once} onClick={() => { setOnce(true); if (!onDate) setOnDate(date) }}><span className="seg-label">Solo un día</span></button>
                 </div>
+                {once ? (
+                  <label className="mt-3 grid gap-2 text-sm">Fecha
+                    <input type="date" className="field" value={onDate} onChange={(e) => setOnDate(e.target.value)} />
+                  </label>
+                ) : (
+                  <div className="mt-3 flex gap-2">
+                    {DAYS.map((d) => {
+                      const on = days.includes(d.n)
+                      return (
+                        <button key={d.n} type="button" aria-pressed={on} aria-label={d.long} onClick={() => setDays(on ? days.filter((x) => x !== d.n) : [...days, d.n])}
+                          className="grid size-11 place-items-center rounded-full border text-sm font-semibold"
+                          style={{ borderColor: on ? 'var(--accent)' : 'var(--line)', background: on ? 'var(--accent)' : 'transparent', color: on ? 'var(--bg)' : 'var(--ink-soft)' }}>
+                          {d.short}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </fieldset>
 
               <label className="grid gap-2 text-sm">Notas
@@ -121,7 +138,7 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {block && block.days.length > 1 && block.days.includes(day) && (
+              {block && !block.on_date && block.days.length > 1 && block.days.includes(day) && (
                 <button type="button" className="btn btn-ghost" onClick={() => { const v = value(); if (v) onSplit(block, v) }}>Solo este día</button>
               )}
               <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete(block!.id) : setConfirm(true))}>

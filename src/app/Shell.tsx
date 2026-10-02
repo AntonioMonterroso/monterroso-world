@@ -4,7 +4,8 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Globe from '../components/Globe'
 import { useAttention } from '../lib/attention'
 import { resolveMode, useMode } from '../lib/context'
-import { useBlocks } from '../lib/data'
+import { blockApplies, useBlocks } from '../lib/data'
+import { localISO } from '../lib/time'
 import { centerGroups, centers } from '../lib/modules'
 import { useTone } from '../lib/tone'
 import NotificationActions from './NotificationActions'
@@ -21,7 +22,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(t) }, [])
   const { blocks } = useBlocks()
   const m = now.getHours() * 60 + now.getMinutes()
-  const currentKind = blocks.find((b) => b.days.includes(now.getDay()) && m >= b.start_min && m < b.end_min)?.kind
+  const currentKind = blocks.find((b) => blockApplies(b, localISO(now)) && m >= b.start_min && m < b.end_min)?.kind
   useMode(resolveMode({ pathname, currentKind, hour: now.getHours() }))
   const attention = useAttention(now)
 

@@ -13,7 +13,7 @@ import { exitKindFor, type ExitList } from '../lib/exitlist'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
-import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
+import { blockApplies, kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
 import { weekDone, type Habit, type HabitLog } from '../lib/habits'
 import { currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
 import { useTable } from '../lib/table'
@@ -38,7 +38,7 @@ export default function Today() {
   const m = nowMin(now)
 
   const { blocks } = useBlocks()
-  const todays = useMemo(() => blocks.filter((b) => b.days.includes(now.getDay())), [blocks, now])
+  const todays = useMemo(() => blocks.filter((b) => blockApplies(b, localISO(now))), [blocks, now])
   const current = todays.find((b) => m >= b.start_min && m < b.end_min)
   const next = todays.find((b) => b.start_min > m)
 

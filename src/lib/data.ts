@@ -26,7 +26,16 @@ export type Block = {
   end_min: number
   notes: string | null
   notify?: boolean
+  /** Si tiene fecha, el bloque es de un solo día; si no, se repite cada semana en `days`. */
+  on_date?: string | null
   active: boolean
+}
+
+/** ¿El bloque cae en esta fecha (AAAA-MM-DD)? Los de un solo día solo en la suya; los demás, según el día de la semana. */
+export const blockApplies = (b: Pick<Block, 'days' | 'on_date'>, iso: string): boolean => {
+  if (b.on_date) return b.on_date === iso
+  const [y, m, d] = iso.split('-').map(Number)
+  return b.days.includes(new Date(y, m - 1, d).getDay())
 }
 export type NewBlock = Omit<Block, 'id' | 'active'>
 

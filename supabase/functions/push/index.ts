@@ -54,7 +54,7 @@ async function sendToUser(userId: string, payload: Payload) {
 type EventRow = Recurrence & { id: string; title: string; action: string | null; start_min: number; location: string | null; alerts: number[]; persistent: boolean; checklist: { id: string; text: string }[]; type: string }
 type State = { event_id: string; occ_date: string; done: boolean; snoozed_until: string | null }
 
-type BlockRow = { id: string; title: string; kind: string; days: number[]; start_min: number; end_min: number; notes: string | null }
+type BlockRow = { id: string; title: string; kind: string; days: number[]; start_min: number; end_min: number; notes: string | null; on_date: string | null }
 type BlockAlerts = { enabled?: boolean; lead?: number[] }
 
 const blockLead = (a: number) => (a === 0 ? 'Ahora' : a >= 60 && a % 60 === 0 ? `En ${a / 60} h` : `En ${a} min`)
@@ -147,14 +147,14 @@ async function processUser(userId: string, now: number) {
   if (ba.enabled !== false && !inQuiet) {
     const leads = ba.lead?.length ? ba.lead : [0]
     const [{ data: blocks }, { data: blogs }] = await Promise.all([
-      admin.from('schedule_blocks').select('id,title,kind,days,start_min,end_min,notes').eq('user_id', userId).eq('active', true).eq('notify', true),
+      admin.from('schedule_blocks').select('id,title,kind,days,start_min,end_min,notes,on_date').eq('user_id', userId).eq('active', true).eq('notify', true),
       admin.from('block_notification_log').select('block_id,occ_date,kind').eq('user_id', userId).gte('sent_at', new Date(now - 3 * 86_400_000).toISOString()),
     ])
     const sentBlocks = new Set((blogs ?? []).map((l) => `${l.block_id}|${l.occ_date}|${l.kind}`))
     const all = (blocks ?? []) as BlockRow[]
     for (const date of dates) {
       const wd = weekdayOfISO(date)
-      const today = all.filter((b) => b.days.includes(wd)).sort((a, b) => a.start_min - b.start_min)
+      const today = all.filter((b) => (b.on_date ? b.on_date === date : b.days.includes(wd))).sort((a, b) => a.start_min - b.start_min)
       for (const [i, b] of today.entries()) {
         const start = zonedToUtc(date, b.start_min, tz)
         for (const lead of leads) {
