@@ -493,3 +493,9 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-5px) rotate(2deg) } }
 @keyframes hop2 { 0% { transform: translateY(0) scale(1) } 30% { transform: translateY(-22px) scale(1.12, .92) } 60% { transform: translateY(0) scale(.94, 1.06) } 100% { transform: translateY(0) scale(1) } }
 @media (prefers-reduced-motion: reduce) { .plane-fly { animation: none; offset-distance: 55%; opacity: 1; } .outing-icon, .outing-icon.hop { animation: none; } }
+
+/* Casilla "ya lo compré": un círculo que se llena al tocarlo */
+.buy-check { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 99px; }
+.buy-check span { width: 24px; height: 24px; border-radius: 99px; box-shadow: inset 0 0 0 1.75px color-mix(in oklab, var(--pos) 65%, transparent); transition: background-color 180ms var(--ease-out), transform 140ms var(--ease-out); }
+.buy-check:active span { background: var(--pos); transform: scale(.88); }
+@media (hover: hover) and (pointer: fine) { .buy-check:hover span { background: color-mix(in oklab, var(--pos) 30%, transparent); } }

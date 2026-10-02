@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Chk, Group, Row } from '../components/ui'
 import GoalSpotlight from '../components/GoalSpotlight'
 import OutingSpotlight from '../components/OutingSpotlight'
+import ShoppingSpotlight from '../components/ShoppingSpotlight'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -125,6 +126,8 @@ export default function Today() {
       <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
 
       <OutingSpotlight />
+
+      <ShoppingSpotlight />
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">

@@ -28,6 +28,15 @@ export default function Shopping() {
   const [showBought, setShowBought] = useState(false)
   const [sp, setSp] = useSearchParams()
   useEffect(() => { if (sp.get('nuevo')) { setD(blank()); setSp({}, { replace: true }) } }, [sp, setSp])
+  // Viene de Hoy: «ya lo compré» abre la confirmación de ese artículo
+  useEffect(() => {
+    const id = sp.get('comprar')
+    if (!id || db.loading) return
+    const it = db.rows.find((x) => x.id === id && x.status === 'pending')
+    if (it) startBuy(it)
+    setSp({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp, db.loading, db.rows, setSp])
 
   const pending = useMemo(() => sortShopping(db.rows.filter((i) => i.status === 'pending')), [db.rows])
   const bought = useMemo(() => db.rows.filter((i) => i.status === 'bought'), [db.rows])
