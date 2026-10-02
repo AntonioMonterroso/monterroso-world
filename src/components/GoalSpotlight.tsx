@@ -47,7 +47,7 @@ export default function GoalSpotlight({ today, evening }: { today: string; eveni
         </p>
         <p className="mt-1 text-sm" style={{ color }} role="status">{thanks || message}</p>
         {!done && perWeek !== null && <p className="mt-0.5 text-xs" style={{ color: 'var(--ink-faint)' }}>{money(perWeek)} por semana te lleva a tiempo ({daysLeft} {daysLeft === 1 ? 'día' : 'días'}).</p>}
-        {!done && daysLeft !== null && daysLeft <= 0 && <p className="mt-0.5 text-xs" style={{ color: 'var(--neg)' }}>La fecha ya pasó: puedes moverla en Metas.</p>}
+        {!done && daysLeft !== null && daysLeft <= 0 && <p className="mt-0.5 text-xs" style={{ color: 'var(--neg)' }}>La fecha ya pasó. <Link to={`/app/dinero/metas?editar=${goal.id}`} className="underline">Cambiar fecha</Link></p>}
 
         {adding ? (
           <form onSubmit={add} className="mt-3 flex gap-2">
@@ -60,6 +60,7 @@ export default function GoalSpotlight({ today, evening }: { today: string; eveni
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {!done && <button className="btn btn-tint !min-h-10" onClick={() => { setThanks(''); setAdding(true) }}>Sumar un aporte</button>}
             <Link to="/app/dinero/metas" className="inline-flex min-h-10 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver mis metas</Link>
+            {!done && <Link to={`/app/dinero/metas?editar=${goal.id}`} className="inline-flex min-h-10 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>{goal.due_date ? 'Cambiar fecha' : 'Poner fecha'}</Link>}
           </div>
         )}
       </div>
