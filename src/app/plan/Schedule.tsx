@@ -166,35 +166,34 @@ export default function Schedule() {
         <button className="btn btn-primary" onClick={newBlock}><Plus size={18} aria-hidden /> Bloque</button>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => shiftWeek(-1)} aria-label="Semana anterior"><ChevronLeft size={18} aria-hidden /></button>
-        <p className="min-w-44 text-center font-semibold" aria-live="polite">{week.includes(todayISO) ? 'Esta semana' : 'Semana'} <span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}>· {fmtShort(week[0])} – {fmtShort(week[6])}</span></p>
-        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => shiftWeek(1)} aria-label="Semana siguiente"><ChevronRight size={18} aria-hidden /></button>
-        {!week.includes(todayISO) && <button className="min-h-11 rounded-full border px-4 text-sm" style={{ borderColor: 'var(--line)' }} onClick={() => setDate(todayISO)}>Hoy</button>}
-        <label className="ml-auto flex min-h-11 items-center gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
-          <span className="sr-only sm:not-sr-only">Ir a</span>
-          <input type="date" className="field !h-11 !w-auto" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Ir a una fecha" />
+      <div className="stepper mt-5 flex-wrap">
+        <button className="stepper-btn" onClick={() => shiftWeek(-1)} aria-label="Semana anterior"><ChevronLeft size={18} aria-hidden /></button>
+        <h2 className="stepper-label !min-w-[11rem]" aria-live="polite">{fmtShort(week[0])} – {fmtShort(week[6])}</h2>
+        <button className="stepper-btn" onClick={() => shiftWeek(1)} aria-label="Semana siguiente"><ChevronRight size={18} aria-hidden /></button>
+        {!week.includes(todayISO) && <button className="stepper-today" onClick={() => setDate(todayISO)}>Hoy</button>}
+        <label className="ml-auto">
+          <span className="sr-only">Ir a una fecha</span>
+          <input type="date" className="field !min-h-11 !w-auto !px-3 !text-sm" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Ir a una fecha" />
         </label>
       </div>
 
-      <div role="tablist" aria-label="Día de la semana" className="mt-3 flex gap-1.5">
+      <div role="tablist" aria-label="Día de la semana" className="weekstrip">
         {DAYS.map((d, i) => {
           const iso = week[i]
           const on = iso === date
           const isNow = iso === todayISO
           return (
-            <button key={d.n} role="tab" aria-selected={on} aria-label={`${d.long} ${fmtShort(iso)}`} onClick={() => setDate(iso)} className="relative grid min-h-14 flex-1 place-items-center rounded-xl border py-1 text-sm font-semibold leading-tight"
-              style={{ borderColor: on ? 'var(--accent)' : 'var(--line-soft)', background: on ? 'var(--accent)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--ink-soft)' }}>
-              <span>{d.short}</span>
-              <span className="text-xs font-normal" style={{ opacity: 0.85 }}>{Number(iso.slice(8))}</span>
-              {isNow && <span className="absolute bottom-1 size-1 rounded-full" style={{ background: on ? 'var(--bg)' : 'var(--accent)' }} aria-hidden />}
+            <button key={d.n} role="tab" aria-selected={on} aria-label={`${d.long} ${fmtShort(iso)}`} onClick={() => setDate(iso)} className="weekday" data-today={isNow}>
+              <span className="weekday-name">{d.short}</span>
+              <span className="weekday-num" data-on={on}>{Number(iso.slice(8))}</span>
             </button>
           )
         })}
       </div>
-      <p className="mt-3 text-xs" style={{ color: 'var(--ink-faint)' }}>
-        Toca un bloque para editarlo. Arrástralo para moverlo (en el teléfono, mantenlo presionado) y estira el borde de abajo para cambiar su duración. Los bloques se repiten cada semana: un cambio afecta todos los días del bloque; usa “Solo este día” para separarlo. Los eventos sí son de la fecha exacta.
-      </p>
+      <details className="mt-3 text-xs" style={{ color: 'var(--ink-faint)' }}>
+        <summary className="cursor-pointer select-none py-2">Cómo usar el horario</summary>
+        <p className="pb-2 leading-relaxed">Toca un bloque para editarlo. Arrástralo para moverlo (en el teléfono, mantenlo presionado) y estira el borde de abajo para cambiar su duración. Los bloques se repiten cada semana: un cambio afecta todos los días del bloque; usa “Solo este día” para separarlo. Los eventos sí son de la fecha exacta.</p>
+      </details>
 
       {error && (
         <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>
@@ -205,7 +204,7 @@ export default function Schedule() {
       {loading ? (
         <div className="grid h-64 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
       ) : (
-        <div ref={scroller} className="relative mt-4 h-[62dvh] overflow-y-auto rounded-2xl border md:h-[68dvh]" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
+        <div ref={scroller} className="relative mt-4 h-[62dvh] overflow-y-auto rounded-[var(--r-card)] md:h-[68dvh]" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }}>
           <div className="relative" style={{ height: total }}>
             {Array.from({ length: 24 }).map((_, h) => (
               <div key={h} className="absolute inset-x-0 flex" style={{ top: h * HOUR_H, height: HOUR_H, borderTop: h ? '1px solid var(--line-soft)' : 'none' }}>
@@ -227,13 +226,13 @@ export default function Schedule() {
                   <div key={b.id} role="button" tabIndex={0} aria-label={`${b.title}, ${fmtMin(s)} a ${fmtMin(e % 1440)}. Enter para editar`}
                     onKeyDown={(ev) => { if (ev.key === 'Enter') setEditing(b) }}
                     onPointerDown={(ev) => startDrag(ev, b, 'move')}
-                    className="blk absolute overflow-hidden rounded-xl border px-3 py-2 text-left"
+                    className="blk absolute overflow-hidden rounded-xl px-3 py-2 text-left"
                     style={{
                       top: s * PX, height: Math.max(h, 26), left: `${(lane.col / lane.cols) * 100}%`, width: `calc(${100 / lane.cols}% - 4px)`,
-                      color: M.color, borderColor: `color-mix(in oklab, ${M.color} 72%, transparent)`,
-                      background: `color-mix(in oklab, ${M.color} ${live ? 30 : 20}%, var(--bg))`,
+                      color: M.color,
+                      background: `color-mix(in oklab, ${M.color} ${live ? 26 : 15}%, var(--surface))`,
                       transform: d ? 'scale(1.015)' : undefined, zIndex: d ? 5 : 1,
-                      boxShadow: d ? '0 14px 30px -12px rgba(0,0,0,.7)' : undefined,
+                      boxShadow: d ? `0 14px 30px -12px rgba(0,0,0,.7), inset 0 0 0 1px color-mix(in oklab, ${M.color} 55%, transparent)` : `inset 0 0 0 1px color-mix(in oklab, ${M.color} ${live ? 55 : 28}%, transparent)`,
                       transition: d ? 'none' : 'top 220ms var(--ease-out), height 220ms var(--ease-out), box-shadow 160ms var(--ease-out)',
                       touchAction: 'pan-y',
                     }}>

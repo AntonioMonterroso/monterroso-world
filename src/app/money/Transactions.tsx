@@ -2,9 +2,10 @@ import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { AREAS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, areaMeta, type Area, type Kind, type Tx } from '../../lib/finance'
-import { currentMonth, money, monthLabel, shiftMonth } from '../../lib/projects'
+import { currentMonth, money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
+import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, rememberCurrency, toNum } from './shared'
 
 type Draft = { id?: string; kind: Kind; amount: string; currency: string; category: string; area: Area; date: string; note: string }
@@ -65,22 +66,21 @@ export default function Transactions() {
     setDraft(null)
   }
 
+  const totals = useMemo(() => {
+    const cur = list[0]?.currency ?? defaultCurrency()
+    const same = list.filter((t) => t.currency === cur)
+    const inc = same.filter((t) => t.kind === 'income').reduce((a, t) => a + Number(t.amount), 0)
+    const out = same.filter((t) => t.kind === 'expense').reduce((a, t) => a + Number(t.amount), 0)
+    return { cur, inc, out, mixed: same.length !== list.length }
+  }, [list])
+
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Dinero</p><h1 className="mt-2 font-display text-4xl">Movimientos</h1></div>
-        <button className="btn btn-primary" onClick={() => setDraft(blank())}><Plus size={18} aria-hidden /> Movimiento</button>
-      </div>
-
-      <div className="mt-6 flex items-center gap-2">
-        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Mes anterior">‹</button>
-        <h2 className="min-w-40 text-center font-display text-2xl first-letter:uppercase">{monthLabel(month)}</h2>
-        <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Mes siguiente">›</button>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filtros">
-        {([['all', 'Todo'], ['income', 'Ingresos'], ['expense', 'Gastos']] as const).map(([v, l]) => <button key={v} aria-pressed={kind === v} onClick={() => setKind(v)} className="min-h-11 rounded-full border px-4 text-sm" style={chip(kind === v)}>{l}</button>)}
-        <span className="w-px self-stretch" style={{ background: 'var(--line)' }} aria-hidden />
-        {([{ id: 'all', label: 'Todas las áreas', color: 'var(--accent)' }, ...AREAS] as { id: Area | 'all'; label: string; color: string }[]).map((a) => <button key={a.id} aria-pressed={area === a.id} onClick={() => setArea(a.id)} className="min-h-11 rounded-full border px-4 text-sm" style={chip(area === a.id, a.color)}>{a.label}</button>)}
+      <PageHeader eyebrow="Dinero" title="Movimientos" action={<button className="btn btn-primary" onClick={() => setDraft(blank())}><Plus size={18} aria-hidden /> Nuevo</button>} />
+      <MonthStepper month={month} onChange={setMonth} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Segmented label="Tipo" value={kind} onChange={setKind} options={[{ id: 'all', label: 'Todo' }, { id: 'income', label: 'Ingresos' }, { id: 'expense', label: 'Gastos' }]} />
+        <Segmented label="Área" value={area} onChange={setArea} options={[{ id: 'all', label: 'Todas' }, ...AREAS.map((a) => ({ id: a.id, label: a.label.replace('Freelance web', 'Web') }))]} />
       </div>
 
       <ErrorBar msg={db.error} onClose={db.clearError} />
@@ -88,23 +88,22 @@ export default function Transactions() {
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : groups.length === 0 ? (
         <Empty title="Sin movimientos" text="Registra lo que entra y lo que sale. Los cobros de tus trabajos ya se cuentan solos en el Resumen." action="Registrar uno" onAction={() => setDraft(blank())} />
       ) : (
-        <div className="mt-6 grid gap-6">
+        <>
+          <div className="stats mt-6">
+            <Stat label="Entró" value={money(totals.inc, totals.cur)} tone="pos" />
+            <Stat label="Salió" value={money(totals.out, totals.cur)} />
+            <Stat label="Quedó" value={money(totals.inc - totals.out, totals.cur)} tone={totals.inc - totals.out < 0 ? 'neg' : undefined} note={totals.mixed ? 'Solo cuenta ' + totals.cur : undefined} />
+          </div>
           {groups.map(([date, items]) => (
-            <section key={date} aria-label={date}>
-              <h3 className="mb-2 text-sm font-semibold" style={{ color: 'var(--ink-soft)' }}>{new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
-              <ul className="grid gap-2">
-                {items.map((t) => (
-                  <li key={t.id}>
-                    <button onClick={() => setDraft({ id: t.id, kind: t.kind, amount: String(t.amount), currency: t.currency, category: t.category, area: t.area, date: t.tx_date, note: t.note ?? '' })} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border px-4 py-2 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-                      <span className="min-w-0"><span className="block truncate font-semibold">{t.category}</span><span className="block truncate text-xs" style={{ color: areaMeta(t.area).color }}>{areaMeta(t.area).label}{t.note && <span style={{ color: 'var(--ink-faint)' }}> · {t.note}</span>}</span></span>
-                      <span className="shrink-0 font-semibold" style={{ color: t.kind === 'income' ? '#8fd1a4' : 'var(--ink)' }}>{t.kind === 'income' ? '+' : '−'}{money(Number(t.amount), t.currency)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <Group key={date} title={new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}>
+              {items.map((t) => (
+                <Row key={t.id} tone={areaMeta(t.area).color} title={t.category} sub={<>{areaMeta(t.area).label}{t.note ? ` · ${t.note}` : ''}</>}
+                  value={`${t.kind === 'income' ? '+' : '−'}${money(Number(t.amount), t.currency)}`} valueTone={t.kind === 'income' ? 'pos' : undefined}
+                  onClick={() => setDraft({ id: t.id, kind: t.kind, amount: String(t.amount), currency: t.currency, category: t.category, area: t.area, date: t.tx_date, note: t.note ?? '' })} />
+              ))}
+            </Group>
           ))}
-        </div>
+        </>
       )}
 
       <Sheet open={Boolean(draft)} title={draft?.id ? 'Editar movimiento' : 'Nuevo movimiento'} onClose={() => setDraft(null)}>

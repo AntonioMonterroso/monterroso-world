@@ -1,13 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
+import { SegNav } from '../../components/ui'
+
+const tabs = [
+    { to: '/app/planear', label: 'Horario', end: true },
+    { to: '/app/planear/agenda', label: 'Agenda' },
+    { to: '/app/planear/calendario', label: 'Calendario' },
+]
 
 export default function PlanLayout() {
   return (
     <div>
-      <nav aria-label="Planear" className="mb-6 inline-flex gap-1 rounded-full p-1" style={{ background: 'var(--surface)' }}>
-        {[['/app/planear', 'Horario', true], ['/app/planear/agenda', 'Agenda', false], ['/app/planear/calendario', 'Calendario', false]].map(([to, label, end]) => (
-          <NavLink key={String(to)} to={String(to)} end={Boolean(end)} className="plan-tab">{label}</NavLink>
-        ))}
-      </nav>
+      <SegNav label="Planear" tabs={tabs} />
       <Outlet />
     </div>
   )

@@ -32,11 +32,11 @@ export async function shareQuote(text: string, reference?: string | null) {
 
   if (reference) {
     g.fillStyle = '#d9c7a0'
-    g.font = '600 44px "Instrument Sans", sans-serif'
+    g.font = '600 44px "Figtree", sans-serif'
     g.fillText(reference, S / 2, y + 40)
   }
   g.fillStyle = 'rgba(241,235,221,.55)'
-  g.font = '400 30px "Instrument Sans", sans-serif'
+  g.font = '400 30px "Figtree", sans-serif'
   g.fillText('Monterroso World', S / 2, S - 90)
 
   const blob: Blob | null = await new Promise((r) => c.toBlob(r, 'image/png'))

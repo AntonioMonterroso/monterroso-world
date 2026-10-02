@@ -1,6 +1,7 @@
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
+import { Group, PageHeader, Row } from '../../components/ui'
 import { AREAS, EXPENSE_CATEGORIES, addPeriod, areaMeta, monthlyCost, type Area, type Period, type Sub, type Tx } from '../../lib/finance'
 import { money } from '../../lib/projects'
 import { dayNum } from '../../lib/recur'
@@ -42,31 +43,24 @@ export default function Subscriptions() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Dinero</p><h1 className="mt-2 font-display text-4xl">Suscripciones</h1></div>
-        <button className="btn btn-primary" onClick={() => setD(blank())}><Plus size={18} aria-hidden /> Suscripción</button>
-      </div>
-      {Object.keys(totals).length > 0 && <p className="mt-3 text-sm" style={{ color: 'var(--ink-soft)' }}>Gastas al mes: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</p>}
+      <PageHeader eyebrow="Dinero" title="Suscripciones" action={<button className="btn btn-primary" onClick={() => setD(blank())}><Plus size={18} aria-hidden /> Suscripción</button>} />
       <ErrorBar msg={db.error || txs.error} onClose={db.clearError} />
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : active.length === 0 ? (
         <Empty title="Sin suscripciones" text="Dominios, hosting, apps, plataformas de música. Anótalas y no se te pasa ningún cobro." action="Agregar una" onAction={() => setD(blank())} />
       ) : (
-        <ul className="mt-6 grid gap-2">
+        <Group title="Próximos cobros" footer={Object.keys(totals).length > 0 ? <>Gastas al mes: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</> : undefined}>
           {active.map((s) => {
             const n = days(s.next_due)
             const soon = n <= 7
             return (
-              <li key={s.id} className="flex items-center gap-2 rounded-xl border pr-2 pl-4" style={{ background: 'var(--surface)', borderColor: soon ? 'var(--personal)' : 'var(--line-soft)' }}>
-                <button className="min-w-0 flex-1 py-3 text-left" onClick={() => setD({ id: s.id, name: s.name, amount: String(s.amount), currency: s.currency, period: s.period, next_due: s.next_due, category: s.category, area: s.area, url: s.url ?? '' })}>
-                  <span className="block truncate font-semibold">{s.name}</span>
-                  <span className="block truncate text-xs" style={{ color: soon ? 'var(--personal)' : 'var(--ink-faint)' }}>{n < 0 ? `Venció hace ${-n} d` : n === 0 ? 'Vence hoy' : n === 1 ? 'Vence mañana' : `Vence en ${n} d (${s.next_due})`} · <span style={{ color: areaMeta(s.area).color }}>{areaMeta(s.area).label}</span></span>
-                </button>
-                <span className="shrink-0 text-sm font-semibold">{money(s.amount, s.currency)}</span>
-                <button className="btn btn-ghost shrink-0" onClick={() => paid(s)}>Pagada</button>
-              </li>
+              <Row key={s.id} tone={soon ? 'var(--personal)' : 'var(--ink-faint)'} title={s.name}
+                sub={<span style={{ color: soon ? 'var(--personal)' : undefined }}>{n < 0 ? `Venció hace ${-n} d` : n === 0 ? 'Vence hoy' : n === 1 ? 'Vence mañana' : `Vence en ${n} d`}<span style={{ color: 'var(--ink-faint)' }}> · {areaMeta(s.area).label}</span></span>}
+                value={money(s.amount, s.currency)} chevron={false}
+                onClick={() => setD({ id: s.id, name: s.name, amount: String(s.amount), currency: s.currency, period: s.period, next_due: s.next_due, category: s.category, area: s.area, url: s.url ?? '' })}
+                trailing={<button className="btn btn-tint" onClick={() => paid(s)}>Pagada</button>} />
             )
           })}
-        </ul>
+        </Group>
       )}
       <Sheet open={Boolean(d)} title={d?.id ? 'Editar suscripción' : 'Nueva suscripción'} onClose={() => setD(null)}>
         {d && (

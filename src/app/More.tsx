@@ -1,27 +1,24 @@
-import { Link } from 'react-router-dom'
 import { Settings } from 'lucide-react'
-import { centers } from '../lib/modules'
+import { Group, PageHeader, Row } from '../components/ui'
+import { centerGroups, centers } from '../lib/modules'
+
+const toneColor = { dev: 'var(--dev)', music: 'var(--music)', personal: 'var(--personal)' } as const
 
 export default function More() {
   return (
     <div>
-      <h1 className="font-display text-4xl">Todo Monterroso World</h1>
-      <ul className="mt-6 grid gap-3">
-        {centers.map((c) => (
-          <li key={c.id}>
-            <Link to={c.id === 'hoy' ? '/app' : `/app/${c.id}`} className={`tone-${c.tone} flex min-h-14 items-center gap-4 rounded-xl border px-4`} style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-              <c.icon size={22} aria-hidden style={{ color: 'var(--tone)' }} />
-              <span><span className="block font-semibold">{c.label}</span><span className="block text-sm" style={{ color: 'var(--ink-soft)' }}>{c.blurb}</span></span>
-            </Link>
-          </li>
-        ))}
-        <li>
-          <Link to="/app/ajustes" className="flex min-h-14 items-center gap-4 rounded-xl border px-4" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-            <Settings size={22} aria-hidden style={{ color: 'var(--ink-soft)' }} />
-            <span className="font-semibold">Ajustes</span>
-          </Link>
-        </li>
-      </ul>
+      <PageHeader title="Todo" sub="Todo Monterroso World, ordenado por lo que necesitas hacer." />
+      {centerGroups.map((g, i) => (
+        <Group key={i} title={g.label} className={i === 0 ? '!mt-0' : ''}>
+          {g.ids.map((id) => {
+            const c = centers.find((x) => x.id === id)!
+            return <Row key={id} icon={<c.icon size={17} aria-hidden />} tone={toneColor[c.tone]} title={c.label} sub={c.blurb} to={id === 'hoy' ? '/app' : `/app/${id}`} />
+          })}
+        </Group>
+      ))}
+      <Group>
+        <Row icon={<Settings size={17} aria-hidden />} tone="var(--ink-soft)" title="Ajustes" to="/app/ajustes" />
+      </Group>
     </div>
   )
 }

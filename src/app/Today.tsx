@@ -1,8 +1,8 @@
-import { Check, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Chk, Group, Row } from '../components/ui'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
-import { Check as CheckIcon } from 'lucide-react'
 import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
 import { weekDone, type Habit, type HabitLog } from '../lib/habits'
 import { KIND_LABEL, currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
@@ -75,7 +75,7 @@ export default function Today() {
   }
 
   return (
-    <div className="grid gap-10">
+    <div className="grid gap-8">
       <section className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="eyebrow">{now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
@@ -110,11 +110,8 @@ export default function Today() {
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">
-          <div className="flex items-center justify-between">
-            <h2 id="agenda" className="font-display text-2xl">Tu agenda de hoy</h2>
-            <Link to="/app/planear/agenda" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver todo</Link>
-          </div>
-          <ul className="mt-4 grid gap-2">
+          <div className="group-head"><h3 id="agenda">Tu agenda de hoy</h3><span><Link to="/app/planear/agenda" className="underline">Ver todo</Link></span></div>
+          <ul className="group-list">
             {agenda.map((o) => (
               <OccurrenceCard key={o.event.id + o.date} o={o}
                 onEdit={() => setEvTarget({ event: o.event, date: o.date })}
@@ -126,69 +123,45 @@ export default function Today() {
       )}
 
       {activeHabits.length > 0 && (
-        <section aria-labelledby="hab">
-          <div className="flex items-center justify-between">
-            <h2 id="hab" className="font-display text-2xl">Hábitos de hoy</h2>
-            <Link to="/app/mente" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver todo</Link>
-          </div>
-          <ul className="mt-4 grid gap-2">
-            {activeHabits.map((h) => {
-              const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
-              return (
-                <li key={h.id}>
-                  <button className="flex min-h-12 w-full items-center gap-3 rounded-xl border px-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }} onClick={() => toggleHabit(h)} aria-pressed={done}>
-                    <span className="grid size-6 shrink-0 place-items-center rounded-full border" style={{ borderColor: '#8fd1a4', background: done ? '#8fd1a4' : 'transparent', color: 'var(--bg)' }}>{done && <CheckIcon size={14} aria-hidden />}</span>
-                    <span className="flex-1" style={{ color: done ? 'var(--ink-faint)' : 'var(--ink)' }}>{h.name}</span>
-                    <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>{weekDone(h.id, hlogs.rows, todayISO)}/{h.target_per_week} sem.</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
+        <Group className="!mt-0" title="Hábitos de hoy" aside={<Link to="/app/mente" className="underline">Ver todo</Link>}>
+          {activeHabits.map((h) => {
+            const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
+            return <Row key={h.id} icon={<Chk on={done} tone="var(--pos)" />} title={h.name} muted={done} value={`${weekDone(h.id, hlogs.rows, todayISO)}/${h.target_per_week} sem.`} valueTone="soft" chevron={false} onClick={() => toggleHabit(h)} />
+          })}
+        </Group>
       )}
 
-      <section aria-labelledby="prio">
-        <h2 id="prio" className="font-display text-2xl">Tres prioridades</h2>
-        <ul className="mt-4 grid gap-2">
-          {pr.tasks.map((t) => (
-            <li key={t.id} className="flex items-center rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-              <button className="flex min-h-12 min-w-0 flex-1 items-center gap-3 px-3 text-left" onClick={() => pr.toggle(t.id)} aria-pressed={t.done}>
-                <span className="grid size-6 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--accent)', background: t.done ? 'var(--accent)' : 'transparent', color: 'var(--bg)' }}>{t.done && <Check size={14} aria-hidden />}</span>
-                <span className="truncate" style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? 'var(--ink-faint)' : 'var(--ink)' }}>{t.title}</span>
-              </button>
-              <button className="grid size-11 shrink-0 place-items-center" aria-label={`Borrar prioridad: ${t.title}`} onClick={() => { pr.remove(t.id); setUndo({ label: 'Prioridad borrada', restore: () => pr.add(t.title) }) }}><Trash2 size={16} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>
-            </li>
-          ))}
-        </ul>
+      <Group className="!mt-0" title="Tres prioridades" aside={`${pr.tasks.filter((t) => t.done).length}/${pr.tasks.length || 3}`}>
+        {pr.tasks.map((t) => (
+          <Row key={t.id} icon={<Chk on={t.done} />} title={t.title} muted={t.done} chevron={false} onClick={() => pr.toggle(t.id)}
+            trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar prioridad: ${t.title}`} onClick={() => { pr.remove(t.id); setUndo({ label: 'Prioridad borrada', restore: () => pr.add(t.title) }) }}><Trash2 size={15} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>} />
+        ))}
         {pr.tasks.length < 3 && (
-          <form onSubmit={addPriority} className="mt-3 flex gap-2">
-            <label className="sr-only" htmlFor="prio-in">Nueva prioridad</label>
-            <input id="prio-in" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={500} placeholder={pr.tasks.length ? 'Otra prioridad' : '¿Qué es lo más importante hoy?'} className="field" />
-            <button className="btn btn-primary shrink-0" aria-label="Agregar prioridad"><Plus size={18} aria-hidden /></button>
-          </form>
+          <li className="row">
+            <form onSubmit={addPriority} className="row-hit">
+              <label className="sr-only" htmlFor="prio-in">Nueva prioridad</label>
+              <span className="row-ico" aria-hidden><Plus size={16} /></span>
+              <input id="prio-in" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={500} placeholder={pr.tasks.length ? 'Otra prioridad' : '¿Qué es lo más importante hoy?'} className="row-input" />
+              {draft.trim() && <button className="btn btn-tint !min-h-9">Agregar</button>}
+            </form>
+          </li>
         )}
-      </section>
+      </Group>
 
-      <section aria-labelledby="cap">
-        <h2 id="cap" className="font-display text-2xl">Captura rápida</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Anota lo que se te ocurra. Después decides dónde va.</p>
-        <form onSubmit={capture} className="mt-3 flex gap-2">
-          <label className="sr-only" htmlFor="cap-in">Captura rápida</label>
-          <input id="cap-in" value={cap} onChange={(e) => setCap(e.target.value)} maxLength={2000} placeholder="Una idea, un link, una tarea…" className="field" />
-          <button className="btn btn-ghost shrink-0" aria-label="Guardar captura"><Plus size={18} aria-hidden /></button>
-        </form>
-        {inbox.items.length > 0 && (
-          <ul className="mt-3 grid gap-2 text-sm">
-            {inbox.items.map((x) => (
-              <li key={x.id} className="flex items-center gap-1 rounded-xl pl-3" style={{ background: 'var(--surface)', color: 'var(--ink-soft)' }}>
-                <span className="min-w-0 flex-1 break-words py-2">{x.text}</span>
-                <button className="grid size-11 shrink-0 place-items-center" aria-label={`Borrar captura: ${x.text}`} onClick={() => { inbox.remove(x.id); setUndo({ label: 'Captura borrada', restore: () => inbox.add(x.text) }) }}><Trash2 size={16} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <Group className="!mt-0" title="Captura rápida" footer="Anota lo que se te ocurra. Después decides dónde va.">
+        <li className="row">
+          <form onSubmit={capture} className="row-hit">
+            <label className="sr-only" htmlFor="cap-in">Captura rápida</label>
+            <span className="row-ico" aria-hidden><Plus size={16} /></span>
+            <input id="cap-in" value={cap} onChange={(e) => setCap(e.target.value)} maxLength={2000} placeholder="Una idea, un link, una tarea…" className="row-input" />
+            {cap.trim() && <button className="btn btn-tint !min-h-9">Guardar</button>}
+          </form>
+        </li>
+        {inbox.items.map((x) => (
+          <Row key={x.id} title={<span className="whitespace-normal break-words">{x.text}</span>} chevron={false}
+            trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar captura: ${x.text}`} onClick={() => { inbox.remove(x.id); setUndo({ label: 'Captura borrada', restore: () => inbox.add(x.text) }) }}><Trash2 size={15} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>} />
+        ))}
+      </Group>
       {undo && (
         <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))', background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
           {undo.label}

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { disablePush, enablePush, loadSettings, pushStatus, saveBlockAlerts, saveQuiet, sendTest, type BlockAlerts, type PushStatus, type Quiet } from '../lib/push'
 import { fmtMin, toMin } from '../lib/time'
+import { Group, PageHeader, Row, Switch } from '../components/ui'
 import { chip } from './money/shared'
 
 const LEADS = [{ min: 0, label: 'A la hora' }, { min: 5, label: '5 min antes' }, { min: 10, label: '10 min antes' }, { min: 15, label: '15 min antes' }, { min: 30, label: '30 min antes' }]
@@ -48,50 +49,34 @@ function Alerts() {
     if (next.length) setBlockAlerts({ ...blocks, lead: next })
   }
 
+  const blocksOn = blocks.enabled !== false
   return (
-    <section aria-labelledby="avisos" className="rounded-xl border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-      <h2 id="avisos" className="flex items-center gap-2 font-display text-2xl">{status === 'on' ? <Bell size={20} aria-hidden /> : <BellOff size={20} aria-hidden />} Avisos</h2>
-      <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }} aria-live="polite">{status ? notes[status] : 'Revisando…'}</p>
+    <>
+      <Group title="Notificaciones" footer={msg ? <span role="status" style={{ color: 'var(--sky)' }}>{msg}</span> : undefined}>
+        <Row icon={status === 'on' ? <Bell size={16} /> : <BellOff size={16} />} tone={status === 'on' ? 'var(--pos)' : 'var(--ink-faint)'} title="Avisos en este dispositivo" sub={<span aria-live="polite">{status ? notes[status] : 'Revisando…'}</span>} chevron={false}
+          trailing={status === 'off' ? <button className="btn btn-primary !min-h-10" disabled={busy} onClick={() => run(enablePush, 'Listo. Este dispositivo recibirá avisos.')}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Activar</button> : status === 'on' ? <Switch checked label="Avisos en este dispositivo" onChange={() => run(disablePush, 'Avisos apagados en este dispositivo.')} /> : undefined} />
+        {status === 'on' && <Row title="Enviar una prueba" chevron onClick={() => run(async () => { const n = await sendTest(); if (n === 0) throw new Error('No llegó a ningún dispositivo.') }, 'Prueba enviada. Debe llegar en unos segundos.')} />}
+      </Group>
 
-      <div className="mt-4 flex flex-wrap gap-3">
-        {status === 'off' && <button className="btn btn-primary" disabled={busy} onClick={() => run(enablePush, 'Listo. Este dispositivo recibirá avisos.')}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Activar avisos</button>}
-        {status === 'on' && (
+      <Group title="Horario" footer="Te aviso cuando empieza cada bloque de tu horario. Cada bloque se puede silenciar desde su edición.">
+        <Row title="Avisar cuando empiece una actividad" chevron={false} trailing={<Switch checked={blocksOn} label="Avisar cuando empiece una actividad" onChange={(v) => setBlockAlerts({ ...blocks, enabled: v })} />} />
+        {blocksOn && (
+          <li className="row"><div className="row-hit !flex-wrap !gap-2" role="group" aria-label="Cuándo avisar">
+            {LEADS.map((l) => <button key={l.min} type="button" aria-pressed={leads.includes(l.min)} onClick={() => toggleLead(l.min)} className="min-h-10 rounded-full px-4 text-sm" style={chip(leads.includes(l.min))}>{l.label}</button>)}
+          </div></li>
+        )}
+      </Group>
+
+      <Group title="Horas de silencio" footer={<>No te aviso en este rango, salvo lo que marques como “insistir hasta que lo confirme”.{tz && <> Zona horaria: {tz}.</>}</>}>
+        <Row title="Silencio nocturno" chevron={false} trailing={<Switch checked={Boolean(quiet)} label="Silencio nocturno" onChange={(v) => { const q = v ? { start: 22 * 60, end: 7 * 60 } : null; setQuiet(q); saveQuiet(q) }} />} />
+        {quiet && (
           <>
-            <button className="btn btn-ghost" disabled={busy} onClick={() => run(async () => { const n = await sendTest(); if (n === 0) throw new Error('No llegó a ningún dispositivo.') }, 'Prueba enviada. Debe llegar en unos segundos.')}>Enviar prueba</button>
-            <button className="btn btn-ghost" disabled={busy} onClick={() => run(disablePush, 'Avisos apagados en este dispositivo.')}>Apagar</button>
+            <li className="row"><label className="row-hit"><span className="row-main"><span className="row-title">Desde</span></span><input type="time" className="row-input row-time" value={fmtMin(quiet.start)} onChange={(e) => setQuietTime('start', e.target.value)} /></label></li>
+            <li className="row"><label className="row-hit"><span className="row-main"><span className="row-title">Hasta</span></span><input type="time" className="row-input row-time" value={fmtMin(quiet.end)} onChange={(e) => setQuietTime('end', e.target.value)} /></label></li>
           </>
         )}
-      </div>
-      {msg && <p role="status" className="mt-3 text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-semibold">Avisos del horario</legend>
-        <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Te aviso cuando empieza cada bloque de tu horario (trabajo, ensayo, ejercicio…). Cada bloque se puede silenciar desde su edición.</p>
-        <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
-          <input type="checkbox" className="size-5" checked={blocks.enabled !== false} onChange={(e) => setBlockAlerts({ ...blocks, enabled: e.target.checked })} /> Avisarme cuando empiece una actividad
-        </label>
-        {blocks.enabled !== false && (
-          <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Cuándo avisar">
-            {LEADS.map((l) => <button key={l.min} type="button" aria-pressed={leads.includes(l.min)} onClick={() => toggleLead(l.min)} className="min-h-11 rounded-full border px-4 text-sm" style={chip(leads.includes(l.min))}>{l.label}</button>)}
-          </div>
-        )}
-      </fieldset>
-
-      <fieldset className="mt-6">
-        <legend className="text-sm font-semibold">Horas de silencio</legend>
-        <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>No te aviso en este rango, salvo lo que marques como “insistir hasta que lo confirme”.</p>
-        <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
-          <input type="checkbox" className="size-5" checked={Boolean(quiet)} onChange={(e) => { const q = e.target.checked ? { start: 22 * 60, end: 7 * 60 } : null; setQuiet(q); saveQuiet(q) }} /> Activar
-        </label>
-        {quiet && (
-          <div className="mt-2 grid max-w-sm grid-cols-2 gap-3">
-            <label className="grid gap-2 text-sm">Desde<input type="time" className="field" value={fmtMin(quiet.start)} onChange={(e) => setQuietTime('start', e.target.value)} /></label>
-            <label className="grid gap-2 text-sm">Hasta<input type="time" className="field" value={fmtMin(quiet.end)} onChange={(e) => setQuietTime('end', e.target.value)} /></label>
-          </div>
-        )}
-        {tz && <p className="mt-3 text-xs" style={{ color: 'var(--ink-faint)' }}>Zona horaria: {tz}</p>}
-      </fieldset>
-    </section>
+      </Group>
+    </>
   )
 }
 
@@ -99,19 +84,14 @@ export default function Settings({ onLock, onResetPin }: { onLock: () => void; o
   const { session, signOut } = useAuth()
   return (
     <div>
-      <h1 className="font-display text-4xl">Ajustes</h1>
-      <div className="mt-8 grid gap-4">
-        <Alerts />
-        <div className="rounded-xl border p-4" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-          <p className="text-sm" style={{ color: 'var(--ink-faint)' }}>Cuenta</p>
-          <p className="mt-1 break-all">{session?.user.email}</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button className="btn btn-ghost" onClick={onLock}>Bloquear ahora</button>
-          <button className="btn btn-ghost" onClick={onResetPin}>Cambiar PIN</button>
-          <button className="btn btn-ghost" onClick={signOut}>Cerrar sesión</button>
-        </div>
-      </div>
+      <PageHeader title="Ajustes" />
+      <Alerts />
+      <Group title="Cuenta">
+        <Row title={<span className="break-all">{session?.user.email}</span>} chevron={false} />
+        <Row title="Bloquear ahora" onClick={onLock} />
+        <Row title="Cambiar PIN" onClick={onResetPin} />
+        <Row title={<span style={{ color: 'var(--neg)' }}>Cerrar sesión</span>} onClick={signOut} />
+      </Group>
     </div>
   )
 }

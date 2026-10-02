@@ -1,13 +1,19 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
+import { SegNav } from '../../components/ui'
 
-const tabs: [string, string, boolean][] = [['/app/dinero', 'Resumen', true], ['/app/dinero/movimientos', 'Movimientos', false], ['/app/dinero/presupuesto', 'Presupuesto', false], ['/app/dinero/metas', 'Metas', false], ['/app/dinero/suscripciones', 'Suscripciones', false], ['/app/dinero/prestamos', 'Préstamos', false]]
+const tabs = [
+    { to: '/app/dinero', label: 'Resumen', end: true },
+    { to: '/app/dinero/movimientos', label: 'Movimientos' },
+    { to: '/app/dinero/presupuesto', label: 'Presupuesto' },
+    { to: '/app/dinero/metas', label: 'Metas' },
+    { to: '/app/dinero/suscripciones', label: 'Suscripciones' },
+    { to: '/app/dinero/prestamos', label: 'Préstamos' },
+]
 
 export default function MoneyLayout() {
   return (
     <div>
-      <nav aria-label="Dinero" className="mb-6 flex gap-1 overflow-x-auto rounded-full p-1" style={{ background: 'var(--surface)', width: 'fit-content', maxWidth: '100%' }}>
-        {tabs.map(([to, label, end]) => <NavLink key={to} to={to} end={end} className="plan-tab shrink-0">{label}</NavLink>)}
-      </nav>
+      <SegNav label="Dinero" tabs={tabs} />
       <Outlet />
     </div>
   )

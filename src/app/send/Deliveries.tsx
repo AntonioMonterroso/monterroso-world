@@ -5,6 +5,7 @@ import { CHANNELS, KINDS, STATUSES, addDays, daysSince, followUpDue, isOpen, isW
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
+import { Group, PageHeader, Row } from '../../components/ui'
 import { Empty, ErrorBar, chip } from '../money/shared'
 
 type Draft = { id?: string; title: string; recipient: string; kind: DeliveryKind; channel: DeliveryChannel; status: DeliveryStatus; followDays: number; notes: string }
@@ -74,22 +75,19 @@ export default function Deliveries() {
     const step = nextStep(d.status)
     const due = followUpDue(d, today)
     const waited = daysSince(d.sent_at, today)
+    const open = () => { setConfirm(false); setDraft({ id: d.id, title: d.title, recipient: d.recipient ?? '', kind: d.kind, channel: d.channel, status: d.status, followDays: 0, notes: d.notes ?? '' }) }
+    const meta = [d.recipient && `Para ${d.recipient}`, KINDS[d.kind], CHANNELS[d.channel]].filter(Boolean).join(' · ')
     return (
-      <li className="rounded-xl border p-4" style={{ background: 'var(--surface)', borderColor: due ? 'var(--accent)' : 'var(--line-soft)' }}>
-        <button className="block w-full text-left" onClick={() => { setConfirm(false); setDraft({ id: d.id, title: d.title, recipient: d.recipient ?? '', kind: d.kind, channel: d.channel, status: d.status, followDays: 0, notes: d.notes ?? '' }) }}>
-          <span className="flex items-start justify-between gap-3">
-            <span className="min-w-0"><span className="block truncate font-semibold">{d.title}</span><span className="block truncate text-sm" style={{ color: 'var(--ink-soft)' }}>{[d.recipient && `Para ${d.recipient}`, KINDS[d.kind], CHANNELS[d.channel]].filter(Boolean).join(' · ')}</span></span>
-            <span className="shrink-0 rounded-full border px-2 py-0.5 text-xs" style={{ borderColor: 'var(--line)', color: 'var(--ink-soft)' }}>{statusLabel(d.status)}</span>
-          </span>
-          {isWaiting(d) && <span className="mt-2 block text-xs" style={{ color: due ? 'var(--accent)' : 'var(--ink-faint)' }}>{waited === 0 ? 'Enviado hoy' : `Enviado hace ${waited} ${waited === 1 ? 'día' : 'días'}`}{d.follow_up_date && ` · seguimiento ${due ? 'hoy o ya pasó' : d.follow_up_date}`}</span>}
-          {d.notes && <span className="mt-1 line-clamp-2 block text-xs" style={{ color: 'var(--ink-faint)' }}>{d.notes}</span>}
-        </button>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {step && <button className="btn btn-primary" onClick={() => void advance(d, step.to)}><Check size={16} aria-hidden /> {step.label}</button>}
-          {isWaiting(d) && <><button className="btn btn-ghost" onClick={() => void advance(d, 'paid')}>Pagado</button><button className="btn btn-ghost" onClick={() => void snooze(d, 3)}><AlarmClock size={16} aria-hidden /> +3 días</button></>}
-          {isWaiting(d) && <button className="btn btn-ghost" onClick={() => void advance(d, 'closed')}>Cerrar</button>}
-        </div>
-      </li>
+      <Row title={d.title} tone={due ? 'var(--accent)' : isWaiting(d) ? 'var(--sky)' : 'var(--ink-faint)'} onClick={open}
+        sub={<>{meta}{isWaiting(d) && <span style={{ color: due ? 'var(--accent)' : undefined }}> · {waited === 0 ? 'enviado hoy' : `hace ${waited} ${waited === 1 ? 'día' : 'días'}`}{d.follow_up_date && (due ? ' · dar seguimiento' : ` · seguimiento ${d.follow_up_date}`)}</span>}</>}
+        value={statusLabel(d.status)} valueTone="soft">
+        {(step || isWaiting(d)) && (
+          <div className="flex flex-wrap items-center gap-2 px-4 pb-3 pl-[3.75rem]">
+            {step && <button className="btn btn-tint !min-h-10" onClick={() => void advance(d, step.to)}><Check size={15} aria-hidden /> {step.label}</button>}
+            {isWaiting(d) && <><button className="btn btn-ghost !min-h-10" onClick={() => void advance(d, 'paid')}>Pagado</button><button className="btn btn-ghost !min-h-10" onClick={() => void snooze(d, 3)}><AlarmClock size={15} aria-hidden /> +3 días</button><button className="btn btn-ghost !min-h-10" onClick={() => void advance(d, 'closed')}>Cerrar</button></>}
+          </div>
+        )}
+      </Row>
     )
   }
 
@@ -97,18 +95,15 @@ export default function Deliveries() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Trabajo</p><h1 className="mt-2 font-display text-4xl">Envíos y seguimiento</h1><p className="mt-1 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Cotizaciones, propuestas, archivos, canciones: lo que mandaste, a quién y si ya respondieron. Te aviso cuándo darle seguimiento.</p></div>
-        <button className="btn btn-primary shrink-0" onClick={() => { setConfirm(false); setDraft(blank()) }}><Plus size={18} aria-hidden /> Envío</button>
-      </div>
+      <PageHeader eyebrow="Trabajo" title="Envíos y seguimiento" sub="Cotizaciones, propuestas, archivos, canciones: lo que mandaste, a quién y si ya respondieron." action={<button className="btn btn-primary" onClick={() => { setConfirm(false); setDraft(blank()) }}><Plus size={18} aria-hidden /> Nuevo</button>} />
       <ErrorBar msg={db.error} onClose={db.clearError} />
-      {msg && <p role="status" className="mt-3 text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
+      {msg && <p role="status" className="mb-3 text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
 
       {db.rows.length === 0 ? <Empty title="Nada enviado todavía" text="Anota lo que tienes que mandar o lo que ya mandaste. Cuando pase el tiempo que elijas sin respuesta, te lo recuerdo." action="Anotar el primero" onAction={() => setDraft(blank())} /> : (
         <>
-          {toSend.length > 0 && <section className="mt-8"><h2 className="font-display text-2xl">Por enviar <span className="text-base" style={{ color: 'var(--ink-faint)' }}>{toSend.length}</span></h2><ul className="mt-3 grid gap-3">{toSend.map((d) => <Card key={d.id} d={d} />)}</ul></section>}
-          {waiting.length > 0 && <section className="mt-8"><h2 className="font-display text-2xl">Esperando respuesta <span className="text-base" style={{ color: 'var(--ink-faint)' }}>{waiting.length}</span></h2><ul className="mt-3 grid gap-3">{waiting.map((d) => <Card key={d.id} d={d} />)}</ul></section>}
-          {closed.length > 0 && <details className="mt-8"><summary className="min-h-11 cursor-pointer font-display text-2xl">Cerrados <span className="text-base" style={{ color: 'var(--ink-faint)' }}>{closed.length}</span></summary><ul className="mt-3 grid gap-3">{closed.map((d) => <Card key={d.id} d={d} />)}</ul></details>}
+          {toSend.length > 0 && <Group className="!mt-0" title="Por enviar" aside={toSend.length}>{toSend.map((d) => <Card key={d.id} d={d} />)}</Group>}
+          {waiting.length > 0 && <Group title="Esperando respuesta" aside={waiting.length}>{waiting.map((d) => <Card key={d.id} d={d} />)}</Group>}
+          {closed.length > 0 && <details className="mt-6"><summary className="group-head cursor-pointer select-none"><h3>Cerrados · {closed.length}</h3></summary><Group className="!mt-0">{closed.map((d) => <Card key={d.id} d={d} />)}</Group></details>}
         </>
       )}
 

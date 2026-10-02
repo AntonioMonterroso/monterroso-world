@@ -19,3 +19,12 @@ export const centers: Center[] = [
 ]
 
 export const centerById = (id: string) => centers.find((c) => c.id === id)
+
+/** Cómo se agrupan los centros en la barra lateral y en «Más», por intención y no por orden alfabético. */
+export const centerGroups: { label?: string; ids: string[] }[] = [
+  { ids: ['hoy'] },
+  { label: 'Organizar', ids: ['planear', 'trabajo', 'dinero'] },
+  { label: 'Crear', ids: ['musica', 'pulpito', 'descubrir'] },
+  { label: 'Cuidarme', ids: ['mente', 'ejercicio'] },
+  { label: 'Privado', ids: ['boveda', 'compartir'] },
+]

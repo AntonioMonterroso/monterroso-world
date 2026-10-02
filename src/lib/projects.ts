@@ -39,11 +39,12 @@ export type Payment = {
 }
 export type NewPayment = Omit<Payment, 'id'>
 
-export const CURRENCIES = ['USD', 'MXN', 'EUR', 'GTQ', 'HNL', 'SVC', 'COP', 'CRC', 'PEN', 'ARS', 'CLP']
+/** Todo el dinero del sistema es en quetzales. */
+export const CURRENCIES = ['GTQ']
 
-export const money = (n: number, currency: string) => {
-  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n) } catch { return `${n.toFixed(2)} ${currency}` }
-}
+const GTQ = new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ', maximumFractionDigits: 2 })
+/** Siempre quetzales (Q 1,200.00); el segundo parámetro se conserva por compatibilidad. */
+export const money = (n: number, _currency?: string) => GTQ.format(n)
 
 export const currentMonth = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 export function shiftMonth(m: string, delta: number) {

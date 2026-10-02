@@ -1,6 +1,7 @@
-import { Check, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
+import { Chk, Group, PageHeader } from '../../components/ui'
 import { MOMENTS, SUGGESTIONS, streak, weekDone, weekStart, type Habit, type HabitLog, type Moment } from '../../lib/habits'
 import { dayNum, isoFromNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
@@ -42,10 +43,7 @@ export default function Habits() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Mente y cuerpo</p><h1 className="mt-2 font-display text-4xl">Hábitos</h1>{active.length > 0 && <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>{doneToday} de {active.length} hoy. Un día sin hacerlo no borra lo avanzado.</p>}</div>
-        <button className="btn btn-primary" onClick={() => setD({ name: '', target: 7, moment: 'any' })}><Plus size={18} aria-hidden /> Hábito</button>
-      </div>
+      <PageHeader eyebrow="Mente y cuerpo" title="Hábitos" sub={active.length > 0 ? <>{doneToday} de {active.length} hoy. Un día sin hacerlo no borra lo avanzado.</> : undefined} action={<button className="btn btn-primary" onClick={() => setD({ name: '', target: 7, moment: 'any' })}><Plus size={18} aria-hidden /> Hábito</button>} />
       <ErrorBar msg={habits.error || logs.error} onClose={habits.clearError} />
 
       {active.length === 0 ? (
@@ -55,40 +53,32 @@ export default function Habits() {
           <div className="mt-4 flex flex-wrap gap-2">{SUGGESTIONS.map((s) => <button key={s.name} className="inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-sm" style={{ borderColor: 'var(--line)' }} onClick={() => habits.add({ name: s.name, target_per_week: s.target, moment: s.moment, position: (habits.rows.at(-1)?.position ?? 0) + 1, archived: false })}><Plus size={14} aria-hidden /> {s.name}</button>)}</div>
         </div>
       ) : (
-        <div className="mt-6 grid gap-7">
-          {groups.map((g) => (
-            <section key={g.id} aria-label={g.label}>
-              <h2 className="mb-3 text-sm font-semibold" style={{ color: 'var(--ink-soft)' }}>{g.label}</h2>
-              <ul className="grid gap-2">
-                {g.items.map((h) => {
-                  const wd = weekDone(h.id, logs.rows, today)
-                  const st = streak(h, logs.rows, today)
-                  const doneT = logs.rows.some((l) => l.habit_id === h.id && l.day === today)
-                  return (
-                    <li key={h.id} className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => toggle(h, today)} aria-pressed={doneT} aria-label={`${h.name}: ${doneT ? 'hecho hoy' : 'marcar hecho hoy'}`} className="grid size-12 shrink-0 place-items-center rounded-full border-2" style={{ borderColor: '#8fd1a4', background: doneT ? '#8fd1a4' : 'transparent', color: 'var(--bg)', transition: 'background-color 160ms var(--ease-out), transform 120ms var(--ease-out)' }}>{doneT && <Check size={22} aria-hidden />}</button>
-                        <button className="min-w-0 flex-1 text-left" onClick={() => setD({ id: h.id, name: h.name, target: h.target_per_week, moment: h.moment })}>
-                          <span className="block truncate font-semibold">{h.name}</span>
-                          <span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>{wd} de {h.target_per_week} esta semana{st.count > 0 && ` · ${st.count} ${st.count === 1 ? st.unit.replace('días', 'día').replace('semanas', 'semana') : st.unit} seguidas`}</span>
-                        </button>
-                      </div>
-                      <div className="mt-3 flex gap-1.5" role="group" aria-label={`Semana de ${h.name}`}>
-                        {week.map((day, i) => {
-                          const on = logs.rows.some((l) => l.habit_id === h.id && l.day === day)
-                          const future = day > today
-                          return (
-                            <button key={day} disabled={future} onClick={() => toggle(h, day)} aria-pressed={on} aria-label={`${DAYS.find((x) => x.n === (i + 1) % 7)?.long}${on ? ': hecho' : ''}`} className="grid h-9 flex-1 place-items-center rounded-lg text-[11px] font-semibold" style={{ background: on ? 'color-mix(in oklab, #8fd1a4 30%, transparent)' : 'var(--bg)', color: on ? '#8fd1a4' : day === today ? 'var(--accent)' : 'var(--ink-faint)', border: day === today ? '1px solid var(--accent)' : '1px solid transparent', opacity: future ? 0.4 : 1 }}>{DAYS.find((x) => x.n === (i + 1) % 7)?.short}</button>
-                          )
-                        })}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          ))}
-        </div>
+        groups.map((g, gi) => (
+          <Group key={g.id} title={g.label} className={gi === 0 ? '!mt-5' : ''}>
+            {g.items.map((h) => {
+              const wd = weekDone(h.id, logs.rows, today)
+              const st = streak(h, logs.rows, today)
+              const doneT = logs.rows.some((l) => l.habit_id === h.id && l.day === today)
+              return (
+                <li key={h.id} className="row">
+                  <div className="flex items-center">
+                    <button onClick={() => toggle(h, today)} aria-pressed={doneT} aria-label={`${h.name}: ${doneT ? 'hecho hoy' : 'marcar hecho hoy'}`} className="grid size-14 shrink-0 place-items-center"><Chk on={doneT} tone="var(--pos)" /></button>
+                    <button className="row-hit !pl-0" onClick={() => setD({ id: h.id, name: h.name, target: h.target_per_week, moment: h.moment })}>
+                      <span className="row-main"><span className="row-title">{h.name}</span><span className="row-sub">{wd} de {h.target_per_week} esta semana{st.count > 0 && ` · ${st.count} ${st.count === 1 ? st.unit.replace('días', 'día').replace('semanas', 'semana') : st.unit}`}</span></span>
+                    </button>
+                  </div>
+                  <div className="flex gap-1 px-4 pb-3 pl-14" role="group" aria-label={`Semana de ${h.name}`}>
+                    {week.map((day, i) => {
+                      const on = logs.rows.some((l) => l.habit_id === h.id && l.day === day)
+                      const future = day > today
+                      return <button key={day} disabled={future} onClick={() => toggle(h, day)} aria-pressed={on} aria-label={`${DAYS.find((x) => x.n === (i + 1) % 7)?.long}${on ? ': hecho' : ''}`} className="wk" data-today={day === today} style={{ opacity: future ? 0.35 : 1 }}>{DAYS.find((x) => x.n === (i + 1) % 7)?.short}</button>
+                    })}
+                  </div>
+                </li>
+              )
+            })}
+          </Group>
+        ))
       )}
 
       <Sheet open={Boolean(d)} title={d?.id ? 'Editar hábito' : 'Nuevo hábito'} onClose={() => { setD(null); setConfirm(false) }}>

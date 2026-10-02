@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { ExternalLink, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { CURRENCIES, STATUSES, money, receivedOf, type CheckTask, type NewPayment, type Payment, type Project, type Status } from '../../lib/projects'
+import { STATUSES, money, receivedOf, type CheckTask, type NewPayment, type Payment, type Project, type Status } from '../../lib/projects'
 import { localISO } from '../../lib/time'
 
 const ease = [0.23, 1, 0.32, 1] as const
@@ -25,7 +25,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
   const [month, setMonth] = useState('')
   const [due, setDue] = useState('')
   const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState('USD')
+  const [currency, setCurrency] = useState('GTQ')
   const [url, setUrl] = useState('')
   const [notes, setNotes] = useState('')
   const [checklist, setChecklist] = useState<CheckTask[]>([])
@@ -105,9 +105,6 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                 <label className="grid gap-2 text-sm">Mes<input type="month" className="field" value={month} onChange={(e) => setMonth(e.target.value)} /></label>
                 <label className="grid gap-2 text-sm">Entrega<input type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></label>
                 <label className="grid gap-2 text-sm">Monto total<input className="field" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(',', '.'))} placeholder="0.00" /></label>
-                <label className="grid gap-2 text-sm">Moneda
-                  <select className="field" value={currency} onChange={(e) => setCurrency(e.target.value)}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
-                </label>
               </div>
 
               <label className="grid gap-2 text-sm">Sitio o enlace<input className="field" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} maxLength={500} placeholder="https://" /></label>

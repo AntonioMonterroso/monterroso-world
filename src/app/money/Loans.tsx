@@ -1,6 +1,7 @@
 import { BellPlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
+import { Group, PageHeader, Row, Stat } from '../../components/ui'
 import { loanBalance, loanPaid, loanTotals, type Loan, type LoanPayment } from '../../lib/finance'
 import { money } from '../../lib/projects'
 import { supabase } from '../../lib/supabase'
@@ -54,36 +55,31 @@ export default function Loans() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Dinero</p><h1 className="mt-2 font-display text-4xl">Préstamos</h1></div>
-        <button className="btn btn-primary" onClick={() => setD(blank())}><Plus size={18} aria-hidden /> Préstamo</button>
-      </div>
+      <PageHeader eyebrow="Dinero" title="Préstamos" action={<button className="btn btn-primary" onClick={() => setD(blank())}><Plus size={18} aria-hidden /> Préstamo</button>} />
       <ErrorBar msg={loans.error || pays.error} onClose={loans.clearError} />
 
       {Object.entries(totals).map(([c, t]) => (
-        <dl key={c} className="mt-5 grid grid-cols-2 gap-3 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
-          <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Me deben</dt><dd className="mt-1 font-semibold" style={{ color: '#8fd1a4' }}>{money(t.owedToMe, c)}</dd></div>
-          <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Debo</dt><dd className="mt-1 font-semibold" style={{ color: 'var(--personal)' }}>{money(t.iOwe, c)}</dd></div>
-        </dl>
+        <div key={c} className="stats mb-2">
+          <Stat label="Me deben" value={money(t.owedToMe, c)} tone="pos" />
+          <Stat label="Debo" value={money(t.iOwe, c)} />
+        </div>
       ))}
 
       {loans.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : loans.rows.length === 0 ? (
         <Empty title="Sin préstamos" text="Anota lo que prestaste o te prestaron, registra cada pago y mira cuánto falta." action="Registrar uno" onAction={() => setD(blank())} />
       ) : (
-        <ul className="mt-6 grid gap-2">
+        <Group title="Todos">
           {sorted.map((l) => {
             const bal = loanBalance(l, pays.rows)
             const done = bal === 0
             return (
-              <li key={l.id}>
-                <button onClick={() => { setD({ id: l.id, direction: l.direction, person: l.person, amount: String(l.amount), currency: l.currency, loan_date: l.loan_date, due_date: l.due_date ?? '', note: l.note ?? '' }); setMsg(''); setErr('') }} className="flex min-h-16 w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)', opacity: done ? 0.6 : 1 }}>
-                  <span className="min-w-0"><span className="block truncate font-semibold">{l.person}</span><span className="block truncate text-xs" style={{ color: 'var(--ink-faint)' }}>{l.direction === 'lent' ? 'Me debe' : 'Le debo'}{l.due_date && ` · hasta ${l.due_date}`}</span></span>
-                  <span className="shrink-0 text-right text-sm"><span className="block font-semibold" style={{ color: done ? '#8fd1a4' : l.direction === 'lent' ? '#8fd1a4' : 'var(--personal)' }}>{done ? 'Saldado' : money(bal, l.currency)}</span><span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>de {money(l.amount, l.currency)}</span></span>
-                </button>
-              </li>
+              <Row key={l.id} tone={l.direction === 'lent' ? 'var(--pos)' : 'var(--personal)'} title={l.person} muted={done}
+                sub={<>{l.direction === 'lent' ? 'Me debe' : 'Le debo'} · de {money(l.amount, l.currency)}{l.due_date ? ` · hasta ${l.due_date}` : ''}</>}
+                value={done ? 'Saldado' : money(bal, l.currency)} valueTone={done ? 'soft' : l.direction === 'lent' ? 'pos' : undefined}
+                onClick={() => { setD({ id: l.id, direction: l.direction, person: l.person, amount: String(l.amount), currency: l.currency, loan_date: l.loan_date, due_date: l.due_date ?? '', note: l.note ?? '' }); setMsg(''); setErr('') }} />
             )
           })}
-        </ul>
+        </Group>
       )}
 
       <Sheet open={Boolean(d)} title={d?.id ? 'Préstamo' : 'Nuevo préstamo'} onClose={() => setD(null)}>
