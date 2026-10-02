@@ -1,10 +1,14 @@
-import { Plus, Trash2 } from 'lucide-react'
+import { HeartHandshake, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chk, Group, Row } from '../components/ui'
 import GoalSpotlight from '../components/GoalSpotlight'
 import OutingSpotlight from '../components/OutingSpotlight'
 import ShoppingSpotlight from '../components/ShoppingSpotlight'
+import DayRitual from '../components/DayRitual'
+import OverwhelmSheet from '../components/OverwhelmSheet'
+import { useCheckins } from '../lib/checkin'
+import { isSoftDay } from '../lib/rhythm'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -66,6 +70,9 @@ export default function Today() {
 
   // Qué conviene hacer ahora (reglas en lib/suggest.ts)
   const attention = useAttention(now)
+  const checkins = useCheckins()
+  const soft = isSoftDay(checkins.today)
+  const [overwhelm, setOverwhelm] = useState(false)
   const suggestions = useMemo(() => suggest({
     nowMin: m,
     current: current ? { title: current.title, endMin: current.end_min } : null,
@@ -77,7 +84,8 @@ export default function Today() {
     habitsPending: activeHabits.filter((h) => !hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).map((h) => ({ id: h.id, name: h.name })),
     routine: routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed ? { id: routineNow.id, name: routineNow.name, started: routineProgress.done > 0 } : null,
     inbox: inbox.items.length,
-  }), [m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+    lowEnergy: soft,
+  }), [soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
@@ -111,6 +119,7 @@ export default function Today() {
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-x-4">
             <Link to="/app/mente/enfoque" className="btn btn-primary">Enfocarme</Link>
+            <button className="btn btn-ghost" onClick={() => setOverwhelm(true)}><HeartHandshake size={16} aria-hidden /> Estoy abrumado</button>
             <Link to="/app/planear" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver mi horario</Link>
           </div>
         </div>
@@ -118,6 +127,8 @@ export default function Today() {
       </section>
 
       {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{error}</p>}
+
+      <DayRitual ck={checkins} hour={now.getHours()} prioritiesDone={pr.tasks.filter((t) => t.done).length} habitsDone={activeHabits.filter((h) => hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).length} onAddPriority={(t) => { if (pr.tasks.length < 3) pr.add(t) }} />
 
       <Group className="!mt-0" title="Ahora te conviene" aside={suggestions[0]?.id === 'free' ? undefined : `${suggestions.length}`}>
         {suggestions.map((x) => <Row key={x.id} to={x.to} tone={x.tone === 'urgent' ? 'var(--neg)' : x.tone === 'now' ? 'var(--accent)' : x.tone === 'soon' ? 'var(--sky)' : 'var(--ink-faint)'} title={x.title} sub={x.reason} />)}
@@ -189,6 +200,7 @@ export default function Today() {
           <button className="min-h-11 rounded-full px-3 font-semibold underline" style={{ color: 'var(--accent)' }} onClick={() => { undo.restore(); setUndo(null) }}>Deshacer</button>
         </div>
       )}
+      <OverwhelmSheet open={overwhelm} onClose={() => setOverwhelm(false)} priorities={pr.tasks.filter((t) => !t.done).map((t) => t.title)} dump={async (lines) => { for (const l of lines) await inbox.add(l) }} />
       <EventEditor target={evTarget} onClose={() => setEvTarget(null)}
         onSave={async (id, v) => { if (id) await evs.update(id, v); else await evs.add(v); setEvTarget(null) }}
         onDelete={(id) => { evs.remove(id); setEvTarget(null) }}

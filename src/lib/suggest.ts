@@ -13,6 +13,8 @@ export type SuggestInput = {
   habitsPending: { id: string; name: string }[]
   routine?: { id: string; name: string; started: boolean } | null
   inbox: number
+  /** Día suave: se muestran menos cosas y solo lo que de verdad pesa. */
+  lowEnergy?: boolean
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -21,6 +23,8 @@ const late = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h`)
 export function suggest(i: SuggestInput, limit = 3): Suggestion[] {
   const out: Suggestion[] = []
   const push = (s: Suggestion) => out.push(s)
+  const soft = Boolean(i.lowEnergy)
+  if (soft) push({ id: 'soft-day', title: 'Hoy basta con una cosa pequeña', reason: 'Tu energía está baja: elige lo más fácil y listo', to: '/app/mente/enfoque', tone: 'calm', score: 95 })
 
   for (const o of i.overdue.slice(0, 3)) {
     push({ id: `ov-${o.id}`, title: o.title, reason: `Pasó hace ${late(o.minsLate)} y sigue sin confirmar`, to: `/app/planear/agenda?e=${o.id}`, tone: 'urgent', score: 90 - Math.min(o.minsLate, 600) / 20 })
@@ -46,14 +50,14 @@ export function suggest(i: SuggestInput, limit = 3): Suggestion[] {
   for (const f of i.followUps.slice(0, 2)) push({ id: `fu-${f.id}`, title: `Dar seguimiento: ${f.title}`, reason: f.recipient ? `${f.recipient} no ha respondido` : 'Sin respuesta', to: '/app/envios', tone: 'now', score: 72 })
   if (i.toSend.length > 0) push({ id: 'to-send', title: i.toSend.length === 1 ? `Enviar: ${i.toSend[0].title}` : `Tienes ${i.toSend.length} cosas por enviar`, reason: i.toSend[0].recipient ? `Para ${i.toSend[0].recipient}` : 'Mandarlo hoy lo quita de tu cabeza', to: '/app/envios', tone: 'soon', score: 55 })
 
-  if (i.inbox > 0) push({ id: 'inbox', title: `Ordena tus capturas`, reason: `${plural(i.inbox, 'idea', 'ideas')} sin decidir dónde van`, to: '/app', tone: 'calm', score: 40 })
+  if (i.inbox > 0 && !soft) push({ id: 'inbox', title: `Ordena tus capturas`, reason: `${plural(i.inbox, 'idea', 'ideas')} sin decidir dónde van`, to: '/app', tone: 'calm', score: 40 })
 
-  if (i.habitsPending.length > 0) {
+  if (i.habitsPending.length > 0 && !soft) {
     const evening = i.nowMin >= 19 * 60
     push({ id: 'habit', title: i.habitsPending.length === 1 ? i.habitsPending[0].name : `${i.habitsPending.length} hábitos de hoy`, reason: evening ? 'Aún estás a tiempo de hoy' : 'Un hábito pequeño ahora suma', to: '/app/mente', tone: evening ? 'soon' : 'calm', score: evening ? 52 : 38 })
   }
 
   if (out.length === 0) push({ id: 'free', title: 'Todo al día', reason: i.next ? `Sigue ${i.next.title} a las ${String(Math.floor(i.next.startMin / 60)).padStart(2, '0')}:${String(i.next.startMin % 60).padStart(2, '0')}` : 'Buen momento para descansar o avanzar algo tuyo', to: '/app/mente/enfoque', tone: 'calm', score: 1 })
 
-  return out.sort((a, b) => b.score - a.score).slice(0, limit)
+  return out.sort((a, b) => b.score - a.score).slice(0, soft ? Math.min(limit, 2) : limit)
 }

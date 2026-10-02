@@ -1,5 +1,6 @@
 import { Loader2, Pause, Play, Plus, Square, Volume2, VolumeX, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Avatar from '../../components/Avatar'
 import { chime, startAmbient, stopAmbient, type AmbientKind } from '../../lib/ambient'
 import { CAPTURE_LABEL, DEFAULT_DOPAMINE, classifyCapture, focusStats, mmss, pickDopamine, remainingSeconds, type FocusSession } from '../../lib/focus'
@@ -39,6 +40,7 @@ export default function Focus() {
   const [picks, setPicks] = useState<string[]>([])
   const [err, setErr] = useState('')
   const finishing = useRef(false)
+  const [sp, setSp] = useSearchParams()
 
   useEffect(() => { getSettings().then((s) => { const d = (s as { dopamine?: typeof dop }).dopamine; if (d) setDop(d) }) }, [])
   useEffect(() => { store(run) }, [run])
@@ -92,6 +94,17 @@ export default function Focus() {
     setPicks([])
     setRun({ mode, status: 'running', task: mode === 'focus' ? (keepTask || task.trim()) : '', plannedMin: mins, startedAt: t, endAt: t + mins * 60_000, pausedLeft: 0, distractions: 0, sound, companion, saved: false, actualMin: 0, completed: false })
   }
+
+  // Viene de «Estoy abrumado»: arranca una ronda corta con la cosa elegida
+  useEffect(() => {
+    const t = sp.get('tarea')
+    if (!t || run) return
+    const mins = Math.min(60, Math.max(1, Number(sp.get('min')) || 2))
+    setTask(t)
+    if (sp.get('auto')) { setMinutes(mins); start(mins, 'focus', t) }
+    setSp({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp])
 
   const pending = useMemo(() => inbox.rows.filter((i) => i.source === 'focus' && !i.processed), [inbox.rows])
 

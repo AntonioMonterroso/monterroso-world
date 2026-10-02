@@ -499,3 +499,26 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .buy-check span { width: 24px; height: 24px; border-radius: 99px; box-shadow: inset 0 0 0 1.75px color-mix(in oklab, var(--pos) 65%, transparent); transition: background-color 180ms var(--ease-out), transform 140ms var(--ease-out); }
 .buy-check:active span { background: var(--pos); transform: scale(.88); }
 @media (hover: hover) and (pointer: fine) { .buy-check:hover span { background: color-mix(in oklab, var(--pos) 30%, transparent); } }
+
+/* Ritmo del día: energía, ánimo y rituales */
+.ritual { padding: 1rem 1.1rem 1.1rem; border-radius: var(--r-card); background: var(--surface); box-shadow: inset 0 0 0 1px var(--sep); }
+.ritual[data-ritual="close"] { background: linear-gradient(160deg, color-mix(in oklab, var(--accent) 9%, var(--surface)), var(--surface) 65%); }
+.ritual-head { display: flex; align-items: center; gap: .8rem; }
+.ritual-ico { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 11px; color: var(--accent); background: color-mix(in oklab, var(--accent) 15%, transparent); }
+.ritual-note { margin-top: .9rem; padding: .8rem .9rem; border-radius: 14px; background: var(--surface-2); }
+.energy { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: .5rem; }
+.energy-btn { display: grid; justify-items: center; gap: 4px; min-height: 64px; padding: .5rem .15rem; border-radius: 14px; background: var(--surface-2); color: var(--ink-soft); font-size: .6875rem; font-weight: 600; cursor: pointer; transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out), transform 120ms var(--ease-out); }
+.energy-btn:active { transform: scale(.95); }
+.energy-btn[aria-pressed="true"] { background: color-mix(in oklab, var(--accent) 22%, transparent); color: var(--accent); }
+.mood-btn { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 99px; background: var(--surface-2); color: var(--ink-soft); cursor: pointer; transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out), transform 120ms var(--ease-out); }
+.mood-btn:active { transform: scale(.92); }
+.mood-btn[aria-pressed="true"] { background: color-mix(in oklab, var(--accent) 22%, transparent); color: var(--accent); }
+@media (hover: hover) and (pointer: fine) { .energy-btn:hover, .mood-btn:hover { color: var(--ink); } }
+
+/* Respirar: el círculo crece al inhalar y se achica al soltar (4 s y 6 s) */
+.breath { display: grid; place-items: center; width: 120px; height: 120px; border-radius: 99px; color: var(--accent); background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 30%, transparent), color-mix(in oklab, var(--accent) 6%, transparent)); box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent); animation: breathe-ring 10s ease-in-out infinite; }
+@keyframes breathe-ring { 0%, 100% { transform: scale(.72) } 40% { transform: scale(1.12) } 45% { transform: scale(1.12) } }
+.pick { min-height: 48px; padding: .6rem 1rem; text-align: left; border-radius: 14px; background: var(--surface-2); color: var(--ink); font-size: .9375rem; cursor: pointer; transition: background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 120ms var(--ease-out); }
+.pick:active { transform: scale(.98); }
+.pick[aria-checked="true"] { background: color-mix(in oklab, var(--accent) 18%, var(--surface-2)); box-shadow: inset 0 0 0 1.5px var(--accent); }
+@media (prefers-reduced-motion: reduce) { .breath { animation: none; transform: scale(.95); } }
