@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chk, Group, Row } from '../components/ui'
 import GoalSpotlight from '../components/GoalSpotlight'
+import OutingSpotlight from '../components/OutingSpotlight'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -122,6 +123,8 @@ export default function Today() {
       </Group>
 
       <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
+
+      <OutingSpotlight />
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">

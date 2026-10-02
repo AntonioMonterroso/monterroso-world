@@ -479,3 +479,17 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .goal-ring { position: relative; flex-shrink: 0; width: 72px; height: 72px; }
 .goal-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: .9375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .goal[data-done="true"] .goal-ring span { color: var(--pos); animation: pop 360ms var(--ease-out); }
+
+/* Salida destacada: la escena cambia con el tipo de lugar */
+.outing { overflow: hidden; border-radius: var(--r-card); background: var(--surface); box-shadow: inset 0 0 0 1px var(--sep); }
+.outing-stage { position: relative; display: grid; place-items: center; width: 100%; height: 92px; color: var(--hue); cursor: pointer; background: radial-gradient(120% 140% at 20% 0%, color-mix(in oklab, var(--hue) 22%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklab, var(--hue) 10%, var(--surface-2)), var(--surface)); }
+.outing-stage:active { filter: brightness(1.1); }
+.outing-body { padding: .9rem 1.1rem 1.1rem; }
+.scene-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.plane-fly { offset-path: path("M16 70 C 90 8, 200 8, 304 62"); offset-rotate: auto; animation: fly 7s var(--ease-out) infinite; color: var(--hue); }
+@keyframes fly { 0% { offset-distance: 0%; opacity: 0 } 8% { opacity: 1 } 78% { offset-distance: 100%; opacity: 1 } 90%, 100% { offset-distance: 100%; opacity: 0 } }
+.outing-icon { display: grid; place-items: center; animation: bob 3.2s ease-in-out infinite; filter: drop-shadow(0 8px 14px color-mix(in oklab, var(--hue) 40%, transparent)); }
+.outing-icon.hop { animation: hop2 620ms var(--ease-out), bob 3.2s ease-in-out 620ms infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-5px) rotate(2deg) } }
+@keyframes hop2 { 0% { transform: translateY(0) scale(1) } 30% { transform: translateY(-22px) scale(1.12, .92) } 60% { transform: translateY(0) scale(.94, 1.06) } 100% { transform: translateY(0) scale(1) } }
+@media (prefers-reduced-motion: reduce) { .plane-fly { animation: none; offset-distance: 55%; opacity: 1; } .outing-icon, .outing-icon.hop { animation: none; } }
