@@ -5,7 +5,7 @@ export async function shareQuote(text: string, reference?: string | null) {
   c.width = c.height = S
   const g = c.getContext('2d')!
   const bg = g.createLinearGradient(0, 0, S, S)
-  bg.addColorStop(0, '#17315c'); bg.addColorStop(1, '#0b1730')
+  bg.addColorStop(0, '#16323f'); bg.addColorStop(1, '#0a1923')
   g.fillStyle = bg; g.fillRect(0, 0, S, S)
   g.strokeStyle = 'rgba(217,199,160,.35)'; g.lineWidth = 3; g.strokeRect(48, 48, S - 96, S - 96)
 
@@ -31,7 +31,7 @@ export async function shareQuote(text: string, reference?: string | null) {
   for (const l of lines) { g.fillText(l, S / 2, y); y += size * 1.3 }
 
   if (reference) {
-    g.fillStyle = '#d9c7a0'
+    g.fillStyle = '#e0b48e'
     g.font = '600 44px "Figtree", sans-serif'
     g.fillText(reference, S / 2, y + 40)
   }

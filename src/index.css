@@ -7,37 +7,47 @@
    Roles por enfoque: dev (latón), music (celeste), personal (arcilla)
    Tono del día (--glow): cambia según la hora, ver useTone()            */
 :root {
-  --bg: #0c1322;
-  --surface: #121a2c;
-  --surface-2: #1a2438;
-  --surface-3: #222e47;
-  --line-soft: #1b2539;
-  --line: #2b3853;
-  --sep: rgba(255, 255, 255, .07);
+  --bg: #0a131a;
+  --surface: #101c25;
+  --surface-2: #172732;
+  --surface-3: #20343f;
+  --line-soft: #15232c;
+  --line: #263a46;
+  --sep: rgba(255, 255, 255, .06);
 
-  --ink: #ece9e0;
-  --ink-soft: #a7afc0;
-  --ink-faint: #8590a8;
+  --ink: #e8eeee;
+  --ink-soft: #a2b3ba;
+  --ink-faint: #7c8f98;
 
-  --brass: #d4c19a;
-  --sky: #8aaed6;
-  --clay: #d3b3a0;
+  --teal: #5ec4b6;
+  --sky: #8db6e6;
+  --clay: #dcae9b;
+  --brass: #d9c493;
 
-  --dev: var(--brass);
+  --dev: var(--teal);
   --music: var(--sky);
   --personal: var(--clay);
 
-  --accent: var(--brass);
+  /* El acento cambia con lo que estás haciendo (ver lib/context.ts) y se desliza entre tonos */
+  --accent: #5ec4b6;
   --accent-soft: var(--sky);
-  --glow: #d4c19a;
+  --glow: #7fcfc2;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --r-card: 18px;
 }
-:root[data-tone="dawn"] { --glow: #e3b98f; }
-:root[data-tone="day"] { --glow: #d9c7a0; }
-:root[data-tone="dusk"] { --glow: #8fb3d9; }
-:root[data-tone="night"] { --glow: #6f8bd0; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: #5ec4b6; }
+:root { transition: --accent 700ms var(--ease-out); }
+:root[data-mode="dev"] { --accent: #5ec4b6; }
+:root[data-mode="music"] { --accent: #93aeea; }
+:root[data-mode="faith"] { --accent: #e0b48e; }
+:root[data-mode="body"] { --accent: #8fd1a0; }
+:root[data-mode="calm"] { --accent: #aaa0e2; }
+:root[data-tone="dawn"] { --glow: #e8b58a; }
+:root[data-tone="day"] { --glow: #7fcfc2; }
+:root[data-tone="dusk"] { --glow: #8fb3e0; }
+:root[data-tone="night"] { --glow: #6f86d6; }
+@media (prefers-reduced-motion: reduce) { :root { transition: none; } }
 
 @theme {
   --font-display: "Fraunces", Georgia, serif;
@@ -123,15 +133,15 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
   position: absolute; inset: 0; overflow: hidden; border-radius: 18px;
   background:
     radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--focus) 10%, transparent), transparent 60%),
-    linear-gradient(155deg, #17315c 0%, #0f2347 55%, #0b1a37 100%);
-  border: 1px solid color-mix(in oklab, var(--focus, #d9c7a0) 40%, var(--line-soft));
+    linear-gradient(155deg, #16323f 0%, #0f2430 55%, #0a1923 100%);
+  border: 1px solid color-mix(in oklab, var(--focus, #5ec4b6) 40%, var(--line-soft));
   box-shadow: 0 30px 60px -28px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   transition: border-color 500ms var(--ease-out);
 }
 .card-face::after { /* filete interior */
   content: ""; position: absolute; inset: 7px; border-radius: 12px; pointer-events: none;
-  border: 1px solid color-mix(in oklab, var(--focus, #d9c7a0) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--focus, #5ec4b6) 18%, transparent);
 }
 .card-back { transform: rotateY(180deg); }
 .card-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.1) 50%, transparent 65%); transform: translateX(-120%); animation: sheen 1.1s var(--ease-out) .1s forwards; }
@@ -303,7 +313,7 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 
 /* ═════════ Calma v2: componentes compartidos ═════════ */
 :root {
-  --pos: #93c9a6; --neg: #e8a393;
+  --pos: #98d6a3; --neg: #eba596;
   --sep: rgba(255, 255, 255, .06);
   --shadow-pop: 0 18px 50px -18px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .06);
 }
@@ -456,3 +466,8 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .swatch:active { transform: scale(.92); }
 .swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--sw); }
 .field[class*="pl-10"] { padding-left: 2.5rem; }
+
+/* Contador de pendientes */
+.bell { position: relative; }
+.bell-dot { position: absolute; top: 5px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--accent); color: var(--bg); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; animation: pop 260ms var(--ease-out); }
+.nav-badge { margin-left: auto; min-width: 22px; padding: 0 7px; border-radius: 99px; background: var(--accent); color: var(--bg); font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }

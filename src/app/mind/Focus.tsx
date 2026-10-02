@@ -122,7 +122,7 @@ export default function Focus() {
   if (run && run.status !== 'finished') {
     const isFocus = run.mode === 'focus'
     return (
-      <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#08111f' }}>
+      <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#07111a' }}>
         <div className="flex items-center justify-between px-3 py-2">
           <button className="grid size-11 place-items-center rounded-full" onClick={() => finish(false).then(() => setRun(null))} aria-label="Cancelar y salir"><X size={22} aria-hidden /></button>
           <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>{isFocus ? 'Enfoque' : 'Pausa'}</span>

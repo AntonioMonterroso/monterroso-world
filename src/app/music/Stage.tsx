@@ -69,7 +69,7 @@ export default function Stage() {
   const shownKey = song.song_key ? transposeKey(song.song_key, semis, prefersFlats(transposeKey(song.song_key, semis))) : null
 
   return (
-    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#08111f' }}>
+    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#07111a' }}>
       <div className="flex items-center gap-2 px-3 py-2" style={{ opacity: bar ? 1 : 0.15, transition: 'opacity 200ms var(--ease-out)' }}>
         <button className="grid size-11 place-items-center rounded-full" onClick={close} aria-label="Salir del escenario"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1 text-center">

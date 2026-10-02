@@ -2,10 +2,12 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chk, Group, Row } from '../components/ui'
+import { suggest } from '../lib/suggest'
+import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
 import { kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
 import { weekDone, type Habit, type HabitLog } from '../lib/habits'
-import { KIND_LABEL, currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
+import { currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
 import { useTable } from '../lib/table'
 import { useEvents } from '../lib/events'
 import { localISO } from '../lib/time'
@@ -58,6 +60,21 @@ export default function Today() {
   const inbox = useInbox()
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
+
+  // Qué conviene hacer ahora (reglas en lib/suggest.ts)
+  const attention = useAttention(now)
+  const suggestions = useMemo(() => suggest({
+    nowMin: m,
+    current: current ? { title: current.title, endMin: current.end_min } : null,
+    next: next ? { title: next.title, startMin: next.start_min } : null,
+    priorities: { open: pr.tasks.filter((t) => !t.done).length, total: pr.tasks.length },
+    overdue: attention.overdue,
+    followUps: attention.followUps.map((d) => ({ id: d.id, title: d.title, recipient: d.recipient })),
+    toSend: attention.toSend.map((d) => ({ id: d.id, title: d.title, recipient: d.recipient })),
+    habitsPending: activeHabits.filter((h) => !hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).map((h) => ({ id: h.id, name: h.name })),
+    routine: routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed ? { id: routineNow.id, name: routineNow.name, started: routineProgress.done > 0 } : null,
+    inbox: inbox.items.length,
+  }), [m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
@@ -99,14 +116,9 @@ export default function Today() {
 
       {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{error}</p>}
 
-      {routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed && (
-        <section aria-labelledby="rut-hoy" className="rounded-2xl border p-4" style={{ borderColor: 'var(--accent)', background: 'var(--surface)' }}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0"><p className="eyebrow">Rutina de {KIND_LABEL[routineNow.kind].toLowerCase()}</p><h2 id="rut-hoy" className="mt-1 truncate font-display text-2xl">{routineNow.name}</h2><p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{routineProgress.done > 0 ? `${routineProgress.done} de ${routineProgress.total} pasos` : `${routineProgress.total} pasos`}</p></div>
-            <Link to={`/app/mente/rutinas/${routineNow.id}/hacer`} className="btn btn-primary shrink-0">{routineProgress.done > 0 ? 'Seguir' : 'Empezar'}</Link>
-          </div>
-        </section>
-      )}
+      <Group className="!mt-0" title="Ahora te conviene" aside={suggestions[0]?.id === 'free' ? undefined : `${suggestions.length}`}>
+        {suggestions.map((x) => <Row key={x.id} to={x.to} tone={x.tone === 'urgent' ? 'var(--neg)' : x.tone === 'now' ? 'var(--accent)' : x.tone === 'soon' ? 'var(--sky)' : 'var(--ink-faint)'} title={x.title} sub={x.reason} />)}
+      </Group>
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">

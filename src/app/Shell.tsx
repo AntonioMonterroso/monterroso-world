@@ -2,6 +2,9 @@ import { Bell, LayoutGrid, Search, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Globe from '../components/Globe'
+import { useAttention } from '../lib/attention'
+import { resolveMode, useMode } from '../lib/context'
+import { useBlocks } from '../lib/data'
 import { centerGroups, centers } from '../lib/modules'
 import { useTone } from '../lib/tone'
 import NotificationActions from './NotificationActions'
@@ -14,6 +17,13 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   useTone()
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(t) }, [])
+  const { blocks } = useBlocks()
+  const m = now.getHours() * 60 + now.getMinutes()
+  const currentKind = blocks.find((b) => b.days.includes(now.getDay()) && m >= b.start_min && m < b.end_min)?.kind
+  useMode(resolveMode({ pathname, currentKind, hour: now.getHours() }))
+  const attention = useAttention(now)
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -43,6 +53,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
         </nav>
         <div className="mt-auto grid gap-1">
           <button className="nav-link w-full cursor-pointer" onClick={() => setOpen(true)}><Search size={18} aria-hidden /> Buscar <kbd className="ml-auto text-xs" style={{ color: 'var(--ink-faint)' }}>⌘K</kbd></button>
+          <NavLink to="/app/avisos" className="nav-link"><Bell size={18} aria-hidden /> Avisos{attention.count > 0 && <span className="nav-badge" aria-label={`${attention.count} pendientes`}>{attention.count}</span>}</NavLink>
           <NavLink to="/app/ajustes" className="nav-link"><Settings size={18} aria-hidden /> Ajustes</NavLink>
         </div>
       </aside>
@@ -50,7 +61,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
       <div className="min-w-0 pb-24 md:pb-0">
         <header className="topbar safe-top-sticky sticky top-0 z-10 flex items-center justify-between px-4 pb-2 md:hidden">
           <span className="flex items-center gap-2 text-lg font-semibold tracking-tight"><Globe size={26} /> Monterroso World</span>
-          <span className="flex"><NavLink to="/app/avisos" className="grid size-11 place-items-center rounded-full" aria-label="Centro de avisos"><Bell size={20} aria-hidden /></NavLink><button className="grid size-11 place-items-center rounded-full" onClick={() => setOpen(true)} aria-label="Buscar"><Search size={20} aria-hidden /></button></span>
+          <span className="flex"><NavLink to="/app/avisos" className="bell grid size-11 place-items-center rounded-full" aria-label={attention.count > 0 ? `Centro de avisos, ${attention.count} pendientes` : 'Centro de avisos'}><Bell size={20} aria-hidden />{attention.count > 0 && <span className="bell-dot" aria-hidden>{attention.count > 9 ? '9+' : attention.count}</span>}</NavLink><button className="grid size-11 place-items-center rounded-full" onClick={() => setOpen(true)} aria-label="Buscar"><Search size={20} aria-hidden /></button></span>
         </header>
         <main className="mx-auto max-w-4xl px-4 py-6 md:px-10 md:py-10"><div key={pathname.split('/').slice(0, 3).join('/')} className="page-in"><Outlet /></div></main>
       </div>

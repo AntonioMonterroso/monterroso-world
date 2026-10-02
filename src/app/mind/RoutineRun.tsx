@@ -79,13 +79,13 @@ export default function RoutineRun() {
     }
   }
 
-  if (!ready) return <div className="safe-top fixed inset-0 z-50 grid place-items-center" style={{ background: '#08111f' }}><Loader2 className="animate-spin" aria-label="Cargando" /></div>
-  if (!r || steps.length === 0) return <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#08111f' }}><div><p className="font-display text-2xl">{r ? 'Esta rutina no tiene pasos' : 'No encontré esta rutina'}</p><button className="btn btn-primary mt-4" onClick={() => nav('/app/mente/rutinas')}>Volver</button></div></div>
+  if (!ready) return <div className="safe-top fixed inset-0 z-50 grid place-items-center" style={{ background: '#07111a' }}><Loader2 className="animate-spin" aria-label="Cargando" /></div>
+  if (!r || steps.length === 0) return <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#07111a' }}><div><p className="font-display text-2xl">{r ? 'Esta rutina no tiene pasos' : 'No encontré esta rutina'}</p><button className="btn btn-primary mt-4" onClick={() => nav('/app/mente/rutinas')}>Volver</button></div></div>
 
   if (finished) {
     const streak = routineStreak(r, runsDb.rows.filter((x) => x.routine_id === r.id), today)
     return (
-      <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#08111f' }}>
+      <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#07111a' }}>
         <div className="max-w-sm">
           <p className="eyebrow">{r.name}</p>
           <h1 className="mt-3 font-display text-5xl">{finished.completed ? 'Lista' : 'Hiciste lo que pudiste'}</h1>
@@ -103,7 +103,7 @@ export default function RoutineRun() {
   const progress = left !== null && total ? (total - left) / total : 0
 
   return (
-    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#08111f' }}>
+    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#07111a' }}>
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav('/app/mente/rutinas')} aria-label="Salir"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1 text-center"><p className="truncate text-sm font-semibold">{r.name}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Paso {idx + 1} de {steps.length}</p></div>
