@@ -525,6 +525,11 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 
 /* El avión vuela en ocho por toda la tarjeta, por DETRÁS del texto, y no estorba los toques */
 .flight { position: absolute; inset: 0; z-index: 1; pointer-events: none; color: var(--hue); overflow: hidden; }
+.flight svg { position: absolute; inset: 0; }
+.pin-hit { position: absolute; width: 48px; height: 60px; pointer-events: auto; cursor: pointer; border-radius: 14px; background: transparent; }
+.pin-hit:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.outing[data-kind="travel"] .outing-body { pointer-events: none; }
+.outing[data-kind="travel"] .outing-body :is(a, button, input) { pointer-events: auto; }
 .outing[data-kind="travel"] .outing-body { position: relative; z-index: 2; }
 .flight .plane-fly { animation: loop8 11s linear infinite; opacity: 1; filter: drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
 @keyframes loop8 { from { offset-distance: 0% } to { offset-distance: 100% } }
@@ -547,3 +552,10 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .ready { display: flex; align-items: center; justify-content: center; gap: .6rem; margin-top: 1.25rem; min-height: 52px; border-radius: 16px; background: var(--surface-2); color: var(--ink-soft); font-weight: 600; transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out); }
 .ready.on { background: color-mix(in oklab, var(--pos) 18%, var(--surface-2)); color: var(--pos); animation: pop 380ms var(--ease-out); }
 @media (prefers-reduced-motion: reduce) { .ready.on { animation: none; } }
+
+/* Estacionado: el avión baja de tamaño, gira hacia el pin y queda a su lado */
+.plane-body { transform-box: fill-box; transform-origin: center; transition: transform 700ms var(--ease-out); }
+.flight[data-phase="parked"] .plane-body { transform: translate(-6px, -34px) rotate(-28deg) scale(.82); /* el eje local del avión apunta hacia donde viaja (arriba en el pin): -34 en y lo deja a la izquierda */ }
+.flight[data-phase="parked"] .pin { animation-duration: 3.6s; }
+.flight[data-phase="landing"] .plane-fly { filter: drop-shadow(0 10px 10px rgba(0,0,0,.4)); }
+@media (prefers-reduced-motion: reduce) { .plane-body { transition: none; } }
