@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chk, Group, Row } from '../components/ui'
+import GoalSpotlight from '../components/GoalSpotlight'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -119,6 +120,8 @@ export default function Today() {
       <Group className="!mt-0" title="Ahora te conviene" aside={suggestions[0]?.id === 'free' ? undefined : `${suggestions.length}`}>
         {suggestions.map((x) => <Row key={x.id} to={x.to} tone={x.tone === 'urgent' ? 'var(--neg)' : x.tone === 'now' ? 'var(--accent)' : x.tone === 'soon' ? 'var(--sky)' : 'var(--ink-faint)'} title={x.title} sub={x.reason} />)}
       </Group>
+
+      <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">
