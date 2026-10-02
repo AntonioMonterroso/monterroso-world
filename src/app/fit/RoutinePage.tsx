@@ -66,7 +66,7 @@ export default function RoutinePage() {
       <div className="mt-3"><Field multiline rows={3} value={w.notes ?? ''} onCommit={(v) => ws.update(w.id, { notes: v.trim() || null })} maxLength={2000} aria-label="Notas de la rutina" /></div>
 
       <div className="mt-10">
-        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await ws.remove(w.id); nav('/app/ejercicio') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra la rutina y sus ejercicios' : 'Eliminar rutina'}</button>
+        <button className="btn btn-ghost" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await ws.remove(w.id); nav('/app/ejercicio') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra la rutina y sus ejercicios' : 'Eliminar rutina'}</button>
       </div>
     </div>
   )

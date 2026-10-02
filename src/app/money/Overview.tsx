@@ -1,12 +1,13 @@
 import { Loader2, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AREAS, budgetStatus, incomeByArea, lastMonths, loanTotals, monthTotals, spendByCategory, type Budget, type Loan, type LoanPayment, type Sub, type Tx } from '../../lib/finance'
+import { budgetStatus, incomeByArea, lastMonths, loanTotals, monthTotals, spendByCategory, type Budget, type Loan, type LoanPayment, type Sub, type Tx } from '../../lib/finance'
 import { currentMonth, money, monthLabel, useProjects } from '../../lib/projects'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { dayNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
+import { useTaxonomy } from '../../lib/taxonomy'
 import { Empty, ErrorBar } from './shared'
 
 function Chart({ data, currency }: { data: { month: string; income: number; expense: number }[]; currency: string }) {
@@ -40,6 +41,7 @@ export default function Overview() {
   const [month, setMonth] = useState(currentMonth())
   const [pick, setPick] = useState('')
   const nav = useNavigate()
+  const tax = useTaxonomy()
   const today = localISO()
 
   // Cobros ya recibidos en Trabajo cuentan como ingreso (freelance web) sin registrarlos dos veces
@@ -56,6 +58,8 @@ export default function Overview() {
   const alerts = useMemo(() => budgetStatus(budgets.rows, txs.rows, month).filter((b) => b.state !== 'ok'), [budgets.rows, txs.rows, month])
   const due = useMemo(() => subs.rows.filter((s) => s.active && dayNum(s.next_due) - dayNum(today) <= 14).slice(0, 4), [subs.rows, today])
   const lt = useMemo(() => loanTotals(loans.rows, pays.rows), [loans.rows, pays.rows])
+  // Tus áreas, más cualquier clave con ingresos que ya no exista en la lista (p. ej. un área borrada)
+  const areaRows = useMemo(() => [...tax.areas.map((a) => ({ key: a.key, name: a.name, color: a.color })), ...Object.keys(byArea).filter((k) => !tax.areas.some((a) => a.key === k) && byArea[k] > 0).map((k) => tax.areaMeta(k))], [tax, byArea])
   const areaMax = Math.max(1, ...Object.values(byArea))
 
   const loading = txs.loading || work.loading
@@ -89,9 +93,9 @@ export default function Overview() {
 
           {!empty && Object.values(byArea).some(Boolean) && (
             <Group title="Ingresos por área" footer={extra.some((e) => e.date.startsWith(month)) ? 'Incluye los cobros de tus trabajos web.' : undefined}>
-              {AREAS.map((a) => (
-                <Row key={a.id} tone={a.color} title={a.label} value={money(byArea[a.id], cur)}>
-                  <div className="meter mx-4 mb-3 -mt-1" style={{ ['--meter' as string]: a.color }}><i style={{ width: `${(byArea[a.id] / areaMax) * 100}%` }} /></div>
+              {areaRows.map((a) => (
+                <Row key={a.key} tone={a.color} title={a.name} value={money(byArea[a.key] ?? 0, cur)}>
+                  <div className="meter mx-4 mb-3 -mt-1" style={{ ['--meter' as string]: a.color }}><i style={{ width: `${((byArea[a.key] ?? 0) / areaMax) * 100}%` }} /></div>
                 </Row>
               ))}
             </Group>

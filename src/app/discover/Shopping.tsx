@@ -9,6 +9,7 @@ import { money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, toNum } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 type Draft = { id?: string; name: string; priority: 1 | 2 | 3; category: string; price: string; currency: string; store: string; url: string; notes: string }
 const blank = (): Draft => ({ name: '', priority: 2, category: 'Equipo y tecnología', price: '', currency: defaultCurrency(), store: '', url: '', notes: '' })
@@ -65,8 +66,8 @@ export default function Shopping() {
     return (
       <li key={i.id} className="rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)', opacity: i.status === 'bought' ? 0.65 : 1 }}>
         <div className="flex items-center gap-1">
-          {i.status === 'pending' && <button className="grid size-12 shrink-0 place-items-center" onClick={() => startBuy(i)} aria-label={`Marcar ${i.name} como comprado`}><span className="grid size-6 place-items-center rounded-full border" style={{ borderColor: '#8fd1a4' }} aria-hidden /></button>}
-          {i.status === 'bought' && <span className="grid size-12 shrink-0 place-items-center" aria-hidden><Check size={18} style={{ color: '#8fd1a4' }} /></span>}
+          {i.status === 'pending' && <button className="grid size-12 shrink-0 place-items-center" onClick={() => startBuy(i)} aria-label={`Marcar ${i.name} como comprado`}><span className="grid size-6 place-items-center rounded-full border" style={{ borderColor: 'var(--pos)' }} aria-hidden /></button>}
+          {i.status === 'bought' && <span className="grid size-12 shrink-0 place-items-center" aria-hidden><Check size={18} style={{ color: 'var(--pos)' }} /></span>}
           <button className="min-w-0 flex-1 py-3 text-left" onClick={() => { setErr(''); setConfirm(false); setD({ id: i.id, name: i.name, priority: i.priority, category: i.category, price: i.price ? String(i.price) : '', currency: i.currency, store: i.store ?? '', url: i.url ?? '', notes: i.notes ?? '' }) }}>
             <span className="block truncate font-semibold" style={{ textDecoration: i.status === 'bought' ? 'line-through' : 'none' }}>{i.name}</span>
             <span className="block truncate text-xs" style={{ color: 'var(--ink-faint)' }}><span style={{ color: pr.color }}>{pr.label}</span> · {i.category}{i.store ? ` · ${i.store}` : ''}{i.status === 'bought' && i.bought_on ? ` · ${i.bought_on}` : ''}</span>
@@ -81,10 +82,7 @@ export default function Shopping() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Descubrir</p><h1 className="mt-2 font-display text-4xl">Por comprar</h1>{Object.keys(totals).length > 0 && <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Pendiente: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</p>}</div>
-        <button className="btn btn-primary" onClick={() => { setErr(''); setD(blank()) }}><Plus size={18} aria-hidden /> Artículo</button>
-      </div>
+      <PageHeader eyebrow="Descubrir" title="Por comprar" sub={<>Pendiente: {Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}</>} action={<button className="btn btn-primary" onClick={() => { setErr(''); setD(blank()) }}><Plus size={18} aria-hidden /> Artículo</button>} />
       <ErrorBar msg={db.error || txs.error || goals.error} onClose={db.clearError} />
       {msg && <p role="status" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--sky) 14%, transparent)', color: 'var(--sky)' }}>{msg}</p>}
 
@@ -115,10 +113,10 @@ export default function Shopping() {
             <label className="grid gap-2 text-sm">Dónde<input className="field" value={d.store} onChange={(e) => setD({ ...d, store: e.target.value })} maxLength={200} placeholder="Tienda o sitio" /></label>
             <label className="grid gap-2 text-sm">Enlace (opcional)<input className="field" inputMode="url" value={d.url} onChange={(e) => setD({ ...d, url: e.target.value })} maxLength={1000} placeholder="https://" /></label>
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} maxLength={500} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await db.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+              {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
             </div>
           </form>
         )}
@@ -130,7 +128,7 @@ export default function Shopping() {
             <p className="font-semibold">{buy.name}</p>
             <label className="grid gap-2 text-sm">¿Cuánto costó realmente? ({buy.currency})<input className="field" inputMode="decimal" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} placeholder="0.00" autoFocus /></label>
             <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={record} onChange={(e) => setRecord(e.target.checked)} /> Registrarlo como gasto en Finanzas ({expenseCategoryFor(buy.category)})</label>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Listo, lo compré</button>
           </form>
         )}

@@ -449,3 +449,10 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 @media (min-width: 768px) { .sheet-grab { display: none; } }
 .sheet-grab, .sheet-grab + div { user-select: none; -webkit-user-select: none; }
 .stat { min-width: 0; } .stat-value { overflow-wrap: anywhere; }
+
+/* Muestras de color */
+.swatch { width: 36px; height: 36px; border-radius: 99px; background: var(--sw); cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); transition: transform 140ms var(--ease-out), box-shadow 160ms var(--ease-out); position: relative; }
+.swatch::before { content: ""; position: absolute; inset: -7px; }
+.swatch:active { transform: scale(.92); }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--sw); }
+.field[class*="pl-10"] { padding-left: 2.5rem; }

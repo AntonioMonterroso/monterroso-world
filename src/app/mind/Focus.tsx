@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { usePriorities } from '../../lib/data'
 import { ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 type Inbox = { id: string; text: string; kind: string; processed: boolean; source: string }
 type Run = { mode: 'focus' | 'break'; status: 'running' | 'paused' | 'finished'; task: string; plannedMin: number; startedAt: number; endAt: number; pausedLeft: number; distractions: number; sound: AmbientKind; companion: boolean; saved: boolean; actualMin: number; completed: boolean }
@@ -133,7 +134,7 @@ export default function Focus() {
           <div className="relative grid place-items-center">
             <svg viewBox="0 0 200 200" width={260} height={260} role="timer" aria-label={`Quedan ${mmss(left)}`}>
               <circle cx="100" cy="100" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
-              <circle cx="100" cy="100" r={r} fill="none" stroke={isFocus ? 'var(--accent)' : '#8fd1a4'} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - (total ? (total - left) / total : 0))} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 300ms linear' }} />
+              <circle cx="100" cy="100" r={r} fill="none" stroke={isFocus ? 'var(--accent)' : 'var(--pos)'} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - (total ? (total - left) / total : 0))} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 300ms linear' }} />
             </svg>
             <span className="absolute font-display text-6xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{mmss(left)}</span>
           </div>
@@ -169,8 +170,7 @@ export default function Focus() {
     const isFocus = run.mode === 'focus'
     return (
       <div>
-        <p className="eyebrow">{isFocus ? 'Enfoque' : 'Pausa'}</p>
-        <h1 className="mt-2 font-display text-4xl">{isFocus ? (run.completed ? 'Lo lograste' : 'Cerraste la ronda') : 'Pausa terminada'}</h1>
+        <PageHeader eyebrow="{isFocus ? 'Enfoque' : 'Pausa'}" title="{isFocus ? (run.completed ? 'Lo lograste' : 'Cerraste la ronda') : 'Pausa terminada'}" />
         <ErrorBar msg={err || inbox.error || sessions.error} onClose={() => setErr('')} />
         {isFocus && <p className="mt-2" style={{ color: 'var(--ink-soft)' }}>{run.actualMin} min de enfoque{run.task && ` en “${run.task}”`}{run.distractions > 0 && ` · anotaste ${run.distractions} ${run.distractions === 1 ? 'idea' : 'ideas'} sin salirte de la tarea`}.</p>}
 

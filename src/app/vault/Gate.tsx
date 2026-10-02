@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { VaultError, createVault, masterStrength, rewrapMaster, rewrapRecovery, unlockWithMaster, unlockWithRecovery, type DataKey, type VaultMeta } from '../../lib/vault'
 import { copySecret, unlockVault } from '../../lib/vaultSession'
 
-const bar = ['#e8a393', '#e8a393', 'var(--personal)', '#8fd1a4', '#8fd1a4']
+const bar = ['var(--neg)', 'var(--neg)', 'var(--personal)', 'var(--pos)', 'var(--pos)']
 
 function Strength({ pw }: { pw: string }) {
   const s = masterStrength(pw)
@@ -31,7 +31,7 @@ export function RecoveryScreen({ code, onDone }: { code: string; onDone: () => v
   }
   return (
     <div className="mx-auto max-w-md">
-      <ShieldCheck size={36} aria-hidden style={{ color: '#8fd1a4' }} />
+      <ShieldCheck size={36} aria-hidden style={{ color: 'var(--pos)' }} />
       <h1 className="mt-3 font-display text-4xl">Guarda este código</h1>
       <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>Es tu única forma de entrar si olvidas la clave maestra. Se muestra solo ahora. Anótalo en papel o guárdalo en tu gestor de claves, <strong>no</strong> en este mismo teléfono sin respaldo.</p>
       <p className="mt-5 rounded-2xl border px-4 py-5 text-center font-mono text-lg tracking-wider break-all" style={{ borderColor: 'var(--accent)', background: 'var(--bg)' }} aria-label="Código de recuperación">{code}</p>
@@ -76,7 +76,7 @@ export function Setup({ onCreated }: { onCreated: (meta: VaultMeta, code: string
       <Strength pw={pw} />
       <label className="grid gap-2 text-sm">Repítela<input className="field" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></label>
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={ack} onChange={(e) => setAck(e.target.checked)} /> Entiendo que si pierdo la clave maestra y el código de recuperación, nadie puede recuperar mis datos.</label>
-      {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
       <button className="btn btn-primary w-fit" disabled={busy || !ack || !pw}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} {busy ? 'Protegiendo…' : 'Crear bóveda'}</button>
     </form>
   )
@@ -132,7 +132,7 @@ export function Unlock({ meta, onMetaChanged }: { meta: VaultMeta; onMetaChanged
         <label className="grid gap-2 text-sm">Nueva clave maestra<input className="field" type="password" autoComplete="new-password" value={np} onChange={(e) => setNp(e.target.value)} /></label>
         <Strength pw={np} />
         <label className="grid gap-2 text-sm">Repítela<input className="field" type="password" autoComplete="new-password" value={np2} onChange={(e) => setNp2(e.target.value)} /></label>
-        {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
         <div className="flex gap-3">
           <button className="btn btn-primary" disabled={busy || !code}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Recuperar</button>
           <button type="button" className="btn btn-ghost" onClick={() => { setForgot(false); setErr('') }}>Volver</button>
@@ -146,7 +146,7 @@ export function Unlock({ meta, onMetaChanged }: { meta: VaultMeta; onMetaChanged
       <KeyRound size={36} aria-hidden style={{ color: 'var(--accent)' }} />
       <h1 className="font-display text-4xl">Bóveda bloqueada</h1>
       <label className="grid gap-2 text-sm">Clave maestra<input className="field" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus /></label>
-      {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
       <div className="flex flex-wrap gap-3">
         <button className="btn btn-primary" disabled={busy || !pw}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Desbloquear</button>
         {bio && <button type="button" className="btn btn-ghost" onClick={() => void withBio()} disabled={busy}><Fingerprint size={18} aria-hidden /> Huella o Face ID</button>}

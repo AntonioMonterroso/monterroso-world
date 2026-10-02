@@ -1,6 +1,7 @@
-import { ArrowRight, BookmarkCheck, Lightbulb, Link2, MapPin, PlayCircle, Plus, Repeat, ShoppingBag, Briefcase } from 'lucide-react'
+import { BookmarkCheck, Lightbulb, Link2, MapPin, PlayCircle, Plus, Repeat, ShoppingBag, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Group, PageHeader, Row } from '../../components/ui'
 import { pendingTotals, type Board, type Inspiration, type Place, type ShopItem } from '../../lib/inspire'
 import { STATUS, dueReviews, finishedThisWeek, thumbUrl, type LinkRow, type Video } from '../../lib/learn'
 import { money } from '../../lib/projects'
@@ -16,15 +17,9 @@ const QUICK = [
   { label: 'Compra', to: '/app/descubrir/compras?nuevo=1' },
 ]
 
-function Row({ to, icon: Icon, title, line, color }: { to: string; icon: typeof Link2; title: string; line: string; color: string }) {
-  return (
-    <Link to={to} className="group flex min-h-16 items-center gap-4 border-b py-3 last:border-b-0" style={{ borderColor: 'var(--line-soft)' }}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-full" style={{ background: `color-mix(in oklab, ${color} 14%, transparent)`, color }}><Icon size={18} aria-hidden /></span>
-      <span className="min-w-0 flex-1"><span className="block font-semibold">{title}</span><span className="block truncate text-sm" style={{ color: 'var(--ink-soft)' }}>{line}</span></span>
-      <ArrowRight size={16} aria-hidden className="shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" style={{ color: 'var(--ink-faint)' }} />
-    </Link>
-  )
-}
+const HubRow = ({ to, icon: Icon, title, line, color }: { to: string; icon: typeof Link2; title: string; line: string; color: string }) => (
+  <Row to={to} icon={<Icon size={17} aria-hidden />} tone={color} title={title} sub={line} />
+)
 
 export default function Hub() {
   const nav = useNavigate()
@@ -52,25 +47,20 @@ export default function Hub() {
 
   return (
     <div>
-      <p className="eyebrow">Centro</p>
-      <h1 className="mt-2 font-display text-4xl">Descubrir</h1>
-      <p className="mt-2 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Lo que aprendes, lo que guardas y lo que quieres conocer o comprar.</p>
+      <PageHeader eyebrow="Centro" title="Descubrir" sub="Lo que aprendes, lo que guardas y lo que quieres conocer o comprar." />
 
-      <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Agregar rápido">
-        {QUICK.map((q) => <button key={q.label} onClick={() => nav(q.to)} className="inline-flex min-h-11 items-center gap-1 rounded-full border px-4 text-sm" style={{ borderColor: 'var(--line)' }}><Plus size={14} aria-hidden /> {q.label}</button>)}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Agregar rápido">
+        {QUICK.map((q) => <button key={q.label} onClick={() => nav(q.to)} className="btn btn-tint !min-h-10"><Plus size={14} aria-hidden /> {q.label}</button>)}
       </div>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
+      <div className="mt-2 grid gap-2 lg:grid-cols-[1.25fr_1fr] lg:gap-14">
         {/* Aprender: lo accionable va primero */}
         <section aria-labelledby="h-aprender">
-          <div className="flex items-baseline justify-between">
-            <h2 id="h-aprender" className="font-display text-2xl">Aprender</h2>
-            <Link to="/app/descubrir/aprender" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver videos</Link>
-          </div>
+          <div className="group-head !mt-6"><h3 id="h-aprender">Aprender</h3><span><Link to="/app/descubrir/aprender" className="underline">Ver videos</Link></span></div>
 
           <div className="mt-3 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
             <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Esta semana terminaste <strong style={{ color: 'var(--ink)' }}>{week}</strong> de <strong style={{ color: 'var(--ink)' }}>{goal}</strong> videos</p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${week} de ${goal}`}><div className="h-full rounded-full" style={{ width: `${Math.min(100, (week / goal) * 100)}%`, background: week >= goal ? '#8fd1a4' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${week} de ${goal}`}><div className="h-full rounded-full" style={{ width: `${Math.min(100, (week / goal) * 100)}%`, background: week >= goal ? 'var(--pos)' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
           </div>
 
           {due.length > 0 && (
@@ -94,23 +84,17 @@ export default function Hub() {
           )}
         </section>
 
-        <div className="grid content-start gap-10">
-          <section aria-labelledby="h-guardar">
-            <h2 id="h-guardar" className="font-display text-2xl">Guardar</h2>
-            <div className="mt-1">
-              <Row to="/app/descubrir/links" icon={Link2} color="var(--dev)" title="Links" line={links.rows.length ? `${summary(links.rows.length, 'link', 'links')}${favs ? ` · ${favs} ${favs === 1 ? 'favorito' : 'favoritos'}` : ''}` : 'Tu directorio por categorías'} />
-              <Row to="/app/descubrir/inspiracion" icon={Lightbulb} color="var(--music)" title="Inspiración" line={insp.rows.length ? `${summary(insp.rows.length, 'cosa guardada', 'cosas guardadas')}${boards.rows.length ? ` · ${summary(boards.rows.length, 'tablero', 'tableros')}` : ''}` : 'Enlaces, fotos, canciones y notas'} />
-              <Row to="/app/descubrir/portafolio" icon={Briefcase} color="var(--personal)" title="Portafolio" line={portfolio ? summary(portfolio, 'trabajo para mostrar', 'trabajos para mostrar') : 'Tu página y lo que ya publicaste'} />
-            </div>
-          </section>
+        <div className="grid content-start">
+          <Group title="Guardar">
+              <HubRow to="/app/descubrir/links" icon={Link2} color="var(--dev)" title="Links" line={links.rows.length ? `${summary(links.rows.length, 'link', 'links')}${favs ? ` · ${favs} ${favs === 1 ? 'favorito' : 'favoritos'}` : ''}` : 'Tu directorio por categorías'} />
+              <HubRow to="/app/descubrir/inspiracion" icon={Lightbulb} color="var(--music)" title="Inspiración" line={insp.rows.length ? `${summary(insp.rows.length, 'cosa guardada', 'cosas guardadas')}${boards.rows.length ? ` · ${summary(boards.rows.length, 'tablero', 'tableros')}` : ''}` : 'Enlaces, fotos, canciones y notas'} />
+              <HubRow to="/app/descubrir/portafolio" icon={Briefcase} color="var(--personal)" title="Portafolio" line={portfolio ? summary(portfolio, 'trabajo para mostrar', 'trabajos para mostrar') : 'Tu página y lo que ya publicaste'} />
+          </Group>
 
-          <section aria-labelledby="h-salir">
-            <h2 id="h-salir" className="font-display text-2xl">Salir y comprar</h2>
-            <div className="mt-1">
-              <Row to="/app/descubrir/lugares" icon={MapPin} color="var(--music)" title="Lugares" line={places.rows.length ? `${want} por visitar · ${places.rows.length - want} ${places.rows.length - want === 1 ? 'visitado' : 'visitados'}` : 'Sitios que quieres conocer'} />
-              <Row to="/app/descubrir/compras" icon={pendingShop.length ? ShoppingBag : BookmarkCheck} color="var(--dev)" title="Por comprar" line={pendingShop.length ? `${summary(pendingShop.length, 'pendiente', 'pendientes')}${Object.keys(totals).length ? ` · ${Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}` : ''}` : shop.rows.length ? 'Todo comprado' : 'Instrumentos, equipo y más'} />
-            </div>
-          </section>
+          <Group title="Salir y comprar">
+              <HubRow to="/app/descubrir/lugares" icon={MapPin} color="var(--music)" title="Lugares" line={places.rows.length ? `${want} por visitar · ${places.rows.length - want} ${places.rows.length - want === 1 ? 'visitado' : 'visitados'}` : 'Sitios que quieres conocer'} />
+              <HubRow to="/app/descubrir/compras" icon={pendingShop.length ? ShoppingBag : BookmarkCheck} color="var(--dev)" title="Por comprar" line={pendingShop.length ? `${summary(pendingShop.length, 'pendiente', 'pendientes')}${Object.keys(totals).length ? ` · ${Object.entries(totals).map(([c, v]) => money(v, c)).join(' · ')}` : ''}` : shop.rows.length ? 'Todo comprado' : 'Instrumentos, equipo y más'} />
+          </Group>
         </div>
       </div>
     </div>

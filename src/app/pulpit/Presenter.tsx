@@ -141,7 +141,7 @@ export default function Presenter() {
     <div className="safe-top fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: '#08111f' }}>
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav(`/app/pulpito/predica/${sermon.id}`)} aria-label="Salir"><X size={22} aria-hidden /></button>
-        <div className="min-w-0 flex-1"><p className="truncate font-semibold">{sermon.title}</p><p className="text-xs" style={{ color: displays ? '#8fd1a4' : 'var(--ink-faint)' }}>{displays ? `${displays} ${displays === 1 ? 'pantalla conectada' : 'pantallas conectadas'}` : 'Ninguna pantalla conectada'}</p></div>
+        <div className="min-w-0 flex-1"><p className="truncate font-semibold">{sermon.title}</p><p className="text-xs" style={{ color: displays ? 'var(--pos)' : 'var(--ink-faint)' }}>{displays ? `${displays} ${displays === 1 ? 'pantalla conectada' : 'pantallas conectadas'}` : 'Ninguna pantalla conectada'}</p></div>
         <div className="inline-flex rounded-full p-1" style={{ background: 'var(--surface)' }} role="tablist">
           {([['slides', 'Diapositivas'], ['script', 'Guion']] as const).map(([v, l]) => <button key={v} role="tab" aria-selected={tab === v} onClick={() => setTab(v)} className="min-h-10 rounded-full px-3 text-sm font-semibold" style={{ background: tab === v ? 'var(--accent)' : 'transparent', color: tab === v ? 'var(--bg)' : 'var(--ink-soft)' }}>{l}</button>)}
         </div>

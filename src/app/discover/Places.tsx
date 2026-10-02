@@ -6,6 +6,7 @@ import { PLACE_CATEGORIES, mapsSearchUrl, type Place, type Trip } from '../../li
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 type PDraft = { id?: string; name: string; category: string; status: 'want' | 'visited'; address: string; url: string; notes: string; rating: number; visited_on: string; trip_id: string }
 type TDraft = { id?: string; name: string; start_date: string; end_date: string; notes: string }
@@ -50,10 +51,7 @@ export default function Places() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Descubrir</p><h1 className="mt-2 font-display text-4xl">Lugares</h1></div>
-        <button className="btn btn-primary" onClick={() => { setErr(''); setP(blankP(trip)) }}><Plus size={18} aria-hidden /> Lugar</button>
-      </div>
+      <PageHeader eyebrow="Descubrir" title="Lugares" action={<button className="btn btn-primary" onClick={() => { setErr(''); setP(blankP(trip)) }}><Plus size={18} aria-hidden /> Lugar</button>} />
       <ErrorBar msg={places.error || trips.error} onClose={places.clearError} />
 
       <section className="mt-6" aria-labelledby="viajes">
@@ -83,7 +81,7 @@ export default function Places() {
                   <span className="block truncate text-xs" style={{ color: 'var(--ink-faint)' }}>{x.category}{x.trip_id && trips.rows.find((y) => y.id === x.trip_id) ? ` · ${trips.rows.find((y) => y.id === x.trip_id)!.name}` : ''}{x.status === 'visited' && x.rating ? ` · ${'★'.repeat(x.rating)}` : ''}{x.address ? ` · ${x.address}` : ''}</span>
                 </button>
                 {(x.address || x.url) && <a className="grid size-11 shrink-0 place-items-center" href={x.address ? mapsSearchUrl(x.address) : x.url!} target="_blank" rel="noopener noreferrer" aria-label={x.address ? `Abrir ${x.name} en Mapas` : `Abrir enlace de ${x.name}`}>{x.address ? <MapPin size={18} aria-hidden style={{ color: 'var(--sky)' }} /> : <ExternalLink size={16} aria-hidden />}</a>}
-                {x.status === 'want' && <button className="grid size-11 shrink-0 place-items-center" onClick={() => markVisited(x)} aria-label={`Marcar ${x.name} como visitado`}><Check size={18} aria-hidden style={{ color: '#8fd1a4' }} /></button>}
+                {x.status === 'want' && <button className="grid size-11 shrink-0 place-items-center" onClick={() => markVisited(x)} aria-label={`Marcar ${x.name} como visitado`}><Check size={18} aria-hidden style={{ color: 'var(--pos)' }} /></button>}
               </div>
             </li>
           ))}
@@ -107,10 +105,10 @@ export default function Places() {
               </div>
             )}
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={p.notes} onChange={(e) => setP({ ...p, notes: e.target.value })} maxLength={1000} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {p.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await places.remove(p.id!); setP(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+              {p.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await places.remove(p.id!); setP(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
             </div>
           </form>
         )}
@@ -125,10 +123,10 @@ export default function Places() {
               <label className="grid gap-2 text-sm">Hasta<input type="date" className="field" value={t.end_date} onChange={(e) => setT({ ...t, end_date: e.target.value })} /></label>
             </div>
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={t.notes} onChange={(e) => setT({ ...t, notes: e.target.value })} maxLength={1000} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {t.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await trips.remove(t.id!); setT(null); setTrip(''); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Los lugares se quedan' : 'Eliminar'}</button>}
+              {t.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await trips.remove(t.id!); setT(null); setTrip(''); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Los lugares se quedan' : 'Eliminar'}</button>}
             </div>
           </form>
         )}

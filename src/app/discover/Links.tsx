@@ -5,6 +5,7 @@ import Sheet from '../../components/Sheet'
 import { LINK_CATEGORIES, hostOf, type LinkRow } from '../../lib/learn'
 import { useTable } from '../../lib/table'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 type Draft = { id?: string; url: string; title: string; category: string; description: string; favorite: boolean; portfolio: boolean; image_url: string }
 export const blankLink = (portfolio = false): Draft => ({ url: '', title: '', category: portfolio ? 'Clientes' : 'Otros', description: '', favorite: false, portfolio, image_url: '' })
@@ -43,10 +44,10 @@ export function LinkSheet({ draft, setDraft, db }: { draft: Draft | null; setDra
           <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.favorite} onChange={(e) => setDraft({ ...draft, favorite: e.target.checked })} /> Favorito</label>
           <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.portfolio} onChange={(e) => setDraft({ ...draft, portfolio: e.target.checked })} /> Es parte de mi portafolio</label>
           {draft.portfolio && <label className="grid gap-2 text-sm">Imagen o captura (enlace https, opcional)<input className="field" inputMode="url" value={draft.image_url} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} maxLength={1000} placeholder="https://" /></label>}
-          {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <div className="flex items-center gap-3">
             <button className="btn btn-primary">Guardar</button>
-            {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await db.remove(draft.id!); setDraft(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+            {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(draft.id!); setDraft(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
           </div>
         </form>
       )}
@@ -79,10 +80,7 @@ export default function Links() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Descubrir</p><h1 className="mt-2 font-display text-4xl">Links</h1></div>
-        <button className="btn btn-primary" onClick={() => setDraft(blankLink())}><Plus size={18} aria-hidden /> Link</button>
-      </div>
+      <PageHeader eyebrow="Descubrir" title="Links" action={<button className="btn btn-primary" onClick={() => setDraft(blankLink())}><Plus size={18} aria-hidden /> Link</button>} />
       <ErrorBar msg={db.error} onClose={db.clearError} />
 
       <div className="relative mt-6">

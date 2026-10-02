@@ -4,6 +4,7 @@ import { hostOf, type LinkRow } from '../../lib/learn'
 import { useTable } from '../../lib/table'
 import { Empty, ErrorBar } from '../money/shared'
 import { LinkSheet, blankLink, toDraft } from './Links'
+import { PageHeader } from '../../components/ui'
 
 export default function Portfolio() {
   const db = useTable<LinkRow>('links', { col: 'created_at', asc: false })
@@ -12,10 +13,7 @@ export default function Portfolio() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Descubrir</p><h1 className="mt-2 font-display text-4xl">Portafolio</h1><p className="mt-1 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Tu página y los trabajos que ya publicaste, a un toque para mostrarlos.</p></div>
-        <button className="btn btn-primary" onClick={() => setDraft(blankLink(true))}><Plus size={18} aria-hidden /> Trabajo</button>
-      </div>
+      <PageHeader eyebrow="Descubrir" title="Portafolio" sub={<>Tu página y los trabajos que ya publicaste, a un toque para mostrarlos.</>} action={<button className="btn btn-primary" onClick={() => setDraft(blankLink(true))}><Plus size={18} aria-hidden /> Trabajo</button>} />
       <ErrorBar msg={db.error} onClose={db.clearError} />
 
       {db.loading ? <div className="grid h-40 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : items.length === 0 ? (

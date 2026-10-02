@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useTable } from '../../lib/table'
 import { NOTE_KINDS, type FaithNote, type NoteKind } from '../../lib/pulpit'
 import { localISO } from '../../lib/time'
+import { PageHeader } from '../../components/ui'
 
 const kindLabel = (k: NoteKind) => NOTE_KINDS.find((x) => x.id === k)?.label ?? k
 
@@ -26,7 +27,7 @@ function NoteForm({ n, onSave, onDelete, onClose }: { n: FaithNote; onSave: (p: 
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary">Guardar</button>
         <button type="button" className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-        <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
+        <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
       </div>
     </form>
   )
@@ -59,10 +60,7 @@ export default function FaithNotes() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Púlpito</p><h1 className="mt-2 font-display text-4xl">Notas de fe</h1></div>
-        <button className="btn btn-primary" onClick={() => create(filter === 'all' ? 'heard' : filter)}><Plus size={18} aria-hidden /> Nota</button>
-      </div>
+      <PageHeader eyebrow="Púlpito" title="Notas de fe" action={<button className="btn btn-primary" onClick={() => create(filter === 'all' ? 'heard' : filter)}><Plus size={18} aria-hidden /> Nota</button>} />
 
       <div className="relative mt-6">
         <Search size={16} aria-hidden className="absolute top-1/2 left-4 -translate-y-1/2" style={{ color: 'var(--ink-faint)' }} />
@@ -72,7 +70,7 @@ export default function FaithNotes() {
         {([{ id: 'all', label: 'Todas' }, ...NOTE_KINDS] as { id: NoteKind | 'all'; label: string }[]).map((k) => <button key={k.id} aria-pressed={filter === k.id} onClick={() => setFilter(k.id)} className="min-h-11 shrink-0 rounded-full border px-4 text-sm" style={{ borderColor: filter === k.id ? 'var(--accent)' : 'var(--line)', background: filter === k.id ? 'var(--accent)' : 'transparent', color: filter === k.id ? 'var(--bg)' : 'var(--ink-soft)' }}>{k.label}</button>)}
       </div>
 
-      {db.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{db.error}</p>}
+      {db.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{db.error}</p>}
 
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : list.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
@@ -86,7 +84,7 @@ export default function FaithNotes() {
               <div className="flex items-center gap-2">
                 {n.kind === 'prayer' && (
                   <button onClick={() => db.update(n.id, { answered: !n.answered })} aria-pressed={n.answered} aria-label={n.answered ? 'Marcar como pendiente' : 'Marcar como respondida'} className="grid size-11 shrink-0 place-items-center">
-                    <span className="grid size-6 place-items-center rounded-full border" style={{ borderColor: '#8fd1a4', background: n.answered ? '#8fd1a4' : 'transparent', color: 'var(--bg)' }}>{n.answered && <Check size={14} aria-hidden />}</span>
+                    <span className="grid size-6 place-items-center rounded-full border" style={{ borderColor: 'var(--pos)', background: n.answered ? 'var(--pos)' : 'transparent', color: 'var(--bg)' }}>{n.answered && <Check size={14} aria-hidden />}</span>
                   </button>
                 )}
                 <button onClick={() => setOpen(open === n.id ? null : n.id)} className="min-w-0 flex-1 px-4 py-3 text-left" aria-expanded={open === n.id}>

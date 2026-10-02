@@ -76,7 +76,7 @@ export default function VideoPage() {
               <p className="mt-1" style={{ color: 'var(--ink-soft)' }}>{dueNow ? 'Toca repasarlo ahora.' : `Próximo repaso: ${v.next_review}.`} Llevas {v.review_step} de {REVIEW_DAYS.length}.</p>
               {dueNow && <button className="btn btn-primary mt-3" onClick={() => db.update(v.id, advanceReview(v.review_step, today))}><Check size={16} aria-hidden /> Ya lo repasé</button>}
             </>
-          ) : <p className="mt-1" style={{ color: '#8fd1a4' }}>Completaste los {REVIEW_DAYS.length} repasos. Ya es tuyo.</p>}
+          ) : <p className="mt-1" style={{ color: 'var(--pos)' }}>Completaste los {REVIEW_DAYS.length} repasos. Ya es tuyo.</p>}
         </div>
       )}
 
@@ -88,7 +88,7 @@ export default function VideoPage() {
             <button type="button" className="btn btn-ghost shrink-0" onClick={stamp} disabled={v.provider !== 'youtube'} title={v.provider === 'youtube' ? undefined : 'Con Vimeo escribe el minuto a mano'}><Clock size={16} aria-hidden /> Minuto actual</button>
           </div>
           <textarea className="field py-3" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder="Lo que quieres recordar de este momento" maxLength={2000} aria-label="Nota" />
-          {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Guardar nota</button>
         </form>
         {mine.length > 0 && (
@@ -105,7 +105,7 @@ export default function VideoPage() {
       </section>
 
       <div className="mt-10">
-        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await db.remove(v.id); nav('/app/descubrir/aprender') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran también sus notas' : 'Quitar video'}</button>
+        <button className="btn btn-ghost" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(v.id); nav('/app/descubrir/aprender') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran también sus notas' : 'Quitar video'}</button>
       </div>
     </div>
   )

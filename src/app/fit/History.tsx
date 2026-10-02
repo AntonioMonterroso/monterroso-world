@@ -4,6 +4,7 @@ import { exerciseNames, progress, sessionsInLast, volume, type Partner, type Wor
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 function Spark({ points }: { points: { date: string; best: number }[] }) {
   if (points.length < 2) return <p className="text-sm" style={{ color: 'var(--ink-faint)' }}>Necesitas al menos dos sesiones con este ejercicio para ver la curva.</p>
@@ -37,8 +38,7 @@ export default function History() {
 
   return (
     <div>
-      <p className="eyebrow">Ejercicio</p>
-      <h1 className="mt-2 font-display text-4xl">Historial</h1>
+      <PageHeader eyebrow="Ejercicio" title="Historial" />
       <ErrorBar msg={logs.error} onClose={logs.clearError} />
 
       {partners.rows.length > 0 && (

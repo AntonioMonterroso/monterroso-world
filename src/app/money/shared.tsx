@@ -1,5 +1,5 @@
 export const ErrorBar = ({ msg, onClose }: { msg: string; onClose?: () => void }) => msg ? (
-  <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{msg}{onClose && <button className="underline" onClick={onClose}>Cerrar</button>}</p>
+  <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{msg}{onClose && <button className="underline" onClick={onClose}>Cerrar</button>}</p>
 ) : null
 
 export const Empty = ({ title, text, action, onAction }: { title: string; text: string; action?: string; onAction?: () => void }) => (

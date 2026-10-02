@@ -196,12 +196,12 @@ export default function EventEditor({ target, onClose, onSave, onDelete, onSkip 
               <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></label>
             </div>
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {ev && ev.repeat !== 'none' && target?.date && <button type="button" className="btn btn-ghost" onClick={() => onSkip(ev, target.date!)}>Omitir esta fecha</button>}
-              {ev && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete(ev.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : ev.repeat !== 'none' ? 'Eliminar serie' : 'Eliminar'}</button>}
+              {ev && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete(ev.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : ev.repeat !== 'none' ? 'Eliminar serie' : 'Eliminar'}</button>}
             </div>
           </motion.form>
         </motion.div>

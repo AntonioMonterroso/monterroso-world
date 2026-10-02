@@ -124,7 +124,7 @@ export default function Deliveries() {
             <label className="grid gap-2 text-sm">Notas (opcional)<textarea className="field py-3" rows={2} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} maxLength={1000} /></label>
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await remove(db.rows.find((x) => x.id === draft.id)!); setDraft(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+              {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await remove(db.rows.find((x) => x.id === draft.id)!); setDraft(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
             </div>
           </form>
         )}

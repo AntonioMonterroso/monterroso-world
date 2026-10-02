@@ -77,7 +77,7 @@ export default function RoutineEditor() {
         {r.event_id ? <button className="btn btn-ghost" onClick={removeReminder}><BellOff size={16} aria-hidden /> Quitar recordatorio diario</button> : <button className="btn btn-ghost" onClick={addReminder}><BellPlus size={16} aria-hidden /> Recordarme todos los días</button>}
       </div>
       {msg && <p role="status" className="mt-3 text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
-      {(routines.error || stepsDb.error) && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{routines.error || stepsDb.error}</p>}
+      {(routines.error || stepsDb.error) && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{routines.error || stepsDb.error}</p>}
 
       <h2 className="mt-8 font-display text-2xl">Pasos <span className="text-base" style={{ color: 'var(--ink-faint)' }}>{totalMinutes(steps) > 0 && `· ${totalMinutes(steps)} min`}</span></h2>
       <ol className="mt-3 grid gap-3">
@@ -100,7 +100,7 @@ export default function RoutineEditor() {
       <button className="btn btn-ghost mt-3" onClick={() => stepsDb.add({ routine_id: r.id, position: (steps.at(-1)?.position ?? 0) + 1, title: 'Nuevo paso', minutes: 5, note: null })}><Plus size={16} aria-hidden /> Agregar paso</button>
 
       <div className="mt-10">
-        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? del() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra con su historial' : 'Eliminar rutina'}</button>
+        <button className="btn btn-ghost" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? del() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra con su historial' : 'Eliminar rutina'}</button>
       </div>
     </div>
   )

@@ -97,7 +97,7 @@ export default function Today() {
         <div className="w-28 shrink-0 sm:w-36"><Avatar prop={propFor(current?.kind, now.getHours())} size={150} /></div>
       </section>
 
-      {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{error}</p>}
+      {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{error}</p>}
 
       {routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed && (
         <section aria-labelledby="rut-hoy" className="rounded-2xl border p-4" style={{ borderColor: 'var(--accent)', background: 'var(--surface)' }}>

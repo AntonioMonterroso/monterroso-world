@@ -1,7 +1,8 @@
 import { dayNum, isoFromNum } from './recur'
 
 export type Kind = 'income' | 'expense'
-export type Area = 'web' | 'music' | 'personal'
+/** Clave de un área: 'web', 'music', 'personal' o una creada por ti. */
+export type Area = string
 export type Tx = { id: string; kind: Kind; amount: number; currency: string; category: string; area: Area; tx_date: string; note: string | null }
 export type Budget = { id: string; category: string; limit_amount: number; currency: string }
 export type Goal = { id: string; title: string; target: number; saved: number; currency: string; due_date: string | null }
@@ -10,15 +11,14 @@ export type Sub = { id: string; name: string; amount: number; currency: string; 
 export type Loan = { id: string; direction: 'lent' | 'borrowed'; person: string; amount: number; currency: string; loan_date: string; due_date: string | null; note: string | null }
 export type LoanPayment = { id: string; loan_id: string; amount: number; paid_on: string; note: string | null }
 
-export const AREAS: { id: Area; label: string; color: string }[] = [
-  { id: 'web', label: 'Freelance web', color: 'var(--dev)' },
-  { id: 'music', label: 'Música', color: 'var(--music)' },
-  { id: 'personal', label: 'Personal', color: 'var(--personal)' },
+/** Áreas y categorías con las que se siembra la primera vez; después son tuyas (ver taxonomy.ts). */
+export const DEFAULT_AREAS: { key: string; name: string; color: string }[] = [
+  { key: 'web', name: 'Freelance web', color: 'var(--dev)' },
+  { key: 'music', name: 'Música', color: 'var(--music)' },
+  { key: 'personal', name: 'Personal', color: 'var(--personal)' },
 ]
-export const areaMeta = (a: Area) => AREAS.find((x) => x.id === a)!
-
-export const INCOME_CATEGORIES = ['Proyecto web', 'Tocada', 'Clases', 'Producción musical', 'Salario', 'Otros']
-export const EXPENSE_CATEGORIES = ['Comida', 'Transporte', 'Casa', 'Software y servicios', 'Equipo y tecnología', 'Instrumentos', 'Iglesia y ofrendas', 'Salud', 'Ocio', 'Educación', 'Otros']
+export const DEFAULT_INCOME_CATEGORIES = ['Proyecto web', 'Tocada', 'Clases', 'Producción musical', 'Salario', 'Otros']
+export const DEFAULT_EXPENSE_CATEGORIES = ['Comida', 'Transporte', 'Casa', 'Software y servicios', 'Equipo y tecnología', 'Instrumentos', 'Iglesia y ofrendas', 'Salud', 'Ocio', 'Educación', 'Otros']
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
@@ -44,9 +44,9 @@ export function spendByCategory(txs: Tx[], month: string, currency: string): { c
 
 export function incomeByArea(txs: Tx[], month: string, currency: string, extra: { currency: string; amount: number; date: string }[] = []): Record<Area, number> {
   const out: Record<Area, number> = { web: 0, music: 0, personal: 0 }
-  for (const x of txs) if (x.kind === 'income' && x.currency === currency && inMonth(x.tx_date, month)) out[x.area] += Number(x.amount)
+  for (const x of txs) if (x.kind === 'income' && x.currency === currency && inMonth(x.tx_date, month)) out[x.area] = (out[x.area] ?? 0) + Number(x.amount)
   for (const e of extra) if (e.currency === currency && inMonth(e.date, month)) out.web += Number(e.amount)
-  return { web: r2(out.web), music: r2(out.music), personal: r2(out.personal) }
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, r2(v)]))
 }
 
 export type BudgetStatus = { budget: Budget; spent: number; pct: number; state: 'ok' | 'warn' | 'over' }

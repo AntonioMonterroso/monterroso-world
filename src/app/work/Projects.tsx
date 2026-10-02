@@ -76,7 +76,7 @@ export default function Projects() {
         </div>
       ))}
 
-      {db.error && <p role="alert" className="mb-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
+      {db.error && <p role="alert" className="mb-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
 
       <Segmented label="Etapa" value={filter} onChange={setFilter} options={([{ id: 'all', label: 'Todos' }, ...STATUSES] as { id: Status | 'all'; label: string }[]).map((s) => ({ id: s.id, label: s.id === 'all' ? `Todos ${inMonth.length}` : s.label }))} />
 

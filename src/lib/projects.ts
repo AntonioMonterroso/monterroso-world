@@ -7,7 +7,7 @@ export const STATUSES: { id: Status; label: string; color: string }[] = [
   { id: 'active', label: 'En curso', color: 'var(--dev)' },
   { id: 'review', label: 'En revisión', color: 'var(--music)' },
   { id: 'delivered', label: 'Entregado', color: 'var(--personal)' },
-  { id: 'closed', label: 'Cerrado', color: '#8fd1a4' },
+  { id: 'closed', label: 'Cerrado', color: 'var(--pos)' },
 ]
 export const statusMeta = (s: Status) => STATUSES.find((x) => x.id === s)!
 

@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { ErrorBar, toNum } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 export default function Body() {
   const { session } = useAuth()
@@ -47,8 +48,7 @@ export default function Body() {
 
   return (
     <div>
-      <p className="eyebrow">Ejercicio</p>
-      <h1 className="mt-2 font-display text-4xl">Cuerpo y salud</h1>
+      <PageHeader eyebrow="Ejercicio" title="Cuerpo y salud" />
       <ErrorBar msg={err || metrics.error || health.error} onClose={() => setErr('')} />
 
       <section className="mt-6 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }} aria-labelledby="hoy-s">

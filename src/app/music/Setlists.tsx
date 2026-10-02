@@ -4,6 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTable } from '../../lib/table'
 import { fmtDuration, type Setlist, type Song } from '../../lib/music'
 import ShareSheet from './ShareSheet'
+import { PageHeader } from '../../components/ui'
+import { Group, Row } from '../../components/ui'
 
 function Detail({ set, songs, onChange, onDelete, onBack }: { set: Setlist; songs: Song[]; onChange: (p: Partial<Omit<Setlist, 'id'>>) => void; onDelete: () => void; onBack: () => void }) {
   const byId = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs])
@@ -58,7 +60,7 @@ function Detail({ set, songs, onChange, onDelete, onBack }: { set: Setlist; song
         {items.length > 0 && <Link to={`/app/musica/cancion/${items[0].id}/escenario?s=${set.id}&i=0`} className="btn btn-primary"><Play size={16} aria-hidden /> Tocar</Link>}
         <button className="btn btn-ghost" onClick={() => setSharing(true)}><Share2 size={16} aria-hidden /> Compartir</button>
         <button className="btn btn-ghost" onClick={() => window.print()}><Printer size={16} aria-hidden /> Imprimir</button>
-        <button className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
+        <button className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
       </div>
       <ShareSheet open={sharing} onClose={() => setSharing(false)} kind="setlist" id={set.id} title={set.title} />
       <label className="no-print mt-6 grid gap-2 text-sm">Notas<textarea className="field py-3" rows={3} value={set.notes ?? ''} onChange={(e) => onChange({ notes: e.target.value || null })} maxLength={2000} /></label>
@@ -82,11 +84,8 @@ export default function Setlists() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Música</p><h1 className="mt-2 font-display text-4xl">Setlists</h1></div>
-        <button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Setlist</button>
-      </div>
-      {sets.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{sets.error}</p>}
+      <PageHeader eyebrow="Música" title="Setlists" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Setlist</button>} />
+      {sets.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{sets.error}</p>}
       {sets.rows.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
           <p className="font-display text-2xl">Sin setlists todavía</p>
@@ -94,19 +93,12 @@ export default function Setlists() {
           <button className="btn btn-primary mt-5" onClick={create}>Crear el primero</button>
         </div>
       ) : (
-        <ul className="mt-6 grid gap-2">
+        <Group>
           {sets.rows.map((s) => {
             const total = s.song_ids.reduce((a, id) => a + (songs.rows.find((x) => x.id === id)?.duration_sec ?? 0), 0)
-            return (
-              <li key={s.id}>
-                <button onClick={() => setSp({ s: s.id })} className="flex min-h-16 w-full items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-                  <span className="min-w-0"><span className="block truncate font-semibold">{s.title}</span><span className="block text-sm" style={{ color: 'var(--ink-soft)' }}>{s.event_date ?? 'Sin fecha'}</span></span>
-                  <span className="shrink-0 text-xs" style={{ color: 'var(--ink-faint)' }}>{s.song_ids.length} canciones · {fmtDuration(total)}</span>
-                </button>
-              </li>
-            )
+            return <Row key={s.id} tone="var(--music)" title={s.title} sub={s.event_date ?? 'Sin fecha'} value={`${s.song_ids.length} canciones · ${fmtDuration(total)}`} valueTone="soft" onClick={() => setSp({ s: s.id })} />
           })}
-        </ul>
+        </Group>
       )}
     </div>
   )

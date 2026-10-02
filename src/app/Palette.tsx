@@ -80,7 +80,7 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
             <li key={it.id} role="option" aria-selected={n === i}>
               <button className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3 text-left" style={{ background: n === i ? 'var(--surface-2)' : 'transparent' }} onMouseEnter={() => setI(n)} onClick={() => go(it)}>
                 <span className="min-w-0"><span className="block truncate">{it.title}</span>{it.sub && <span className="block truncate text-xs" style={{ color: 'var(--ink-faint)' }}>{it.sub}</span>}</span>
-                <span className="shrink-0 rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--surface-2)', color: it.type === 'Bóveda' ? '#e8a393' : 'var(--sky)' }}>{it.type}</span>
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--surface-2)', color: it.type === 'Bóveda' ? 'var(--neg)' : 'var(--sky)' }}>{it.type}</span>
               </button>
             </li>
           ))}

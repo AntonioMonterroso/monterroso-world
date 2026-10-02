@@ -6,6 +6,7 @@ import { getSettings, patchSettings } from '../../lib/settings'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 export async function fetchYouTubeTitle(url: string): Promise<string | null> {
   try {
@@ -68,8 +69,7 @@ export default function Learn() {
 
   return (
     <div>
-      <p className="eyebrow">Descubrir</p>
-      <h1 className="mt-2 font-display text-4xl">Aprender</h1>
+      <PageHeader eyebrow="Descubrir" title="Aprender" />
       <ErrorBar msg={db.error || notes.error} onClose={db.clearError} />
 
       <section className="mt-6 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }} aria-label="Meta de la semana">
@@ -80,7 +80,7 @@ export default function Learn() {
             <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => setGoalSaved(goal + 1)} aria-label="Subir la meta">+</button>
           </div>
         </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${week} de ${goal}`}><div className="h-full rounded-full" style={{ width: `${Math.min(100, (week / goal) * 100)}%`, background: week >= goal ? '#8fd1a4' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${week} de ${goal}`}><div className="h-full rounded-full" style={{ width: `${Math.min(100, (week / goal) * 100)}%`, background: week >= goal ? 'var(--pos)' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
         {db.rows.filter((v) => v.status === 'watching').length > 3 && <p className="mt-3 text-xs" style={{ color: 'var(--personal)' }}>Tienes más de 3 videos “viendo” a la vez. Terminar uno antes de empezar otro ayuda a no dispersarte.</p>}
       </section>
 
@@ -100,7 +100,7 @@ export default function Learn() {
           <datalist id="topics">{topics.map((t) => <option key={t} value={t} />)}</datalist>
           {needTitle && <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" aria-label="Título" maxLength={300} />}
         </div>
-        {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
         <button className="btn btn-primary w-fit" disabled={adding || !url.trim()}>{adding ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Plus size={16} aria-hidden />} Agregar</button>
       </form>
 

@@ -93,12 +93,12 @@ export default function Habits() {
               <legend className="mb-2 text-sm">Momento del día</legend>
               <div className="flex flex-wrap gap-2">{MOMENTS.map((m) => <button key={m.id} type="button" aria-pressed={d.moment === m.id} onClick={() => setD({ ...d, moment: m.id })} className="min-h-11 rounded-full border px-4 text-sm" style={chip(d.moment === m.id)}>{m.label}</button>)}</div>
             </fieldset>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <>
                 <button type="button" className="btn btn-ghost" onClick={async () => { await habits.update(d.id!, { archived: true }); setD(null) }}>Archivar</button>
-                <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await habits.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
+                <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await habits.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
               </>}
             </div>
           </form>

@@ -60,7 +60,7 @@ export default function ShareSheet({ open, onClose, kind, id, title }: { open: b
           <p className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink-soft)' }}><Eye size={16} aria-hidden className="mt-0.5 shrink-0" /> Quien tenga el enlace verá la letra y los acordes de “{title}” en solo lectura, y podrá transponer, agrandar y imprimir. <strong style={{ color: 'var(--ink)' }}>Tus notas de voz nunca se comparten.</strong></p>
           <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={notes} onChange={(e) => setNotes(e.target.checked)} /> Incluir mis notas por línea (golpes, tablatura, producción)</label>
           <fieldset><legend className="mb-2 text-sm">Caduca</legend><div className="flex flex-wrap gap-2">{EXPIRY.map((x) => <button key={x.days} type="button" aria-pressed={days === x.days} onClick={() => setDays(x.days)} className="min-h-11 rounded-full border px-4 text-sm" style={chip(days === x.days)}>{x.label}</button>)}</div></fieldset>
-          {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <button className="btn btn-primary w-fit" onClick={create} disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Crear enlace</button>
 
           <section aria-labelledby="enlaces-c">
@@ -69,8 +69,8 @@ export default function ShareSheet({ open, onClose, kind, id, title }: { open: b
               <ul className="mt-2 grid gap-2">
                 {mine.map((l) => (
                   <li key={l.id} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--bg)' }}>
-                    <span className="min-w-0 flex-1"><span className="block" style={{ color: state(l) === 'Activo' ? '#8fd1a4' : 'var(--ink-faint)' }}>{state(l)}{l.include_notes ? ' · con notas' : ' · sin notas'}</span><span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>{l.last_used_at ? `Último uso ${new Date(l.last_used_at).toLocaleDateString('es')}` : 'Sin abrir'}{l.expires_at && ` · vence ${new Date(l.expires_at).toLocaleDateString('es')}`}</span></span>
-                    {state(l) === 'Activo' && <button className="min-h-11 px-2 underline" style={{ color: confirm === l.id ? '#e8a393' : undefined }} onClick={() => (confirm === l.id ? (db.update(l.id, { revoked: true }), setConfirm(null)) : setConfirm(l.id))}>{confirm === l.id ? '¿Revocar?' : 'Revocar'}</button>}
+                    <span className="min-w-0 flex-1"><span className="block" style={{ color: state(l) === 'Activo' ? 'var(--pos)' : 'var(--ink-faint)' }}>{state(l)}{l.include_notes ? ' · con notas' : ' · sin notas'}</span><span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>{l.last_used_at ? `Último uso ${new Date(l.last_used_at).toLocaleDateString('es')}` : 'Sin abrir'}{l.expires_at && ` · vence ${new Date(l.expires_at).toLocaleDateString('es')}`}</span></span>
+                    {state(l) === 'Activo' && <button className="min-h-11 px-2 underline" style={{ color: confirm === l.id ? 'var(--neg)' : undefined }} onClick={() => (confirm === l.id ? (db.update(l.id, { revoked: true }), setConfirm(null)) : setConfirm(l.id))}>{confirm === l.id ? '¿Revocar?' : 'Revocar'}</button>}
                   </li>
                 ))}
               </ul>

@@ -1,10 +1,11 @@
 import VoiceNotes from '../../components/VoiceNotes'
+import { PageHeader } from '../../components/ui'
 
 export default function Ideas() {
   return (
     <div>
       <p className="eyebrow">Música</p>
-      <h1 className="mt-2 mb-6 font-display text-4xl">Ideas de voz</h1>
+      <PageHeader title="Ideas de voz" />
       <VoiceNotes />
     </div>
   )

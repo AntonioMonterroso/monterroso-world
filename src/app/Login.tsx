@@ -33,7 +33,7 @@ export default function Login() {
         </div>
         <p className="mt-3" style={{ color: 'var(--ink-soft)' }}>Entra a tu centro de mando.</p>
 
-        {!configured && <p className="mt-4 text-sm" style={{ color: '#e8a393' }}>Falta la configuración de Supabase.</p>}
+        {!configured && <p className="mt-4 text-sm" style={{ color: 'var(--neg)' }}>Falta la configuración de Supabase.</p>}
 
         <form onSubmit={submit} className="mt-6 grid gap-4">
           <label className="grid gap-2 text-sm" htmlFor="email">
@@ -53,7 +53,7 @@ export default function Login() {
             {busy && <Loader2 size={18} className="animate-spin" aria-hidden />} Entrar
           </button>
         </form>
-        {error && <p role="alert" className="mt-4 text-sm" style={{ color: '#e8a393' }}>{error}</p>}
+        {error && <p role="alert" className="mt-4 text-sm" style={{ color: 'var(--neg)' }}>{error}</p>}
       </div>
     </main>
   )

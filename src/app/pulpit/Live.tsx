@@ -81,7 +81,7 @@ export default function Live() {
           {p ? <SlideView p={p} /> : <Brand p={{ name: 'Monterroso World', logo: null }} />}
         </motion.div>
       </AnimatePresence>
-      <span className="fixed right-3 bottom-3 size-2 rounded-full" style={{ background: online ? '#8fd1a4' : '#e8a393', opacity: 0.5 }} role="status" aria-label={online ? 'Conectado' : 'Reconectando'} />
+      <span className="fixed right-3 bottom-3 size-2 rounded-full" style={{ background: online ? 'var(--pos)' : 'var(--neg)', opacity: 0.5 }} role="status" aria-label={online ? 'Conectado' : 'Reconectando'} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { KIND_LABEL, TEMPLATES, fmtStart, progressOf, routineStreak, totalMinute
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { ErrorBar } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 const kindIcon = { morning: Sun, evening: Moon, custom: ListChecks } as const
 
@@ -29,10 +30,7 @@ export default function Routines() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Mente y cuerpo</p><h1 className="mt-2 font-display text-4xl">Rutinas</h1><p className="mt-1 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Tu mañana y tu noche, paso a paso y con tiempo. Sin culpa: si haces la mitad, cuenta.</p></div>
-        {routines.rows.length > 0 && <button className="btn btn-primary" onClick={() => create('custom')} disabled={busy}><Plus size={18} aria-hidden /> Rutina</button>}
-      </div>
+      <PageHeader eyebrow="Mente y cuerpo" title="Rutinas" sub="Tu mañana y tu noche, paso a paso y con tiempo. Sin culpa: si haces la mitad, cuenta." action={routines.rows.length > 0 ? <button className="btn btn-primary" onClick={() => create('custom')} disabled={busy}><Plus size={18} aria-hidden /> Rutina</button> : undefined} />
       <ErrorBar msg={routines.error || steps.error || runs.error} onClose={routines.clearError} />
 
       {routines.rows.length === 0 ? (
@@ -56,7 +54,7 @@ export default function Routines() {
             const Icon = kindIcon[r.kind]
             const done = Boolean(todayRun?.completed)
             return (
-              <li key={r.id} className="rounded-2xl border p-4" style={{ background: 'var(--surface)', borderColor: done ? '#8fd1a4' : 'var(--line-soft)' }}>
+              <li key={r.id} className="rounded-2xl border p-4" style={{ background: 'var(--surface)', borderColor: done ? 'var(--pos)' : 'var(--line-soft)' }}>
                 <div className="flex items-start gap-3">
                   <span className="grid size-11 shrink-0 place-items-center rounded-full" style={{ background: 'color-mix(in oklab, var(--accent) 14%, transparent)', color: 'var(--accent)' }}><Icon size={20} aria-hidden /></span>
                   <Link to={`/app/mente/rutinas/${r.id}`} className="min-w-0 flex-1">
@@ -66,7 +64,7 @@ export default function Routines() {
                   {streak > 0 && <span className="flex shrink-0 items-center gap-1 text-sm" style={{ color: 'var(--accent)' }} aria-label={`Racha de ${streak} días`}><Flame size={16} aria-hidden /> {streak}</span>}
                 </div>
                 <div className="mt-3 flex items-center gap-3">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`Hoy ${p.done} de ${p.total}`}><div className="h-full rounded-full" style={{ width: `${p.pct}%`, background: '#8fd1a4', transition: 'width 400ms var(--ease-out)' }} /></div>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`Hoy ${p.done} de ${p.total}`}><div className="h-full rounded-full" style={{ width: `${p.pct}%`, background: 'var(--pos)', transition: 'width 400ms var(--ease-out)' }} /></div>
                   <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>{done ? 'Hecha hoy' : `${p.done}/${p.total}`}</span>
                   {mine.length > 0 && <Link to={`/app/mente/rutinas/${r.id}/hacer`} className={done ? 'btn btn-ghost' : 'btn btn-primary'}>{done ? <Check size={16} aria-hidden /> : <Play size={16} aria-hidden />} {done ? 'Repetir' : p.done > 0 ? 'Seguir' : 'Empezar'}</Link>}
                 </div>

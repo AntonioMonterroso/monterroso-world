@@ -100,7 +100,7 @@ export default function Loans() {
               <div className="flex items-center gap-3">
                 <button className="btn btn-primary">Guardar</button>
                 {open && <button type="button" className="btn btn-ghost" onClick={() => remind(open)}><BellPlus size={16} aria-hidden /> Recordarme</button>}
-                {open && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await loans.remove(open.id); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+                {open && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await loans.remove(open.id); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
               </div>
             </form>
 
@@ -123,7 +123,7 @@ export default function Loans() {
               </section>
             )}
             {msg && <p role="status" className="text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           </div>
         )}
       </Sheet>

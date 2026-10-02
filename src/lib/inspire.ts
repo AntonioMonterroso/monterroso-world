@@ -12,7 +12,7 @@ export type ShopItem = { id: string; name: string; priority: 1 | 2 | 3; category
 export const PLACE_CATEGORIES = ['Restaurante', 'Café', 'Música y estudios', 'Iglesia', 'Tienda', 'Naturaleza', 'Cultura', 'Otro']
 export const SHOP_CATEGORIES = ['Instrumento', 'Equipo y tecnología', 'Software', 'Casa', 'Ropa', 'Libros', 'Otro']
 export const PRIORITIES: { id: 1 | 2 | 3; label: string; color: string }[] = [
-  { id: 1, label: 'Alta', color: '#e8a393' },
+  { id: 1, label: 'Alta', color: 'var(--neg)' },
   { id: 2, label: 'Media', color: 'var(--personal)' },
   { id: 3, label: 'Baja', color: 'var(--ink-faint)' },
 ]

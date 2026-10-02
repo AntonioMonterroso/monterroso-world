@@ -48,12 +48,12 @@ export default function Goals() {
                   <div className="min-w-0"><p className="truncate font-semibold">{g.title}</p><p className="text-xs" style={{ color: 'var(--ink-faint)' }}>{g.due_date ? `Para el ${g.due_date}` : 'Sin fecha límite'}</p></div>
                   <p className="shrink-0 text-right text-sm"><span className="font-semibold" style={{ color: pct >= 100 ? 'var(--pos)' : 'var(--ink)' }}>{money(g.saved, g.currency)}</span><span style={{ color: 'var(--ink-faint)' }}> / {money(g.target, g.currency)}</span></p>
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${pct}% ahorrado`}><div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 100 ? '#8fd1a4' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`${pct}% ahorrado`}><div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 100 ? 'var(--pos)' : 'var(--music)', transition: 'width 400ms var(--ease-out)' }} /></div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <input className="field !w-28" inputMode="decimal" placeholder="Monto" aria-label={`Monto para ${g.title}`} value={add[g.id] ?? ''} onChange={(e) => setAdd({ ...add, [g.id]: e.target.value })} />
                   <button className="btn btn-primary" onClick={() => contribute(g, 1)}>Aportar</button>
                   <button className="btn btn-ghost" onClick={() => contribute(g, -1)}>Retirar</button>
-                  <button className="btn btn-ghost ml-auto" style={{ color: confirm === g.id ? '#e8a393' : undefined }} onClick={() => (confirm === g.id ? db.remove(g.id) : setConfirm(g.id))} aria-label={`Eliminar ${g.title}`}><Trash2 size={16} aria-hidden />{confirm === g.id && ' ¿Seguro?'}</button>
+                  <button className="btn btn-ghost ml-auto" style={{ color: confirm === g.id ? 'var(--neg)' : undefined }} onClick={() => (confirm === g.id ? db.remove(g.id) : setConfirm(g.id))} aria-label={`Eliminar ${g.title}`}><Trash2 size={16} aria-hidden />{confirm === g.id && ' ¿Seguro?'}</button>
                 </div>
               </li>
             )
@@ -68,7 +68,7 @@ export default function Goals() {
             <CurrencySelect value={cur} onChange={setCur} />
           </div>
           <label className="grid gap-2 text-sm">Fecha límite (opcional)<input type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></label>
-          {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Crear</button>
         </form>
       </Sheet>

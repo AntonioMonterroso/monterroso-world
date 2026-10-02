@@ -53,6 +53,7 @@ import Budget from './money/Budget'
 import Goals from './money/Goals'
 import Loans from './money/Loans'
 import MoneyLayout from './money/MoneyLayout'
+import Categories from './money/Categories'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
 import Transactions from './money/Transactions'
@@ -147,6 +148,7 @@ function Gate() {
         </Route>
         <Route path="dinero" element={<MoneyLayout />}>
           <Route index element={<Overview />} />
+          <Route path="categorias" element={<Categories />} />
           <Route path="movimientos" element={<Transactions />} />
           <Route path="presupuesto" element={<Budget />} />
           <Route path="metas" element={<Goals />} />

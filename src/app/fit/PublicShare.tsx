@@ -63,7 +63,7 @@ export default function PublicShare() {
       <form className="grid gap-4 rounded-2xl border p-6" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }} onSubmit={(e) => { e.preventDefault(); load(pin) }}>
         <h1 className="font-display text-3xl">Escribe tu PIN</h1>
         <input className="field text-center text-2xl tracking-[0.4em]" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} aria-label="PIN" autoFocus />
-        {fail === 'pin_wrong' && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>PIN incorrecto.</p>}
+        {fail === 'pin_wrong' && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>PIN incorrecto.</p>}
         <button className="btn btn-primary justify-center" disabled={pin.length < 4}>Entrar</button>
       </form>,
     )
@@ -156,7 +156,7 @@ function LogSheet({ token, pin, target, onClose, onSaved }: { token: string; pin
         {target === 'free' && <button type="button" className="btn btn-ghost w-fit" onClick={() => setRows((x) => [...x, { name: '', sets: [{ reps: '10', weight: '' }] }])}><Plus size={16} aria-hidden /> Ejercicio</button>}
         <div className="grid grid-cols-2 gap-3"><label className="grid gap-2 text-sm">Duración (min)<input className="field" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value.replace(/\D/g, ''))} /></label></div>
         <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} /></label>
-        {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
         <button className="btn btn-primary w-fit" onClick={save} disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Guardar</button>
       </div>
     </Sheet>

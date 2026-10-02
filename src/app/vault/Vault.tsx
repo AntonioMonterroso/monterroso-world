@@ -29,7 +29,7 @@ export default function Vault() {
 
   if (!meta) return (
     <div>
-      {err && <p role="alert" className="mb-4 text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+      {err && <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
       <Setup onCreated={(m, c, k) => { setMeta(m); setCode(c); setPending(k) }} />
     </div>
   )

@@ -123,14 +123,14 @@ export default function Session() {
                     <span className="w-6 text-center text-sm" style={{ color: 'var(--ink-faint)' }}>{si + 1}</span>
                     <label className="flex flex-1 items-center gap-1 text-xs"><input className="field" inputMode="numeric" value={s.reps} onChange={(e) => upd(ei, si, { reps: e.target.value.replace(/\D/g, '') })} aria-label={`Repeticiones, serie ${si + 1}`} />reps</label>
                     <label className="flex flex-1 items-center gap-1 text-xs"><input className="field" inputMode="decimal" value={s.weight} onChange={(e) => upd(ei, si, { weight: e.target.value })} aria-label={`Peso, serie ${si + 1}`} />peso</label>
-                    <button onClick={() => toggle(ei, si)} aria-pressed={s.done} aria-label={s.done ? 'Desmarcar serie' : 'Marcar serie hecha'} className="grid size-12 shrink-0 place-items-center rounded-full border" style={{ borderColor: '#8fd1a4', background: s.done ? '#8fd1a4' : 'transparent', color: 'var(--bg)' }}>{s.done && <Check size={20} aria-hidden />}</button>
+                    <button onClick={() => toggle(ei, si)} aria-pressed={s.done} aria-label={s.done ? 'Desmarcar serie' : 'Marcar serie hecha'} className="grid size-12 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--pos)', background: s.done ? 'var(--pos)' : 'transparent', color: 'var(--bg)' }}>{s.done && <Check size={20} aria-hidden />}</button>
                   </li>
                 ))}
               </ol>
             </section>
           ))}
           <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Cómo te sentiste" /></label>
-          {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <button className="btn btn-primary min-h-14 justify-center text-lg" onClick={finish} disabled={saving || items.length === 0}>{saving && <Loader2 size={18} className="animate-spin" aria-hidden />} Terminar y guardar</button>
         </div>
       </div>

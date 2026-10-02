@@ -117,14 +117,14 @@ export default function BlockEditor({ block, day, onClose, onSave, onDelete, onS
               <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Avisarme cuando empiece</label>
             </div>
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {block && block.days.length > 1 && block.days.includes(day) && (
                 <button type="button" className="btn btn-ghost" onClick={() => { const v = value(); if (v) onSplit(block, v) }}>Solo este día</button>
               )}
-              <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete(block!.id) : setConfirm(true))}>
+              <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete(block!.id) : setConfirm(true))}>
                 <Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}
               </button>
             </div>

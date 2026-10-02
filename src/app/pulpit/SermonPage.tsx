@@ -69,8 +69,8 @@ export default function SermonPage() {
         <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>{totalMin > 0 ? `${totalMin} min planeados` : 'Agrega fases con tiempo para ver cuánto durará.'}</span>
       </div>
 
-      {(sermons.error || phasesDb.error || slidesDb.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{sermons.error || phasesDb.error || slidesDb.error}</p>}
-      {msg && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{msg}</p>}
+      {(sermons.error || phasesDb.error || slidesDb.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{sermons.error || phasesDb.error || slidesDb.error}</p>}
+      {msg && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{msg}</p>}
 
       {/* Guion */}
       <section className="mt-10" aria-labelledby="guion">
@@ -136,7 +136,7 @@ export default function SermonPage() {
       </section>
 
       <div className="mt-10">
-        <button className="btn btn-ghost" style={{ color: confirm ? '#e8a393' : undefined }} onClick={async () => { if (confirm) { await sermons.remove(sermon.id); nav('/app/pulpito') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra con su guion y diapositivas' : 'Eliminar prédica'}</button>
+        <button className="btn btn-ghost" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await sermons.remove(sermon.id); nav('/app/pulpito') } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra con su guion y diapositivas' : 'Eliminar prédica'}</button>
       </div>
     </div>
   )

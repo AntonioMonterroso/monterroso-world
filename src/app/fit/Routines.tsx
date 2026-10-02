@@ -4,6 +4,7 @@ import { useTable } from '../../lib/table'
 import { DAYS } from '../../lib/time'
 import type { Workout, WorkoutItem } from '../../lib/fitness'
 import { Empty, ErrorBar } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 export default function Routines() {
   const db = useTable<Workout>('workouts', { col: 'created_at', asc: true })
@@ -17,10 +18,7 @@ export default function Routines() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Ejercicio</p><h1 className="mt-2 font-display text-4xl">Rutinas</h1></div>
-        <button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Rutina</button>
-      </div>
+      <PageHeader eyebrow="Ejercicio" title="Rutinas" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Rutina</button>} />
       <ErrorBar msg={db.error || items.error} onClose={db.clearError} />
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : db.rows.length === 0 ? (
         <Empty title="Arma tu primera rutina" text="Ejercicios con series, repeticiones y peso. Luego la usas para entrenar y ver tu progreso." action="Crear rutina" onAction={create} />

@@ -8,6 +8,7 @@ import { hostOf } from '../../lib/learn'
 import { removeImage, signedUrls, uploadImage } from '../../lib/storage'
 import { useTable } from '../../lib/table'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 type Draft = { id?: string; kind: InspKind; title: string; url: string; note: string; tags: string; board: string; newBoard: string; file: File | null; preview: string; image_path: string | null }
 const blank = (): Draft => ({ kind: 'link', title: '', url: '', note: '', tags: '', board: '', newBoard: '', file: null, preview: '', image_path: null })
@@ -103,10 +104,7 @@ export default function Inspiration() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div><p className="eyebrow">Descubrir</p><h1 className="mt-2 font-display text-4xl">Inspiración</h1></div>
-        <button className="btn btn-primary" onClick={() => { setErr(''); setDraft(blank()) }}><Plus size={18} aria-hidden /> Guardar</button>
-      </div>
+      <PageHeader eyebrow="Descubrir" title="Inspiración" action={<button className="btn btn-primary" onClick={() => { setErr(''); setDraft(blank()) }}><Plus size={18} aria-hidden /> Guardar</button>} />
       <ErrorBar msg={db.error || boards.error} onClose={db.clearError} />
 
       <div className="relative mt-6">
@@ -150,7 +148,7 @@ export default function Inspiration() {
                 <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Se reduce y se guarda en tu almacenamiento privado; solo tú la ves.</p>
               </div>
             )}
-            {draft.kind === 'link' && <label className="grid gap-2 text-sm">Enlace<input className="field" inputMode="url" value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} placeholder="https://" maxLength={1000} autoComplete="off" autoFocus />{draft.url && inspirationEmbed(draft.url) && <span className="text-xs" style={{ color: '#8fd1a4' }}>Se podrá reproducir aquí mismo.</span>}</label>}
+            {draft.kind === 'link' && <label className="grid gap-2 text-sm">Enlace<input className="field" inputMode="url" value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} placeholder="https://" maxLength={1000} autoComplete="off" autoFocus />{draft.url && inspirationEmbed(draft.url) && <span className="text-xs" style={{ color: 'var(--pos)' }}>Se podrá reproducir aquí mismo.</span>}</label>}
             <label className="grid gap-2 text-sm">Título<input className="field" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} maxLength={200} /></label>
             <label className="grid gap-2 text-sm">Nota<textarea className="field py-3" rows={3} value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} maxLength={2000} placeholder={draft.kind === 'note' ? 'La idea completa' : 'Por qué te gustó'} /></label>
             <label className="grid gap-2 text-sm">Etiquetas<input className="field" value={draft.tags} onChange={(e) => setDraft({ ...draft, tags: e.target.value })} placeholder="diseño, logos, referencia" maxLength={300} autoComplete="off" /></label>
@@ -158,10 +156,10 @@ export default function Inspiration() {
               <label className="grid gap-2 text-sm">Tablero<select className="field" value={draft.board} onChange={(e) => setDraft({ ...draft, board: e.target.value })}><option value="">Sin tablero</option>{boards.rows.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
               <label className="grid gap-2 text-sm">O uno nuevo<input className="field" value={draft.newBoard} onChange={(e) => setDraft({ ...draft, newBoard: e.target.value })} maxLength={80} placeholder="Logos, Sonidos…" /></label>
             </div>
-            {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Guardar</button>
-              {editing && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? remove(editing) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
+              {editing && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? remove(editing) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
             </div>
           </form>
         )}

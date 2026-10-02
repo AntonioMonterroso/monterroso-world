@@ -7,6 +7,7 @@ import type { Partner, ShareLink, Workout } from '../../lib/fitness'
 import { hashPin, newToken, shareUrl, tokenHash } from '../../lib/share'
 import { useTable } from '../../lib/table'
 import { Empty, ErrorBar, chip } from '../money/shared'
+import { PageHeader } from '../../components/ui'
 
 const EXPIRY = [{ label: 'Sin caducidad', days: 0 }, { label: '7 días', days: 7 }, { label: '30 días', days: 30 }, { label: '90 días', days: 90 }]
 
@@ -50,7 +51,7 @@ function NewLink({ partner, workouts, onCreated }: { partner: Partner; workouts:
         <input className="field" inputMode="numeric" maxLength={8} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} placeholder="4 a 8 dígitos" autoComplete="off" />
         <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Se lo das aparte. Tras 5 intentos fallidos el enlace se bloquea 15 minutos.</span>
       </label>
-      {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
       <button className="btn btn-primary w-fit" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Crear enlace</button>
     </form>
   )
@@ -102,8 +103,7 @@ export default function Partners() {
 
   return (
     <div>
-      <p className="eyebrow">Ejercicio</p>
-      <h1 className="mt-2 font-display text-4xl">Compañeros</h1>
+      <PageHeader eyebrow="Ejercicio" title="Compañeros" />
       <p className="mt-2 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Comparte un panel con quien entrenas. Sin cuenta ni contraseña: entra con un enlace o un QR y solo ve lo que tú elijas.</p>
       <ErrorBar msg={partners.error || links.error || workouts.error} onClose={partners.clearError} />
 
@@ -152,17 +152,17 @@ export default function Partners() {
                     <li key={l.id} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--bg)' }}>
                       <Link2 size={16} aria-hidden style={{ color: 'var(--ink-faint)' }} />
                       <span className="min-w-0 flex-1">
-                        <span className="block" style={{ color: state(l) === 'Activo' ? '#8fd1a4' : 'var(--ink-faint)' }}>{state(l)}{l.can_log ? ' · registra' : ' · solo ve'}{l.pin_hash ? ' · con PIN' : ''}</span>
+                        <span className="block" style={{ color: state(l) === 'Activo' ? 'var(--pos)' : 'var(--ink-faint)' }}>{state(l)}{l.can_log ? ' · registra' : ' · solo ve'}{l.pin_hash ? ' · con PIN' : ''}</span>
                         <span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>{l.last_used_at ? `Último uso ${new Date(l.last_used_at).toLocaleDateString('es')}` : 'Sin usar'}{l.expires_at && ` · vence ${new Date(l.expires_at).toLocaleDateString('es')}`}</span>
                       </span>
-                      {state(l) === 'Activo' && <button className="min-h-11 px-2 underline" style={{ color: confirm === l.id ? '#e8a393' : undefined }} onClick={() => (confirm === l.id ? (links.update(l.id, { revoked: true }), setConfirm(null)) : setConfirm(l.id))}>{confirm === l.id ? '¿Revocar?' : 'Revocar'}</button>}
+                      {state(l) === 'Activo' && <button className="min-h-11 px-2 underline" style={{ color: confirm === l.id ? 'var(--neg)' : undefined }} onClick={() => (confirm === l.id ? (links.update(l.id, { revoked: true }), setConfirm(null)) : setConfirm(l.id))}>{confirm === l.id ? '¿Revocar?' : 'Revocar'}</button>}
                     </li>
                   ))}
                 </ul>
               )}
             </section>
 
-            <button className="btn btn-ghost w-fit" style={{ color: confirm === 'del' ? '#e8a393' : undefined }} onClick={async () => { if (confirm === 'del') { await partners.remove(partner.id); close() } else setConfirm('del') }}><Trash2 size={16} aria-hidden /> {confirm === 'del' ? '¿Seguro? Se borra también su historial' : 'Eliminar compañero'}</button>
+            <button className="btn btn-ghost w-fit" style={{ color: confirm === 'del' ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm === 'del') { await partners.remove(partner.id); close() } else setConfirm('del') }}><Trash2 size={16} aria-hidden /> {confirm === 'del' ? '¿Seguro? Se borra también su historial' : 'Eliminar compañero'}</button>
           </div>
         ))}
       </Sheet>

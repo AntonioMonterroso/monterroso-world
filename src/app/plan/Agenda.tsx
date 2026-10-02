@@ -100,7 +100,7 @@ export default function Agenda() {
       <PageHeader eyebrow="Planear" title="Agenda" sub="Lo que viene en los próximos 30 días." action={<button className="btn btn-primary" onClick={() => setTarget({ type: 'event' })}><Plus size={18} aria-hidden /> Nuevo</button>} />
       <Segmented label="Filtro" value={filter} onChange={setFilter} options={[{ id: 'all', label: 'Todo' }, { id: 'event', label: 'Eventos' }, { id: 'reminder', label: 'Recordatorios' }]} />
 
-      {ev.error && <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>{ev.error} <button className="underline" onClick={ev.clearError}>Cerrar</button></p>}
+      {ev.error && <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{ev.error} <button className="underline" onClick={ev.clearError}>Cerrar</button></p>}
 
       {ev.loading ? (
         <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>

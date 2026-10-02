@@ -31,7 +31,7 @@ export const instrumentLabel = (id: string) => INSTRUMENTS.find((i) => i.id === 
 export const SONG_STATUS: { id: SongStatus; label: string; color: string }[] = [
   { id: 'learning', label: 'Aprendiendo', color: 'var(--personal)' },
   { id: 'practicing', label: 'Practicando', color: 'var(--music)' },
-  { id: 'ready', label: 'Lista', color: '#8fd1a4' },
+  { id: 'ready', label: 'Lista', color: 'var(--pos)' },
 ]
 export const statusOf = (s: SongStatus) => SONG_STATUS.find((x) => x.id === s)!
 

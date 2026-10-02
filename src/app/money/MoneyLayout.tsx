@@ -8,6 +8,7 @@ const tabs = [
     { to: '/app/dinero/metas', label: 'Metas' },
     { to: '/app/dinero/suscripciones', label: 'Suscripciones' },
     { to: '/app/dinero/prestamos', label: 'Préstamos' },
+    { to: '/app/dinero/categorias', label: 'Categorías' },
 ]
 
 export default function MoneyLayout() {

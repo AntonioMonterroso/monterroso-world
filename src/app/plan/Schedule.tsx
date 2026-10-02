@@ -8,6 +8,7 @@ import { eventKinds, reminderMeta, useEvents } from '../../lib/events'
 import { DAYS, fmtMin, localISO, nowMin } from '../../lib/time'
 import BlockEditor from './BlockEditor'
 import EventEditor, { type EditorTarget } from './EventEditor'
+import { PageHeader } from '../../components/ui'
 
 const HOUR_H = 60
 const SNAP = 15
@@ -158,13 +159,7 @@ export default function Schedule() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="eyebrow">Planear</p>
-          <h1 className="mt-2 font-display text-4xl">Horario</h1>
-        </div>
-        <button className="btn btn-primary" onClick={newBlock}><Plus size={18} aria-hidden /> Bloque</button>
-      </div>
+      <PageHeader eyebrow="Planear" title="Horario" action={<button className="btn btn-primary" onClick={newBlock}><Plus size={18} aria-hidden /> Bloque</button>} />
 
       <div className="stepper mt-5 flex-wrap">
         <button className="stepper-btn" onClick={() => shiftWeek(-1)} aria-label="Semana anterior"><ChevronLeft size={18} aria-hidden /></button>
@@ -196,7 +191,7 @@ export default function Schedule() {
       </details>
 
       {error && (
-        <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, #e8a393 15%, transparent)', color: '#e8a393' }}>
+        <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>
           {error} <button className="underline" onClick={clearError}>Cerrar</button>
         </p>
       )}
@@ -270,8 +265,8 @@ export default function Schedule() {
 
               {isToday && (
                 <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: now * PX }} aria-hidden>
-                  <span className="-ml-1 size-2.5 rounded-full" style={{ background: '#e8a393' }} />
-                  <span className="h-px flex-1" style={{ background: '#e8a393' }} />
+                  <span className="-ml-1 size-2.5 rounded-full" style={{ background: 'var(--neg)' }} />
+                  <span className="h-px flex-1" style={{ background: 'var(--neg)' }} />
                 </div>
               )}
             </div>

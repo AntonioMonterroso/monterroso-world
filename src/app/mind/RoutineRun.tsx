@@ -109,7 +109,7 @@ export default function RoutineRun() {
         <div className="min-w-0 flex-1 text-center"><p className="truncate text-sm font-semibold">{r.name}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Paso {idx + 1} de {steps.length}</p></div>
         <span className="size-11" aria-hidden />
       </div>
-      <div className="mx-4 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="progressbar" aria-valuenow={done.length} aria-valuemin={0} aria-valuemax={steps.length} aria-label="Progreso de la rutina"><div className="h-full rounded-full" style={{ width: `${(done.length / steps.length) * 100}%`, background: '#8fd1a4', transition: 'width 300ms var(--ease-out)' }} /></div>
+      <div className="mx-4 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="progressbar" aria-valuenow={done.length} aria-valuemin={0} aria-valuemax={steps.length} aria-label="Progreso de la rutina"><div className="h-full rounded-full" style={{ width: `${(done.length / steps.length) * 100}%`, background: 'var(--pos)', transition: 'width 300ms var(--ease-out)' }} /></div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-7 px-6 text-center">
         <h1 className="max-w-md font-display text-4xl">{step.title}</h1>
@@ -118,12 +118,12 @@ export default function RoutineRun() {
           <div className="relative grid place-items-center">
             <svg viewBox="0 0 200 200" width={220} height={220} role="timer" aria-label={`Quedan ${mmss(left)}`}>
               <circle cx="100" cy="100" r={R} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
-              <circle cx="100" cy="100" r={R} fill="none" stroke={left === 0 ? '#8fd1a4' : 'var(--accent)'} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 300ms linear' }} />
+              <circle cx="100" cy="100" r={R} fill="none" stroke={left === 0 ? 'var(--pos)' : 'var(--accent)'} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - progress)} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 300ms linear' }} />
             </svg>
             <span className="absolute font-display text-5xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{left === 0 ? '¡Tiempo!' : mmss(left)}</span>
           </div>
         ) : <p className="text-sm" style={{ color: 'var(--ink-faint)' }}>Sin tiempo: hazlo a tu ritmo.</p>}
-        {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
       </div>
 
       <div className="flex items-center justify-center gap-3 border-t px-4 py-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>

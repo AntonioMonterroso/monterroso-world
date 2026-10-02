@@ -132,14 +132,14 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
               <section aria-labelledby="cobros" className="rounded-2xl border p-4" style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}>
                 <h3 id="cobros" className="font-display text-xl">Cobros</h3>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>
-                  Cobrado <strong style={{ color: '#8fd1a4' }}>{money(received, currency)}</strong> · Por cobrar <strong style={{ color: 'var(--personal)' }}>{money(pending, currency)}</strong>
+                  Cobrado <strong style={{ color: 'var(--pos)' }}>{money(received, currency)}</strong> · Por cobrar <strong style={{ color: 'var(--personal)' }}>{money(pending, currency)}</strong>
                 </p>
                 <ul className="mt-3 grid gap-2">
                   {mine.map((p) => (
                     <li key={p.id} className="flex items-center gap-2 rounded-xl px-3" style={{ background: 'var(--surface)' }}>
                       <div className="min-w-0 flex-1 py-2 text-sm">
                         <span className="font-semibold">{money(p.amount, currency)}</span>
-                        <span className="ml-2" style={{ color: p.paid_at ? '#8fd1a4' : 'var(--personal)' }}>{p.paid_at ? `cobrado ${p.paid_at}` : p.due_date ? `esperado ${p.due_date}` : 'pendiente'}</span>
+                        <span className="ml-2" style={{ color: p.paid_at ? 'var(--pos)' : 'var(--personal)' }}>{p.paid_at ? `cobrado ${p.paid_at}` : p.due_date ? `esperado ${p.due_date}` : 'pendiente'}</span>
                         {p.method && <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>{p.method}</span>}
                       </div>
                       {!p.paid_at && <button type="button" className="min-h-11 px-2 text-sm underline" onClick={() => onUpdatePayment(p.id, { paid_at: localISO() })}>Marcar cobrado</button>}
@@ -159,10 +159,10 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
               <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={4000} /></label>
             </div>
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? '#e8a393' : undefined }} onClick={() => (confirm ? onDelete(project.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran sus cobros' : 'Eliminar'}</button>
+              <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete(project.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran sus cobros' : 'Eliminar'}</button>
             </div>
           </motion.form>
         </motion.div>

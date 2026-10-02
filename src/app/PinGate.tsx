@@ -80,7 +80,7 @@ export function PinSetup({ onDone }: { onDone: () => void }) {
           </div>
         )}
         <div className="mt-8"><Dots n={len} filled={value.length} shake={shake} /></div>
-        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: '#e8a393' }}>{msg}</p>
+        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--neg)' }}>{msg}</p>
         <Keypad onDigit={digit} onDelete={del} />
       </div>
     </main>
@@ -123,7 +123,7 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
         <h1 className="mt-4 font-display text-3xl">Monterroso World</h1>
         <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>Escribe tu PIN</p>
         <div className="mt-8"><Dots n={len} filled={value.length} shake={shake} /></div>
-        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: '#e8a393' }}>
+        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--neg)' }}>
           {wait > 0 ? `Demasiados intentos. Espera ${wait} s.` : msg}
         </p>
         <Keypad onDigit={digit} onDelete={del} />

@@ -4,6 +4,7 @@ import { useTable } from '../../lib/table'
 import { INSTRUMENTS, instrumentLabel, streak, type PracticeLog, type Song } from '../../lib/music'
 import { dayNum, isoFromNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
+import { PageHeader } from '../../components/ui'
 
 export default function Practice() {
   const logs = useTable<PracticeLog>('practice_logs', { col: 'practiced_on', asc: false })
@@ -38,8 +39,7 @@ export default function Practice() {
 
   return (
     <div>
-      <p className="eyebrow">Música</p>
-      <h1 className="mt-2 font-display text-4xl">Práctica</h1>
+      <PageHeader eyebrow="Música" title="Práctica" />
 
       <div className="mt-6 flex items-center gap-4 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
         <Flame size={32} aria-hidden style={{ color: s > 0 ? 'var(--accent)' : 'var(--ink-faint)' }} />
@@ -67,7 +67,7 @@ export default function Practice() {
           <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={date} max={today} onChange={(e) => setDate(e.target.value)} /></label>
         </div>
         <label className="grid gap-2 text-sm">Nota<input className="field" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="Qué trabajé o qué me costó" /></label>
-        {err && <p role="alert" className="text-sm" style={{ color: '#e8a393' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
         <button className="btn btn-primary w-fit">Guardar</button>
       </form>
 

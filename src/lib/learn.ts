@@ -10,7 +10,7 @@ export type LinkRow = { id: string; url: string; title: string; category: string
 export const STATUS: { id: VideoStatus; label: string; color: string }[] = [
   { id: 'queue', label: 'Por ver', color: 'var(--ink-soft)' },
   { id: 'watching', label: 'Viendo', color: 'var(--music)' },
-  { id: 'done', label: 'Visto', color: '#8fd1a4' },
+  { id: 'done', label: 'Visto', color: 'var(--pos)' },
 ]
 
 export const LINK_CATEGORIES = ['Desarrollo', 'Diseño', 'Música', 'Herramientas', 'Clientes', 'Referencias', 'Iglesia', 'Personal', 'Otros']
