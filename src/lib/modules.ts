@@ -17,7 +17,7 @@ export const centers: Center[] = [
   { id: 'descubrir', label: 'Descubrir', icon: Compass, tone: 'music', blurb: 'Aprender, inspirarte y guardar lo que te sirve.', modules: [m('Aprender (YouTube)', '/app/descubrir/aprender'), m('Links', '/app/descubrir/links'), m('Portafolio', '/app/descubrir/portafolio'), m('Inspiración', '/app/descubrir/inspiracion')] },
   { id: 'lugares', label: 'Lugares', icon: MapPin, tone: 'music', blurb: 'Sitios que quieres conocer, viajes y salidas.', modules: [m('Por visitar', '/app/lugares'), m('Viajes y salidas', '/app/lugares')] },
   { id: 'compras', label: 'Por comprar', icon: ShoppingBag, tone: 'dev', blurb: 'Instrumentos, equipo y lo que necesitas.', modules: [m('Lista de compras', '/app/compras')] },
-  { id: 'compartir', label: 'Compartir', icon: Share2, tone: 'music', blurb: 'Tarjetas y enlaces públicos.', modules: [m('Tarjetas digitales'), m('Canciones públicas'), m('Panel de compañeros', '/app/ejercicio/companeros')] },
+  { id: 'compartir', label: 'Compartir', icon: Share2, tone: 'music', blurb: 'Tarjetas y enlaces públicos.', modules: [m('Tarjetas digitales', '/app/compartir'), m('Canciones públicas', '/app/compartir'), m('Compañeros de ejercicio', '/app/compartir'), m('Pantalla de la iglesia', '/app/compartir')] },
 ]
 
 export const centerById = (id: string) => centers.find((c) => c.id === id)

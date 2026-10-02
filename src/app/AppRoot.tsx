@@ -54,6 +54,7 @@ import Goals from './money/Goals'
 import Loans from './money/Loans'
 import MoneyLayout from './money/MoneyLayout'
 import Categories from './money/Categories'
+import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
 import Transactions from './money/Transactions'
@@ -171,6 +172,7 @@ function Gate() {
         </Route>
         <Route path="lugares" element={<Places />} />
         <Route path="compras" element={<Shopping />} />
+        <Route path="compartir" element={<Share />} />
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>
