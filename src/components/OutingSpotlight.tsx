@@ -10,18 +10,34 @@ import { localISO } from '../lib/time'
 const ICON: Record<OutingKind, LucideIcon> = { travel: Plane, food: Hamburger, coffee: Coffee, nature: Mountain, church: Church, shop: Store, music: Music, culture: Landmark, other: MapPin }
 const HUE: Record<OutingKind, string> = { travel: 'var(--sky)', food: 'var(--clay)', coffee: 'var(--brass)', nature: 'var(--pos)', church: 'var(--brass)', shop: 'var(--teal)', music: 'var(--sky)', culture: 'var(--clay)', other: 'var(--ink-soft)' }
 
-/** El avión cruza la tarjeta entera, de la esquina de abajo a la de arriba, dejando una estela punteada. */
+/** Ocho tumbado (∞) que recorre toda la tarjeta: x = A·sen t, y = B·sen 2t. */
+function figureEight(w: number, h: number) {
+  const cx = w / 2, cy = h / 2 + 4
+  const A = w * 0.4, B = h * 0.34
+  const pts: string[] = []
+  for (let i = 0; i <= 96; i++) {
+    const t = (i / 96) * Math.PI * 2
+    pts.push(`${i === 0 ? 'M' : 'L'}${(cx + A * Math.sin(t)).toFixed(1)} ${(cy + B * Math.sin(2 * t)).toFixed(1)}`)
+  }
+  return { d: `${pts.join(' ')} Z`, dest: { x: cx + A, y: cy } }
+}
+
+/** El avión da la vuelta en ocho por toda la tarjeta, detrás del texto, hacia un destino marcado con un pin como el de Google Maps. */
 function FlightLayer({ w, h, burst, still }: { w: number; h: number; burst: number; still: boolean }) {
-  if (w < 50 || h < 50) return null
-  const x0 = 22, y0 = h - 26, x1 = w - 30, y1 = 34
-  const d = `M${x0} ${y0} C ${w * 0.25} ${h * 0.05}, ${w * 0.65} ${h * -0.1}, ${x1} ${y1}`
+  if (w < 80 || h < 80) return null
+  const { d, dest } = figureEight(w, h)
   return (
     <svg className="flight" viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden>
-      <path d={d} fill="none" stroke="currentColor" strokeOpacity=".3" strokeWidth="1.6" strokeDasharray="2 8" strokeLinecap="round" />
-      <circle cx={x0} cy={y0} r="4" fill="currentColor" opacity=".5" />
-      <circle cx={x1} cy={y1} r="6" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".75" className="flight-dest" />
-      <g key={burst} className="plane-fly" style={{ offsetPath: `path("${d}")`, ...(still ? { offsetDistance: '60%', animation: 'none', opacity: 1 } : null) }}>
-        <g transform="translate(-14 -14) scale(1.17) rotate(45 12 12)"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" fill="currentColor" /></g>
+      <path d={d} fill="none" stroke="currentColor" strokeOpacity=".28" strokeWidth="1.8" strokeDasharray="2 9" strokeLinecap="round" />
+      <g transform={`translate(${dest.x} ${dest.y})`}>
+        <ellipse className="pin-ground" cx="0" cy="1" rx="9" ry="3.2" fill="#ea5f52" opacity=".35" />
+        <g className="pin">
+          <path d="M0 0 C -5 -9, -13 -14, -13 -23 A 13 13 0 1 1 13 -23 C 13 -14, 5 -9, 0 0 Z" fill="#ea5f52" stroke="#fff" strokeOpacity=".85" strokeWidth="1.4" />
+          <circle cx="0" cy="-23" r="5" fill="#fff" />
+        </g>
+      </g>
+      <g key={burst} className="plane-fly" style={{ offsetPath: `path("${d}")`, ...(still ? { offsetDistance: '15%', animation: 'none', opacity: 1 } : null) }}>
+        <g transform="translate(-20 -20) scale(1.67) rotate(45 12 12)"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" fill="currentColor" /></g>
       </g>
     </svg>
   )
