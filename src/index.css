@@ -481,7 +481,7 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .goal[data-done="true"] .goal-ring span { color: var(--pos); animation: pop 360ms var(--ease-out); }
 
 /* Salida destacada: la escena cambia con el tipo de lugar */
-.outing { overflow: hidden; border-radius: var(--r-card); background: var(--surface); box-shadow: inset 0 0 0 1px var(--sep); }
+.outing { position: relative; overflow: hidden; border-radius: var(--r-card); background: var(--surface); box-shadow: inset 0 0 0 1px var(--sep); }
 .outing-stage { position: relative; display: grid; place-items: center; width: 100%; height: 92px; color: var(--hue); cursor: pointer; background: radial-gradient(120% 140% at 20% 0%, color-mix(in oklab, var(--hue) 22%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklab, var(--hue) 10%, var(--surface-2)), var(--surface)); }
 .outing-stage:active { filter: brightness(1.1); }
 .outing-body { padding: .9rem 1.1rem 1.1rem; }
@@ -522,3 +522,24 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .pick:active { transform: scale(.98); }
 .pick[aria-checked="true"] { background: color-mix(in oklab, var(--accent) 18%, var(--surface-2)); box-shadow: inset 0 0 0 1.5px var(--accent); }
 @media (prefers-reduced-motion: reduce) { .breath { animation: none; transform: scale(.95); } }
+
+/* El avión surca toda la tarjeta, por encima del texto y sin estorbar los toques */
+.flight { position: absolute; inset: 0; z-index: 2; pointer-events: none; color: var(--hue); overflow: hidden; }
+.flight .plane-fly { animation-duration: 8s; }
+.flight-dest { animation: dest-pulse 8s var(--ease-out) infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes dest-pulse { 0%, 70% { transform: scale(1); opacity: .5 } 80% { transform: scale(1.7); opacity: 0 } 100% { transform: scale(1); opacity: .75 } }
+.outing-sky { display: block; width: 100%; height: 100%; }
+.outing[data-kind="travel"] .outing-stage { background: radial-gradient(120% 140% at 80% 0%, color-mix(in oklab, var(--hue) 20%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in oklab, var(--hue) 10%, var(--surface-2)), var(--surface)); }
+@media (prefers-reduced-motion: reduce) { .flight-dest { animation: none; } }
+
+/* Ruleta */
+.wheel-wrap { position: relative; display: grid; place-items: center; width: min(86vw, 340px); aspect-ratio: 1; margin: 1.75rem auto 0; }
+.wheel { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 6px var(--surface-2), 0 24px 50px -22px rgba(0,0,0,.7); will-change: transform; }
+.wheel-pointer { position: absolute; top: -12px; left: 50%; z-index: 2; width: 0; height: 0; margin-left: -12px; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid var(--accent); filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
+.result-pop { animation: pop 420ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .result-pop { animation: none; } }
+
+/* Listo para salir */
+.ready { display: flex; align-items: center; justify-content: center; gap: .6rem; margin-top: 1.25rem; min-height: 52px; border-radius: 16px; background: var(--surface-2); color: var(--ink-soft); font-weight: 600; transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out); }
+.ready.on { background: color-mix(in oklab, var(--pos) 18%, var(--surface-2)); color: var(--pos); animation: pop 380ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .ready.on { animation: none; } }

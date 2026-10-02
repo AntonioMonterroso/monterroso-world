@@ -10,14 +10,18 @@ import { localISO } from '../lib/time'
 const ICON: Record<OutingKind, LucideIcon> = { travel: Plane, food: Hamburger, coffee: Coffee, nature: Mountain, church: Church, shop: Store, music: Music, culture: Landmark, other: MapPin }
 const HUE: Record<OutingKind, string> = { travel: 'var(--sky)', food: 'var(--clay)', coffee: 'var(--brass)', nature: 'var(--pos)', church: 'var(--brass)', shop: 'var(--teal)', music: 'var(--sky)', culture: 'var(--clay)', other: 'var(--ink-soft)' }
 
-/** Un avión que cruza el cielo sobre una ruta punteada. Toca la escena y despega. */
-function PlaneScene({ still, burst }: { still: boolean; burst: number }) {
+/** El avión cruza la tarjeta entera, de la esquina de abajo a la de arriba, dejando una estela punteada. */
+function FlightLayer({ w, h, burst, still }: { w: number; h: number; burst: number; still: boolean }) {
+  if (w < 50 || h < 50) return null
+  const x0 = 22, y0 = h - 26, x1 = w - 30, y1 = 34
+  const d = `M${x0} ${y0} C ${w * 0.25} ${h * 0.05}, ${w * 0.65} ${h * -0.1}, ${x1} ${y1}`
   return (
-    <svg viewBox="0 0 320 90" className="scene-svg" aria-hidden preserveAspectRatio="xMidYMid slice">
-      <path id="route" d="M16 70 C 90 8, 200 8, 304 62" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="1.6" strokeDasharray="2 7" strokeLinecap="round" />
-      <circle cx="16" cy="70" r="4" fill="currentColor" opacity=".5" /><circle cx="304" cy="62" r="5" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".7" />
-      <g key={burst} className="plane-fly" style={still ? { offsetDistance: '55%' } : undefined}>
-        <g transform="translate(-12 -12) rotate(45 12 12)"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" fill="currentColor" /></g>
+    <svg className="flight" viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden>
+      <path d={d} fill="none" stroke="currentColor" strokeOpacity=".3" strokeWidth="1.6" strokeDasharray="2 8" strokeLinecap="round" />
+      <circle cx={x0} cy={y0} r="4" fill="currentColor" opacity=".5" />
+      <circle cx={x1} cy={y1} r="6" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".75" className="flight-dest" />
+      <g key={burst} className="plane-fly" style={{ offsetPath: `path("${d}")`, ...(still ? { offsetDistance: '60%', animation: 'none', opacity: 1 } : null) }}>
+        <g transform="translate(-14 -14) scale(1.17) rotate(45 12 12)"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" fill="currentColor" /></g>
       </g>
     </svg>
   )
@@ -32,8 +36,20 @@ export default function OutingSpotlight() {
   const [burst, setBurst] = useState(0)
   const [cheer, setCheer] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const card = useRef<HTMLElement>(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
   const list = useMemo(() => outingCandidates(places.rows, trips.rows, today), [places.rows, trips.rows, today])
   useEffect(() => () => clearTimeout(timer.current), [])
+  const isTravel = list.length > 0 && list[idx % list.length].kind === 'travel'
+  useEffect(() => {
+    const el = card.current
+    if (!el || !isTravel) return
+    const measure = () => setSize({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight) })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [isTravel, idx, places.loading, trips.loading])
   if (places.loading || trips.loading || list.length === 0) return null
 
   const o = list[idx % list.length]
@@ -50,12 +66,13 @@ export default function OutingSpotlight() {
   }
 
   return (
-    <section aria-labelledby="salida-hoy" className="outing" data-kind={o.kind} style={{ ['--hue' as string]: hue }}>
+    <section ref={card} aria-labelledby="salida-hoy" className="outing" data-kind={o.kind} style={{ ['--hue' as string]: hue }}>
       <button type="button" className="outing-stage" onClick={play} aria-label={o.kind === 'travel' ? 'Hacer despegar el avión' : 'Animar'} >
-        {o.kind === 'travel' ? <PlaneScene still={Boolean(calm)} burst={burst} /> : (
+        {o.kind === 'travel' ? <span className="outing-sky" aria-hidden /> : (
           <span key={burst} className={`outing-icon ${burst ? 'hop' : ''}`}><Icon size={44} strokeWidth={1.6} aria-hidden /></span>
         )}
       </button>
+      {o.kind === 'travel' && <FlightLayer w={size.w} h={size.h} burst={burst} still={Boolean(calm)} />}
       <div className="outing-body">
         <p className="eyebrow">{o.type === 'trip' ? 'Tu próximo viaje' : o.kind === 'travel' ? 'Un destino por conocer' : o.kind === 'food' ? 'Antojo pendiente' : 'Por visitar'}</p>
         <h2 id="salida-hoy" className="mt-0.5 truncate text-lg font-semibold tracking-tight">{o.title}</h2>

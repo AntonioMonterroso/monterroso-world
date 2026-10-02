@@ -37,6 +37,17 @@ describe('suggest', () => {
   })
 })
 
+describe('suggest con lista de salida', () => {
+  it('avisa cuando falta poco para salir', () => {
+    expect(suggest({ ...base, exitList: { id: 'l1', name: 'Ensayo', mins: 30 } }).map((x) => x.id)).toContain('exit-l1')
+    const r = suggest({ ...base, exitList: { id: 'l1', name: 'Ensayo', mins: 30 } }).find((x) => x.id === 'exit-l1')!
+    expect(r.to).toContain('lista=l1')
+  })
+  it('no molesta si falta mucho', () => {
+    expect(suggest({ ...base, exitList: { id: 'l1', name: 'Ensayo', mins: 120 } }).map((x) => x.id)).not.toContain('exit-l1')
+  })
+})
+
 describe('context', () => {
   it('la sección manda sobre el bloque en curso', () => {
     expect(resolveMode({ pathname: '/monterroso-world/app/musica', currentKind: 'work', hour: 10 })).toBe('music')

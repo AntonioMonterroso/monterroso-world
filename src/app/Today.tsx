@@ -9,6 +9,7 @@ import DayRitual from '../components/DayRitual'
 import OverwhelmSheet from '../components/OverwhelmSheet'
 import { useCheckins } from '../lib/checkin'
 import { isSoftDay } from '../lib/rhythm'
+import { exitKindFor, type ExitList } from '../lib/exitlist'
 import { suggest } from '../lib/suggest'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
@@ -68,6 +69,18 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
 
+  const exitLists = useTable<ExitList>('exit_lists', { col: 'position', asc: true })
+  // Lo próximo a lo que hay que salir (evento de hoy o bloque), para avisar de la lista de salida
+  const departure = useMemo(() => {
+    const cands: { kind: string | null; start: number }[] = [
+      ...agenda.filter((o) => !o.state.done && o.event.start_min > m - 5).map((o) => ({ kind: exitKindFor(o.event.kind), start: o.event.start_min })),
+      ...(next ? [{ kind: exitKindFor(next.kind), start: next.start_min }] : []),
+    ].filter((c) => c.kind).sort((a, b) => a.start - b.start)
+    const c = cands[0]
+    const list = c ? exitLists.rows.find((l) => l.kind === c.kind) : undefined
+    return c && list ? { id: list.id, name: list.name, mins: c.start - m } : null
+  }, [agenda, next, m, exitLists.rows])
+
   // Qué conviene hacer ahora (reglas en lib/suggest.ts)
   const attention = useAttention(now)
   const checkins = useCheckins()
@@ -85,7 +98,8 @@ export default function Today() {
     routine: routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed ? { id: routineNow.id, name: routineNow.name, started: routineProgress.done > 0 } : null,
     inbox: inbox.items.length,
     lowEnergy: soft,
-  }), [soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+    exitList: departure,
+  }), [departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)

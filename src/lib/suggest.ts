@@ -15,6 +15,8 @@ export type SuggestInput = {
   inbox: number
   /** Día suave: se muestran menos cosas y solo lo que de verdad pesa. */
   lowEnergy?: boolean
+  /** Lista de salida que corresponde a lo que viene (ensayo, iglesia…), con los minutos que faltan. */
+  exitList?: { id: string; name: string; mins: number } | null
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -46,6 +48,8 @@ export function suggest(i: SuggestInput, limit = 3): Suggestion[] {
   } else if (i.priorities.open > 0) {
     push({ id: 'do-priorities', title: `Avanza una prioridad`, reason: `Te ${i.priorities.open === 1 ? 'falta' : 'faltan'} ${plural(i.priorities.open, 'prioridad', 'prioridades')} hoy`, to: '/app', tone: i.nowMin >= 17 * 60 ? 'now' : 'soon', score: i.nowMin >= 17 * 60 ? 68 : 58 })
   }
+
+  if (i.exitList && i.exitList.mins <= 45 && i.exitList.mins >= -5) push({ id: `exit-${i.exitList.id}`, title: `Revisa tu lista: ${i.exitList.name}`, reason: i.exitList.mins <= 0 ? 'Ya toca salir: ¿llevas todo?' : `Sales en ${i.exitList.mins} min. ¿Llevas todo?`, to: `/app/mente/salida?lista=${i.exitList.id}`, tone: 'now', score: 78 })
 
   for (const f of i.followUps.slice(0, 2)) push({ id: `fu-${f.id}`, title: `Dar seguimiento: ${f.title}`, reason: f.recipient ? `${f.recipient} no ha respondido` : 'Sin respuesta', to: '/app/envios', tone: 'now', score: 72 })
   if (i.toSend.length > 0) push({ id: 'to-send', title: i.toSend.length === 1 ? `Enviar: ${i.toSend[0].title}` : `Tienes ${i.toSend.length} cosas por enviar`, reason: i.toSend[0].recipient ? `Para ${i.toSend[0].recipient}` : 'Mandarlo hoy lo quita de tu cabeza', to: '/app/envios', tone: 'soon', score: 55 })
