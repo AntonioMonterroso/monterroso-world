@@ -7,7 +7,7 @@ export type Tx = { id: string; kind: Kind; amount: number; currency: string; cat
 export type Budget = { id: string; category: string; limit_amount: number; currency: string }
 export type Goal = { id: string; title: string; target: number; saved: number; currency: string; due_date: string | null }
 export type Period = 'weekly' | 'monthly' | 'yearly'
-export type Sub = { id: string; name: string; amount: number; currency: string; period: Period; next_due: string; category: string; area: Area; url: string | null; notes: string | null; active: boolean }
+export type Sub = { id: string; name: string; amount: number; currency: string; period: Period; next_due: string; category: string; area: Area; url: string | null; notes: string | null; active: boolean; account_id?: string | null }
 export type Loan = { id: string; direction: 'lent' | 'borrowed'; person: string; amount: number; currency: string; loan_date: string; due_date: string | null; note: string | null }
 export type LoanPayment = { id: string; loan_id: string; amount: number; paid_on: string; note: string | null }
 
