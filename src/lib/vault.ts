@@ -153,6 +153,7 @@ export const CATEGORIES = [
   { id: 'email', label: 'Correos' },
   { id: 'client', label: 'Clientes' },
   { id: 'api', label: 'Claves y API' },
+  { id: 'bank', label: 'Cuentas bancarias' },
   { id: 'note', label: 'Notas' },
 ] as const
 export type Category = (typeof CATEGORIES)[number]['id']
@@ -165,6 +166,7 @@ export const TEMPLATES: Record<Category, Field[]> = {
     { label: 'URL de la base de datos', value: '', secret: false }, { label: 'Anon key', value: '', secret: false }, { label: 'Contraseña de la base de datos', value: '', secret: true },
   ],
   api: [{ label: 'Servicio', value: '', secret: false }, { label: 'Clave', value: '', secret: true }],
+  bank: [{ label: 'Banco', value: '', secret: false }, { label: 'Número de cuenta', value: '', secret: true }],
   note: [],
 }
 

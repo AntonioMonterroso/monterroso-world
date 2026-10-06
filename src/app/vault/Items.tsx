@@ -1,4 +1,4 @@
-import { Briefcase, Check, Cloud, Copy, Eye, EyeOff, ExternalLink, KeyRound, Loader2, Lock, Mail, Pencil, Plus, Search, Settings as Cog, StickyNote, Trash2, X } from 'lucide-react'
+import { Briefcase, Landmark, Check, Cloud, Copy, Eye, EyeOff, ExternalLink, KeyRound, Loader2, Lock, Mail, Pencil, Plus, Search, Settings as Cog, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
@@ -15,7 +15,7 @@ import { PageHeader } from '../../components/ui'
 type Row = { id: string; category: Category; critical: boolean; project_id: string | null; ciphertext: string; iv: string; updated_at: string }
 type Item = { id: string; category: Category; critical: boolean; project_id: string | null; payload: ItemPayload | null; updated_at: string }
 
-const icons = { password: KeyRound, email: Mail, client: Briefcase, api: Cloud, note: StickyNote } as const
+const icons = { password: KeyRound, email: Mail, client: Briefcase, api: Cloud, bank: Landmark, note: StickyNote } as const
 
 function FieldRow({ f, onCopy }: { f: Field; onCopy: (v: string) => void }) {
   const [show, setShow] = useState(false)

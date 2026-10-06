@@ -1,17 +1,21 @@
 import { ArrowRightLeft, Banknote, Building2, CreditCard, Loader2, Plus, Scale, Smartphone, Trash2, type LucideIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Stat } from '../../components/ui'
 import { ACCOUNT_SEEDS, GT_BANKS, KIND_LABEL, balanceOf, creditLeft, last4Of, reconcile, totals, type Account, type AccountKind, type Transfer } from '../../lib/accounts'
 import type { Tx } from '../../lib/finance'
 import { money } from '../../lib/projects'
+import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
+import { decryptItem, encryptItem } from '../../lib/vault'
+import { copySecret, useVaultKey } from '../../lib/vaultSession'
 import { AREA_COLORS } from '../../lib/taxonomy'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, toNum } from './shared'
 
 const ICON: Record<AccountKind, LucideIcon> = { cash: Banknote, bank: Building2, card: CreditCard, wallet: Smartphone }
-type AForm = { id?: string; number: string; name: string; kind: AccountKind; bank: string; last4: string; opening: string; limit: string; color: string }
+type AForm = { id?: string; number: string; vaultId?: string; numberLoaded?: boolean; name: string; kind: AccountKind; bank: string; last4: string; opening: string; limit: string; color: string }
 const blankA = (kind: AccountKind = 'bank'): AForm => ({ number: '', name: kind === 'cash' ? 'Efectivo' : '', kind, bank: '', last4: '', opening: '', limit: '', color: kind === 'cash' ? '#98d6a3' : 'var(--teal)' })
 
 /** Cuentas: tu dinero en efectivo y en bancos, tarjetas y billeteras, con transferencias y conciliación. */
@@ -19,6 +23,7 @@ export default function Accounts() {
   const accounts = useTable<Account>('fin_accounts', { col: 'position', asc: true })
   const txs = useTable<Tx>('fin_transactions', { col: 'tx_date', asc: false })
   const transfers = useTable<Transfer>('fin_transfers', { col: 'tx_date', asc: false })
+  const dk = useVaultKey()
   const [form, setForm] = useState<AForm | null>(null)
   const [moving, setMoving] = useState<{ from: string; to: string; amount: string; fee: string; date: string; note: string } | null>(null)
   const [rec, setRec] = useState<{ acc: Account; real: string } | null>(null)
@@ -30,6 +35,23 @@ export default function Accounts() {
   const bal = useMemo(() => Object.fromEntries(accounts.rows.map((a) => [a.id, balanceOf(a, txs.rows, transfers.rows)])), [accounts.rows, txs.rows, transfers.rows])
   const tot = useMemo(() => totals(accounts.rows, bal), [accounts.rows, bal])
   const unassigned = useMemo(() => txs.rows.filter((t) => !t.account_id).length, [txs.rows])
+  // Al abrir una cuenta con número guardado, se descifra de la Bóveda (si está desbloqueada)
+  const formId = form?.id, formVault = form?.vaultId
+  useEffect(() => {
+    if (!formId || !formVault || !dk) return
+    let live = true
+    ;(async () => {
+      const { data } = await supabase.from('vault_items').select('ciphertext,iv').eq('id', formVault).maybeSingle()
+      if (!data || !live) return
+      try {
+        const p = await decryptItem(dk, formVault, data as { ciphertext: string; iv: string })
+        const n = p.fields.find((f) => f.label === 'Número de cuenta')?.value ?? ''
+        if (live) setForm((f) => (f && f.id === formId ? { ...f, number: n, numberLoaded: true } : f))
+      } catch { if (live) setErr('No pude descifrar el número de cuenta.') }
+    })()
+    return () => { live = false }
+  }, [formId, formVault, dk])
+
   const note = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4500) }
 
   const saveAccount = async () => {
@@ -43,9 +65,20 @@ export default function Accounts() {
     if (form.last4 && !/^\d{4}$/.test(form.last4)) return setErr('Los últimos dígitos deben ser 4 números.')
     const number = form.number.trim()
     if (number && !/^[0-9-]{4,30}$/.test(number)) return setErr('El número de cuenta solo lleva dígitos y guiones (4 a 30).')
-    const v = { name, kind: form.kind, bank: form.bank.trim() || null, last4: form.last4 || null, account_number: number || null, opening_balance: opening, credit_limit: limit, color: form.color }
-    if (form.id) await accounts.update(form.id, v)
-    else await accounts.add({ ...v, position: (accounts.rows.at(-1)?.position ?? 0) + 1, archived: false })
+    const touched = dk && (!form.vaultId || form.numberLoaded)  // sin la Bóveda abierta no se toca el número guardado
+    const v = { name, kind: form.kind, bank: form.bank.trim() || null, last4: form.last4 || (touched && number ? number.replace(/\D/g, '').slice(-4) : '') || null, opening_balance: opening, credit_limit: limit, color: form.color }
+    let vault_item_id = form.vaultId ?? null
+    if (touched && dk) {
+      if (number) {
+        const id = vault_item_id ?? crypto.randomUUID()
+        const row = await encryptItem(dk, id, { title: `${name} · número de cuenta`, fields: [{ label: 'Banco', value: form.bank.trim(), secret: false }, { label: 'Número de cuenta', value: number, secret: true }] })
+        const { error } = await supabase.from('vault_items').upsert({ id, category: 'bank', critical: false, project_id: null, ...row })
+        if (error) return setErr('No pude guardar el número en la Bóveda.')
+        vault_item_id = id
+      } else if (vault_item_id) { await supabase.from('vault_items').delete().eq('id', vault_item_id); vault_item_id = null }
+    }
+    if (form.id) await accounts.update(form.id, { ...v, vault_item_id })
+    else await accounts.add({ ...v, vault_item_id, position: (accounts.rows.at(-1)?.position ?? 0) + 1, archived: false })
     setForm(null); setErr(''); setConfirm(false)
   }
 
@@ -72,7 +105,8 @@ export default function Accounts() {
 
   const removeAccount = async (a: Account) => {
     const used = txs.rows.some((t) => t.account_id === a.id) || transfers.rows.some((t) => t.from_id === a.id || t.to_id === a.id)
-    if (used) await accounts.update(a.id, { archived: true }); else await accounts.remove(a.id)
+    if (used) await accounts.update(a.id, { archived: true })
+    else { await accounts.remove(a.id); if (a.vault_item_id) await supabase.from('vault_items').delete().eq('id', a.vault_item_id) }
     setForm(null); setConfirm(false); note(used ? `${a.name} se archivó (conserva su historial).` : `${a.name} se eliminó.`)
   }
 
@@ -80,7 +114,7 @@ export default function Accounts() {
 
   if (accounts.loading || txs.loading) return <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
 
-  const openForm = (a?: Account) => { setErr(''); setConfirm(false); setForm(a ? { id: a.id, number: a.account_number ?? '', name: a.name, kind: a.kind, bank: a.bank ?? '', last4: a.last4 ?? '', opening: String(a.opening_balance || ''), limit: a.credit_limit != null ? String(a.credit_limit) : '', color: a.color } : blankA()) }
+  const openForm = (a?: Account) => { setErr(''); setConfirm(false); setForm(a ? { id: a.id, number: '', vaultId: a.vault_item_id ?? undefined, name: a.name, kind: a.kind, bank: a.bank ?? '', last4: a.last4 ?? '', opening: String(a.opening_balance || ''), limit: a.credit_limit != null ? String(a.credit_limit) : '', color: a.color } : blankA()) }
   const openMove = (from = '') => { setErr(''); setMoving({ from: from || active[0]?.id || '', to: active.find((a) => a.id !== (from || active[0]?.id))?.id ?? '', amount: '', fee: '', date: localISO(), note: '' }) }
   const kinds: AccountKind[] = ['cash', 'bank', 'wallet', 'card']
   const nameOf = (id: string) => accounts.rows.find((a) => a.id === id)?.name ?? 'Cuenta borrada'
@@ -146,12 +180,20 @@ export default function Accounts() {
               </div>
             )}
             {(form.kind === 'bank' || form.kind === 'card' || form.kind === 'wallet') && (
-              <label className="grid gap-2 text-sm">Número de cuenta{form.kind === 'card' ? ' o de tarjeta' : ''} (opcional)
-                <div className="flex gap-2">
-                  <input className="field" inputMode="numeric" autoComplete="off" value={form.number} maxLength={30} onChange={(e) => setForm({ ...form, number: e.target.value.replace(/[^0-9-]/g, '') })} placeholder="0000-000000-0" />
-                  {form.number && <button type="button" className="btn btn-ghost shrink-0" onClick={async () => { try { await navigator.clipboard.writeText(form.number); note('Número copiado.') } catch { /* sin permiso */ } }}>Copiar</button>}
+              dk ? (
+                <label className="grid gap-2 text-sm">Número de cuenta{form.kind === 'card' ? ' o de tarjeta' : ''} · cifrado en tu Bóveda
+                  <div className="flex gap-2">
+                    <input className="field" inputMode="numeric" autoComplete="off" value={form.number} maxLength={30} onChange={(e) => setForm({ ...form, number: e.target.value.replace(/[^0-9-]/g, ''), numberLoaded: true })} placeholder={form.vaultId && !form.numberLoaded ? 'Descifrando…' : '0000-000000-0'} />
+                    {form.number && <button type="button" className="btn btn-ghost shrink-0" onClick={async () => { if (await copySecret(form.number)) note('Número copiado (se borra del portapapeles en 30 s).') }}>Copiar</button>}
+                  </div>
+                </label>
+              ) : (
+                <div className="rounded-xl px-3 py-3 text-sm" style={{ background: 'var(--surface-2)' }}>
+                  <p className="font-semibold">Número de cuenta</p>
+                  <p className="mt-0.5" style={{ color: 'var(--ink-soft)' }}>{form.vaultId ? 'Está guardado cifrado en tu Bóveda.' : 'Se guarda cifrado en tu Bóveda, no en la base.'} Desbloquéala para {form.vaultId ? 'verlo o cambiarlo' : 'agregarlo'}.</p>
+                  <Link to="/app/boveda" className="mt-2 inline-flex min-h-11 items-center underline" style={{ color: 'var(--accent)' }}>Abrir la Bóveda</Link>
                 </div>
-              </label>
+              )
             )}
             <label className="grid gap-2 text-sm">{form.kind === 'card' ? 'Deuda actual (en negativo, o 0)' : 'Saldo con el que empiezas'}<input className="field" inputMode="decimal" value={form.opening} onChange={(e) => setForm({ ...form, opening: e.target.value })} placeholder="0.00" /></label>
             {form.kind === 'card' && <label className="grid gap-2 text-sm">Límite de crédito<input className="field" inputMode="decimal" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} placeholder="0.00" /></label>}
