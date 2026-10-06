@@ -17,6 +17,10 @@ export type SuggestInput = {
   lowEnergy?: boolean
   /** Lista de salida que corresponde a lo que viene (ensayo, iglesia…), con los minutos que faltan. */
   exitList?: { id: string; name: string; mins: number } | null
+  /** Promesas a otras personas que vencen hoy o ya vencieron. */
+  promises?: { id: string; text: string; person?: string | null; overdue: boolean }[]
+  /** Cosas prestadas que ya toca pedir de vuelta. */
+  chase?: { id: string; name: string; person?: string | null }[]
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -50,6 +54,9 @@ export function suggest(i: SuggestInput, limit = 3): Suggestion[] {
   }
 
   if (i.exitList && i.exitList.mins <= 45 && i.exitList.mins >= -5) push({ id: `exit-${i.exitList.id}`, title: `Revisa tu lista: ${i.exitList.name}`, reason: i.exitList.mins <= 0 ? 'Ya toca salir: ¿llevas todo?' : `Sales en ${i.exitList.mins} min. ¿Llevas todo?`, to: `/app/mente/salida?lista=${i.exitList.id}`, tone: 'now', score: 78 })
+
+  for (const p of (i.promises ?? []).slice(0, 2)) push({ id: `pr-${p.id}`, title: p.text, reason: `${p.person ? `Se lo prometiste a ${p.person}` : 'Es una promesa'} · ${p.overdue ? 'ya venció' : 'es para hoy'}`, to: '/app/mente/cosas', tone: p.overdue ? 'urgent' : 'now', score: p.overdue ? 84 : 76 })
+  if ((i.chase ?? []).length > 0) push({ id: 'chase', title: i.chase!.length === 1 ? `Pide de vuelta: ${i.chase![0].name}` : `Tienes ${i.chase!.length} cosas prestadas por pedir`, reason: i.chase![0].person ? `Con ${i.chase![0].person}` : 'Llevan tiempo fuera', to: '/app/mente/cosas', tone: 'soon', score: 54 })
 
   for (const f of i.followUps.slice(0, 2)) push({ id: `fu-${f.id}`, title: `Dar seguimiento: ${f.title}`, reason: f.recipient ? `${f.recipient} no ha respondido` : 'Sin respuesta', to: '/app/envios', tone: 'now', score: 72 })
   if (i.toSend.length > 0) push({ id: 'to-send', title: i.toSend.length === 1 ? `Enviar: ${i.toSend[0].title}` : `Tienes ${i.toSend.length} cosas por enviar`, reason: i.toSend[0].recipient ? `Para ${i.toSend[0].recipient}` : 'Mandarlo hoy lo quita de tu cabeza', to: '/app/envios', tone: 'soon', score: 55 })

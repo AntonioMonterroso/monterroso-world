@@ -10,6 +10,7 @@ import { useTable } from '../../lib/table'
 import { usePriorities } from '../../lib/data'
 import { ErrorBar, chip } from '../money/shared'
 import { PageHeader } from '../../components/ui'
+import { ResumeField } from '../../components/Resume'
 
 type Inbox = { id: string; text: string; kind: string; processed: boolean; source: string }
 type Run = { mode: 'focus' | 'break'; status: 'running' | 'paused' | 'finished'; task: string; plannedMin: number; startedAt: number; endAt: number; pausedLeft: number; distractions: number; sound: AmbientKind; companion: boolean; saved: boolean; actualMin: number; completed: boolean }
@@ -183,9 +184,13 @@ export default function Focus() {
     const isFocus = run.mode === 'focus'
     return (
       <div>
-        <PageHeader eyebrow="{isFocus ? 'Enfoque' : 'Pausa'}" title="{isFocus ? (run.completed ? 'Lo lograste' : 'Cerraste la ronda') : 'Pausa terminada'}" />
+        <PageHeader eyebrow={isFocus ? 'Enfoque' : 'Pausa'} title={isFocus ? (run.completed ? 'Lo lograste' : 'Cerraste la ronda') : 'Pausa terminada'} />
         <ErrorBar msg={err || inbox.error || sessions.error} onClose={() => setErr('')} />
         {isFocus && <p className="mt-2" style={{ color: 'var(--ink-soft)' }}>{run.actualMin} min de enfoque{run.task && ` en “${run.task}”`}{run.distractions > 0 && ` · anotaste ${run.distractions} ${run.distractions === 1 ? 'idea' : 'ideas'} sin salirte de la tarea`}.</p>}
+
+        {isFocus && !run.completed && (
+          <ResumeField task={run.task} />
+        )}
 
         {isFocus && pending.length > 0 && (
           <section className="mt-8" aria-labelledby="park-h">

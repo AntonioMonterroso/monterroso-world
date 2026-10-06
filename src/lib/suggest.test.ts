@@ -48,6 +48,18 @@ describe('suggest con lista de salida', () => {
   })
 })
 
+describe('suggest con promesas y préstamos', () => {
+  it('una promesa vencida pesa más que una de hoy', () => {
+    const r = suggest({ ...base, promises: [{ id: 'a', text: 'Mandar cotización', person: 'Marcos', overdue: true }, { id: 'b', text: 'Llamar', overdue: false }] })
+    expect(r[0].id).toBe('pr-a')
+    expect(r[0].reason).toContain('Marcos')
+  })
+  it('pide de vuelta lo prestado', () => {
+    const r = suggest({ ...base, chase: [{ id: 'x', name: 'Pedal', person: 'Marcos' }] }).find((s) => s.id === 'chase')!
+    expect(r.title).toContain('Pedal')
+  })
+})
+
 describe('context', () => {
   it('la sección manda sobre el bloque en curso', () => {
     expect(resolveMode({ pathname: '/monterroso-world/app/musica', currentKind: 'work', hour: 10 })).toBe('music')

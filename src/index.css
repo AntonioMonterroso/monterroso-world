@@ -559,3 +559,10 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .flight[data-phase="parked"] .pin { animation-duration: 3.6s; }
 .flight[data-phase="landing"] .plane-fly { filter: drop-shadow(0 10px 10px rgba(0,0,0,.4)); }
 @media (prefers-reduced-motion: reduce) { .plane-body { transition: none; } }
+
+/* Nota discreta de «por dónde ibas» */
+.resume { display: flex; align-items: center; gap: .55rem; min-height: 40px; padding: 0 .4rem 0 .85rem; border-radius: 12px; font-size: .8125rem; color: var(--ink-faint); background: color-mix(in oklab, var(--surface) 70%, transparent); animation: rise 500ms var(--ease-out) 200ms backwards; }
+.resume em { font-style: normal; color: var(--ink-soft); }
+.resume-act { padding: .55rem .5rem; font-weight: 600; color: var(--ink-soft); }
+.resume-x { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 99px; color: var(--ink-faint); }
+@media (prefers-reduced-motion: reduce) { .resume { animation: none; } }

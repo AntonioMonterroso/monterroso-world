@@ -57,6 +57,7 @@ import Accounts from './money/Accounts'
 import Categories from './money/Categories'
 import Exit from './mind/Exit'
 import Leisure from './mind/Leisure'
+import Loose from './mind/Loose'
 import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
@@ -141,6 +142,7 @@ function Gate() {
           <Route path="enfoque" element={<Focus />} />
           <Route path="rutinas" element={<DailyRoutines />} />
           <Route path="ocio" element={<Leisure />} />
+          <Route path="cosas" element={<Loose />} />
           <Route path="salida" element={<Exit />} />
           <Route path="rutinas/:id" element={<RoutineEditor />} />
         </Route>

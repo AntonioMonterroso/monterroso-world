@@ -6,6 +6,8 @@ import GoalSpotlight from '../components/GoalSpotlight'
 import OutingSpotlight from '../components/OutingSpotlight'
 import ShoppingSpotlight from '../components/ShoppingSpotlight'
 import DayRitual from '../components/DayRitual'
+import { ResumeHint } from '../components/Resume'
+import { lentToChase, promiseState, sortPromises, dueLabel, type Promise_, type Stuff } from '../lib/loose'
 import OverwhelmSheet from '../components/OverwhelmSheet'
 import { useCheckins } from '../lib/checkin'
 import { isSoftDay } from '../lib/rhythm'
@@ -69,6 +71,10 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
 
+  const stuffDb = useTable<Stuff>('stuff', { col: 'created_at', asc: false })
+  const promisesDb = useTable<Promise_>('promises', { col: 'created_at', asc: false })
+  const openPromises = useMemo(() => sortPromises(promisesDb.rows.filter((p) => !p.done), todayISO), [promisesDb.rows, todayISO])
+  const chase = useMemo(() => lentToChase(stuffDb.rows, todayISO), [stuffDb.rows, todayISO])
   const exitLists = useTable<ExitList>('exit_lists', { col: 'position', asc: true })
   // Lo próximo a lo que hay que salir (evento de hoy o bloque), para avisar de la lista de salida
   const departure = useMemo(() => {
@@ -99,7 +105,9 @@ export default function Today() {
     inbox: inbox.items.length,
     lowEnergy: soft,
     exitList: departure,
-  }), [departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+    promises: openPromises.filter((p) => ['overdue', 'today'].includes(promiseState(p, todayISO))).map((p) => ({ id: p.id, text: p.text, person: p.person, overdue: promiseState(p, todayISO) === 'overdue' })),
+    chase: chase.map((c) => ({ id: c.id, name: c.name, person: c.person })),
+  }), [openPromises, chase, departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
@@ -153,6 +161,15 @@ export default function Today() {
       <OutingSpotlight />
 
       <ShoppingSpotlight />
+
+      {(openPromises.length > 0 || chase.length > 0) && (
+        <Group className="!mt-0" title="Con la gente" aside={<Link to="/app/mente/cosas" className="underline">Ver todo</Link>}>
+          {openPromises.slice(0, 3).map((p) => <Row key={p.id} to="/app/mente/cosas" chevron={false} tone={promiseState(p, todayISO) === 'overdue' ? 'var(--neg)' : promiseState(p, todayISO) === 'today' ? 'var(--accent)' : 'var(--ink-faint)'} title={p.text} sub={`${p.person ? `${p.person} · ` : ''}${dueLabel(p.due_date, todayISO)}`} />)}
+          {chase.slice(0, 2).map((c) => <Row key={c.id} to="/app/mente/cosas" chevron={false} tone="var(--clay)" title={`Pedir de vuelta: ${c.name}`} sub={`Con ${c.person ?? 'alguien'}`} />)}
+        </Group>
+      )}
+
+      <ResumeHint />
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">
