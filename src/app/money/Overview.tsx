@@ -7,6 +7,7 @@ import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../com
 import { dayNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
+import { balanceOf, totals as accTotals, type Account, type Transfer } from '../../lib/accounts'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { Empty, ErrorBar } from './shared'
 
@@ -42,6 +43,9 @@ export default function Overview() {
   const [pick, setPick] = useState('')
   const nav = useNavigate()
   const tax = useTaxonomy()
+  const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
+  const transfersDb = useTable<Transfer>('fin_transfers', { col: 'tx_date', asc: false })
+  const money_ = useMemo(() => { const b = Object.fromEntries(accountsDb.rows.map((a) => [a.id, balanceOf(a, txs.rows, transfersDb.rows)])); return accTotals(accountsDb.rows, b) }, [accountsDb.rows, txs.rows, transfersDb.rows])
   const today = localISO()
 
   // Cobros ya recibidos en Trabajo cuentan como ingreso (freelance web) sin registrarlos dos veces
@@ -74,6 +78,15 @@ export default function Overview() {
 
       {loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : (
         <div>
+          {accountsDb.rows.some((a) => !a.archived) && (
+            <Link to="/app/dinero/cuentas" className="mb-5 block" aria-label="Ver mis cuentas">
+              <div className="stats">
+                <Stat label="Tengo disponible" value={money(money_.available)} tone={money_.available < 0 ? 'neg' : 'pos'} />
+                <Stat label="En efectivo" value={money(money_.cash)} />
+                <Stat label="En bancos" value={money(money_.banks + money_.wallets)} />
+              </div>
+            </Link>
+          )}
           {currencies.length > 1 && <Segmented label="Moneda" value={cur} onChange={setPick} options={currencies.map((c) => ({ id: c, label: c }))} />}
 
           {empty ? <Empty title="Sin movimientos este mes" text="Registra un ingreso o un gasto y aquí verás el balance, las áreas y la tendencia." action="Registrar uno" onAction={() => nav('/app/dinero/movimientos')} /> : (

@@ -3,7 +3,7 @@ import { dayNum, isoFromNum } from './recur'
 export type Kind = 'income' | 'expense'
 /** Clave de un área: 'web', 'music', 'personal' o una creada por ti. */
 export type Area = string
-export type Tx = { id: string; kind: Kind; amount: number; currency: string; category: string; area: Area; tx_date: string; note: string | null }
+export type Tx = { id: string; kind: Kind; amount: number; currency: string; category: string; area: Area; tx_date: string; note: string | null; account_id?: string | null }
 export type Budget = { id: string; category: string; limit_amount: number; currency: string }
 export type Goal = { id: string; title: string; target: number; saved: number; currency: string; due_date: string | null }
 export type Period = 'weekly' | 'monthly' | 'yearly'
