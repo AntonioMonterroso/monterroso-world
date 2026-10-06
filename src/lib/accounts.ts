@@ -1,7 +1,7 @@
 import type { Tx } from './finance'
 
 export type AccountKind = 'cash' | 'bank' | 'card' | 'wallet'
-export type Account = { id: string; name: string; kind: AccountKind; bank: string | null; last4: string | null; opening_balance: number; credit_limit: number | null; color: string; position: number; archived: boolean }
+export type Account = { id: string; name: string; kind: AccountKind; bank: string | null; last4: string | null; account_number?: string | null; opening_balance: number; credit_limit: number | null; color: string; position: number; archived: boolean }
 export type Transfer = { id: string; from_id: string; to_id: string; amount: number; fee: number; tx_date: string; note: string | null }
 
 export const KIND_LABEL: Record<AccountKind, string> = { cash: 'Efectivo', bank: 'Cuenta de banco', card: 'Tarjeta de crédito', wallet: 'Billetera digital' }
@@ -39,5 +39,8 @@ export function reconcile(current: number, real: number): Reconcile {
   const diff = r2(real - current)
   return { diff: Math.abs(diff), kind: diff === 0 ? null : diff > 0 ? 'income' : 'expense' }
 }
+
+/** Últimos 4 dígitos para mostrar: los que escribiste o, si no, los del número de cuenta. */
+export const last4Of = (a: Pick<Account, 'last4' | 'account_number'>): string | null => a.last4 || (a.account_number ? a.account_number.replace(/\D/g, '').slice(-4) || null : null)
 
 export const ACCOUNT_SEEDS: { name: string; kind: AccountKind }[] = [{ name: 'Efectivo', kind: 'cash' }]

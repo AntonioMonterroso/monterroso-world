@@ -2,7 +2,7 @@ import { ArrowRightLeft, Banknote, Building2, CreditCard, Loader2, Plus, Scale, 
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Stat } from '../../components/ui'
-import { ACCOUNT_SEEDS, GT_BANKS, KIND_LABEL, balanceOf, creditLeft, reconcile, totals, type Account, type AccountKind, type Transfer } from '../../lib/accounts'
+import { ACCOUNT_SEEDS, GT_BANKS, KIND_LABEL, balanceOf, creditLeft, last4Of, reconcile, totals, type Account, type AccountKind, type Transfer } from '../../lib/accounts'
 import type { Tx } from '../../lib/finance'
 import { money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
@@ -11,8 +11,8 @@ import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, toNum } from './shared'
 
 const ICON: Record<AccountKind, LucideIcon> = { cash: Banknote, bank: Building2, card: CreditCard, wallet: Smartphone }
-type AForm = { id?: string; name: string; kind: AccountKind; bank: string; last4: string; opening: string; limit: string; color: string }
-const blankA = (kind: AccountKind = 'bank'): AForm => ({ name: kind === 'cash' ? 'Efectivo' : '', kind, bank: '', last4: '', opening: '', limit: '', color: kind === 'cash' ? '#98d6a3' : 'var(--teal)' })
+type AForm = { id?: string; number: string; name: string; kind: AccountKind; bank: string; last4: string; opening: string; limit: string; color: string }
+const blankA = (kind: AccountKind = 'bank'): AForm => ({ number: '', name: kind === 'cash' ? 'Efectivo' : '', kind, bank: '', last4: '', opening: '', limit: '', color: kind === 'cash' ? '#98d6a3' : 'var(--teal)' })
 
 /** Cuentas: tu dinero en efectivo y en bancos, tarjetas y billeteras, con transferencias y conciliación. */
 export default function Accounts() {
@@ -41,7 +41,9 @@ export default function Accounts() {
     const limit = form.kind === 'card' && form.limit.trim() ? toNum(form.limit) : null
     if (limit !== null && !(limit >= 0)) return setErr('El límite no es válido.')
     if (form.last4 && !/^\d{4}$/.test(form.last4)) return setErr('Los últimos dígitos deben ser 4 números.')
-    const v = { name, kind: form.kind, bank: form.bank.trim() || null, last4: form.last4 || null, opening_balance: opening, credit_limit: limit, color: form.color }
+    const number = form.number.trim()
+    if (number && !/^[0-9-]{4,30}$/.test(number)) return setErr('El número de cuenta solo lleva dígitos y guiones (4 a 30).')
+    const v = { name, kind: form.kind, bank: form.bank.trim() || null, last4: form.last4 || null, account_number: number || null, opening_balance: opening, credit_limit: limit, color: form.color }
     if (form.id) await accounts.update(form.id, v)
     else await accounts.add({ ...v, position: (accounts.rows.at(-1)?.position ?? 0) + 1, archived: false })
     setForm(null); setErr(''); setConfirm(false)
@@ -78,7 +80,7 @@ export default function Accounts() {
 
   if (accounts.loading || txs.loading) return <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
 
-  const openForm = (a?: Account) => { setErr(''); setConfirm(false); setForm(a ? { id: a.id, name: a.name, kind: a.kind, bank: a.bank ?? '', last4: a.last4 ?? '', opening: String(a.opening_balance || ''), limit: a.credit_limit != null ? String(a.credit_limit) : '', color: a.color } : blankA()) }
+  const openForm = (a?: Account) => { setErr(''); setConfirm(false); setForm(a ? { id: a.id, number: a.account_number ?? '', name: a.name, kind: a.kind, bank: a.bank ?? '', last4: a.last4 ?? '', opening: String(a.opening_balance || ''), limit: a.credit_limit != null ? String(a.credit_limit) : '', color: a.color } : blankA()) }
   const openMove = (from = '') => { setErr(''); setMoving({ from: from || active[0]?.id || '', to: active.find((a) => a.id !== (from || active[0]?.id))?.id ?? '', amount: '', fee: '', date: localISO(), note: '' }) }
   const kinds: AccountKind[] = ['cash', 'bank', 'wallet', 'card']
   const nameOf = (id: string) => accounts.rows.find((a) => a.id === id)?.name ?? 'Cuenta borrada'
@@ -112,7 +114,7 @@ export default function Accounts() {
                   const b = bal[a.id] ?? 0
                   const left = a.kind === 'card' ? creditLeft(a, b) : null
                   return <Row key={a.id} icon={<Icon size={17} aria-hidden />} tone={a.color} title={a.name}
-                    sub={[a.bank, a.last4 && `•••• ${a.last4}`, left !== null && `Crédito disponible ${money(left)}`].filter(Boolean).join(' · ') || KIND_LABEL[a.kind]}
+                    sub={[a.bank, last4Of(a) && `•••• ${last4Of(a)}`, left !== null && `Crédito disponible ${money(left)}`].filter(Boolean).join(' · ') || KIND_LABEL[a.kind]}
                     value={money(b)} valueTone={b < 0 ? 'neg' : undefined} onClick={() => openForm(a)} />
                 })}
               </Group>
@@ -142,6 +144,14 @@ export default function Accounts() {
                 <label className="grid gap-2 text-sm">Banco<input className="field" list="gtbanks" value={form.bank} maxLength={60} onChange={(e) => setForm({ ...form, bank: e.target.value })} /><datalist id="gtbanks">{GT_BANKS.map((b) => <option key={b} value={b} />)}</datalist></label>
                 <label className="grid gap-2 text-sm">Últimos 4<input className="field" inputMode="numeric" maxLength={4} value={form.last4} onChange={(e) => setForm({ ...form, last4: e.target.value.replace(/\D/g, '') })} placeholder="1234" /></label>
               </div>
+            )}
+            {(form.kind === 'bank' || form.kind === 'card' || form.kind === 'wallet') && (
+              <label className="grid gap-2 text-sm">Número de cuenta{form.kind === 'card' ? ' o de tarjeta' : ''} (opcional)
+                <div className="flex gap-2">
+                  <input className="field" inputMode="numeric" autoComplete="off" value={form.number} maxLength={30} onChange={(e) => setForm({ ...form, number: e.target.value.replace(/[^0-9-]/g, '') })} placeholder="0000-000000-0" />
+                  {form.number && <button type="button" className="btn btn-ghost shrink-0" onClick={async () => { try { await navigator.clipboard.writeText(form.number); note('Número copiado.') } catch { /* sin permiso */ } }}>Copiar</button>}
+                </div>
+              </label>
             )}
             <label className="grid gap-2 text-sm">{form.kind === 'card' ? 'Deuda actual (en negativo, o 0)' : 'Saldo con el que empiezas'}<input className="field" inputMode="decimal" value={form.opening} onChange={(e) => setForm({ ...form, opening: e.target.value })} placeholder="0.00" /></label>
             {form.kind === 'card' && <label className="grid gap-2 text-sm">Límite de crédito<input className="field" inputMode="decimal" value={form.limit} onChange={(e) => setForm({ ...form, limit: e.target.value })} placeholder="0.00" /></label>}
