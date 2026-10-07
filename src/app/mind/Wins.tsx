@@ -6,6 +6,9 @@ import { useProgress, type Reward } from '../../lib/progress'
 import { dayNum, isoFromNum } from '../../lib/recur'
 import { canClaim, pointsToGo, weekXp } from '../../lib/xp'
 import { localISO } from '../../lib/time'
+import { weekReview } from '../../lib/weekreview'
+import { useTable } from '../../lib/table'
+import type { Checkin } from '../../lib/rhythm'
 import { Empty, ErrorBar, toNum } from '../money/shared'
 
 const SUGGESTED = [{ name: 'Un helado', cost: 60 }, { name: 'Una tarde libre sin culpa', cost: 250 }, { name: 'Un capítulo de mi serie', cost: 40 }, { name: 'Algo pequeño para mi instrumento', cost: 600 }]
@@ -20,6 +23,8 @@ export default function Wins() {
   const [confirm, setConfirm] = useState(false)
   const week = useMemo(() => Array.from({ length: 7 }, (_, i) => isoFromNum(dayNum(today) - 6 + i)), [today])
   const t = p.byDay.get(today)
+  const cks = useTable<Checkin>('day_checkins', { col: 'day', asc: false })
+  const review = useMemo(() => weekReview(p.byDay, week, Array.from({ length: 7 }, (_, i) => isoFromNum(dayNum(today) - 13 + i)), Object.fromEntries(cks.rows.map((c) => [c.day, c.energy]))), [p.byDay, week, today, cks.rows])
   const max = Math.max(1, ...week.map((x) => p.byDay.get(x)?.total ?? 0))
 
   const save = async () => {
@@ -65,6 +70,14 @@ export default function Wins() {
             {week.map((x) => { const v = p.byDay.get(x)?.total ?? 0; return <div key={x} className="grid flex-1 justify-items-center gap-1.5"><div className="w-full rounded-md" style={{ height: Math.max(4, (v / max) * 56), background: x === today ? 'var(--accent)' : 'var(--surface-3)', transition: 'height 500ms var(--ease-out)' }} /><span className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>{new Date(x + 'T12:00:00').toLocaleDateString('es', { weekday: 'narrow' }).toUpperCase()}</span></div> })}
           </div>
 
+          <Group title="Tu semana" footer="Sin culpa: aquí solo se cuenta lo que sí pasó.">
+            <li className="row"><p className="row-hit text-sm" style={{ color: 'var(--ink-soft)' }}>{review.message}</p></li>
+            <Row tone="var(--accent)" title={`${review.points} puntos`} sub={review.prevPoints > 0 ? `Semana anterior: ${review.prevPoints}` : 'Sin datos de la semana anterior'} value={`${review.activeDays}/7 días`} valueTone="soft" chevron={false} />
+            {review.focusMin > 0 && <Row tone="var(--sky)" title="Enfoque" sub="Minutos con la cabeza en una sola cosa" value={review.focusMin >= 60 ? `${Math.floor(review.focusMin / 60)} h ${review.focusMin % 60} min` : `${review.focusMin} min`} valueTone="soft" chevron={false} />}
+            {review.best && <Row tone="var(--pos)" title="Tu mejor día" sub={new Date(review.best.day + 'T12:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })} value={`+${review.best.total}`} valueTone="pos" chevron={false} />}
+            {review.top.map((x) => <Row key={x.label} tone="var(--ink-faint)" title={x.label} sub="Lo que más repetiste" value={`${x.n}`} valueTone="soft" chevron={false} />)}
+            {review.avgEnergy != null && <Row tone="var(--clay)" title="Energía promedio" sub="De 1 a 5, según tus registros" value={`${review.avgEnergy}`} valueTone="soft" chevron={false} />}
+          </Group>
           {t && t.parts.length > 0 && <Group title="Lo que sumaste hoy">{t.parts.map((x) => <Row key={x.label} tone="var(--pos)" title={x.label} sub={x.label === 'Minutos de enfoque' ? `${x.n} min` : `${x.n} ${x.n === 1 ? 'vez' : 'veces'}`} value={`+${x.pts}`} valueTone="pos" chevron={false} />)}</Group>}
 
           <Group title="Tus premios" footer="Los premios los defines tú: pequeños y reales. Canjear gasta puntos, pero tu nivel nunca baja.">
