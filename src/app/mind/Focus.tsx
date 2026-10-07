@@ -22,6 +22,14 @@ const SOUNDS: { id: AmbientKind; label: string }[] = [{ id: 'off', label: 'Silen
 const load = (): Run | null => { try { const r = localStorage.getItem(KEY); return r ? (JSON.parse(r) as Run) : null } catch { return null } }
 const store = (r: Run | null) => { try { if (r) localStorage.setItem(KEY, JSON.stringify(r)); else localStorage.removeItem(KEY) } catch { /* sin almacenamiento */ } }
 
+const LONG_EVERY = 4
+const BREAK_TIPS = ['Ponte de pie y estira la espalda.', 'Toma un vaso de agua.', 'Mira algo lejano por 20 segundos.', 'Camina un poco, aunque sea por la casa.', 'Suelta los hombros y respira hondo tres veces.']
+const dayKey = () => new Date().toLocaleDateString('en-CA')
+const loadRounds = (): number => { try { const r = JSON.parse(localStorage.getItem('mw_focus_rounds') || 'null') as { d: string; n: number } | null; return r && r.d === dayKey() ? r.n : 0 } catch { return 0 } }
+const bumpRounds = (): number => { const n = loadRounds() + 1; try { localStorage.setItem('mw_focus_rounds', JSON.stringify({ d: dayKey(), n })) } catch { /* sin almacenamiento */ } return n }
+
+const startTipSeed = (t: number) => (t / 60000) % 5
+
 const MESSAGES = ['Estoy aquí contigo.', 'Una sola cosa a la vez.', 'Vas bien. Sigue con lo que tienes enfrente.', 'Si algo se te ocurre, anótalo y vuelve.', 'Respira. Falta menos de lo que parece.']
 
 export default function Focus() {
@@ -40,10 +48,13 @@ export default function Focus() {
   const [dop, setDop] = useState<{ enabled: boolean; items: string[] }>({ enabled: false, items: DEFAULT_DOPAMINE })
   const [picks, setPicks] = useState<string[]>([])
   const [err, setErr] = useState('')
+  const [guided, setGuided] = useState(true)
+  const [skipBreak, setSkipBreak] = useState(false)
+  const [rounds, setRounds] = useState(loadRounds)
   const finishing = useRef(false)
   const [sp, setSp] = useSearchParams()
 
-  useEffect(() => { getSettings().then((s) => { const d = (s as { dopamine?: typeof dop }).dopamine; if (d) setDop(d) }) }, [])
+  useEffect(() => { getSettings().then((s) => { const d = (s as { dopamine?: typeof dop }).dopamine; if (d) setDop(d); const g = (s as { guidedBreaks?: boolean }).guidedBreaks; if (typeof g === 'boolean') setGuided(g) }) }, [])
   useEffect(() => { store(run) }, [run])
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 250); return () => clearInterval(t) }, [])
 
@@ -83,6 +94,8 @@ export default function Focus() {
       const { error } = await supabase.from('focus_sessions').insert({ task: run.task || null, planned_min: run.plannedMin, actual_min: Math.min(600, actual), completed, distractions: Math.min(500, run.distractions), started_at: new Date(run.startedAt).toISOString() })
       if (error) setErr('No se guardó la sesión, pero tu tiempo cuenta igual.'); else saved = true
     }
+    if (run.mode === 'focus' && completed && actual >= 1) setRounds(bumpRounds())
+    setSkipBreak(false)
     if (run.mode === 'focus' && dop.enabled) setPicks(pickDopamine(dop.items, 3))
     setRun({ ...run, status: 'finished', saved, actualMin: actual, completed })
     finishing.current = false
@@ -93,6 +106,7 @@ export default function Focus() {
   const start = (mins: number, mode: 'focus' | 'break' = 'focus', keepTask = '') => {
     const t = Date.now()
     setPicks([])
+    setSkipBreak(false)
     setRun({ mode, status: 'running', task: mode === 'focus' ? (keepTask || task.trim()) : '', plannedMin: mins, startedAt: t, endAt: t + mins * 60_000, pausedLeft: 0, distractions: 0, sound, companion, saved: false, actualMin: 0, completed: false })
   }
 
@@ -125,6 +139,7 @@ export default function Focus() {
     await inbox.update(i.id, { processed: true })
   }
 
+  const saveGuided = (v: boolean) => { setGuided(v); patchSettings({ guidedBreaks: v } as never) }
   const saveDop = (d: typeof dop) => { setDop(d); patchSettings({ dopamine: d } as never) }
   const stats = useMemo(() => focusStats(sessions.rows), [sessions.rows])
   const msg = run ? MESSAGES[Math.min(MESSAGES.length - 1, Math.floor(((total - left) / Math.max(1, total)) * MESSAGES.length))] : ''
@@ -152,6 +167,7 @@ export default function Focus() {
             </svg>
             <span className="absolute font-display text-6xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{mmss(left)}</span>
           </div>
+          {!isFocus && <p className="max-w-xs text-sm" style={{ color: 'var(--ink-soft)' }}>{BREAK_TIPS[(rounds + Math.floor(startTipSeed(run.startedAt))) % BREAK_TIPS.length]}</p>}
           {isFocus && run.companion && (
             <div className="flex items-center gap-3 text-left" aria-live="off">
               <div className="w-24 shrink-0"><Avatar prop="laptop" size={96} /></div>
@@ -219,12 +235,23 @@ export default function Focus() {
           </section>
         )}
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          {isFocus && <button className="btn btn-primary" onClick={() => start(5, 'break')}>Pausa de 5 min</button>}
-          {isFocus && run.plannedMin <= 2 && <button className="btn btn-primary" onClick={() => start(25, 'focus', run.task)}>Seguir 25 min</button>}
-          <button className="btn btn-ghost" onClick={() => start(isFocus ? run.plannedMin : 25, 'focus', run.task)}>Otra ronda</button>
-          <button className="btn btn-ghost" onClick={() => setRun(null)}>Terminar por hoy</button>
-        </div>
+        {isFocus && run.completed && guided && !skipBreak ? (
+          <div className="mt-8 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
+            <p className="font-display text-xl">{rounds % LONG_EVERY === 0 ? 'Ya llevas ' + rounds + ' rondas: toca una pausa larga' : 'Ahora toca descansar'}</p>
+            <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Descansar es parte de trabajar bien. {BREAK_TIPS[rounds % BREAK_TIPS.length]}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button className="btn btn-primary min-h-12" onClick={() => start(rounds % LONG_EVERY === 0 ? 15 : 5, 'break')}>{rounds % LONG_EVERY === 0 ? 'Pausa de 15 min' : 'Pausa de 5 min'}</button>
+              <button className="min-h-11 text-sm underline" style={{ color: 'var(--ink-faint)' }} onClick={() => setSkipBreak(true)}>Hoy la salto</button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-wrap gap-3">
+            {isFocus && <button className="btn btn-primary" onClick={() => start(5, 'break')}>Pausa de 5 min</button>}
+            {isFocus && run.plannedMin <= 2 && <button className="btn btn-primary" onClick={() => start(25, 'focus', run.task)}>Seguir 25 min</button>}
+            <button className="btn btn-ghost" onClick={() => start(isFocus ? run.plannedMin : 25, 'focus', run.task)}>Otra ronda</button>
+            <button className="btn btn-ghost" onClick={() => setRun(null)}>Terminar por hoy</button>
+          </div>
+        )}
       </div>
     )
   }
@@ -254,7 +281,7 @@ export default function Focus() {
           <legend className="mb-2 text-sm">Cuánto tiempo</legend>
           <div className="flex flex-wrap items-center gap-2">
             {DURATIONS.map((m) => <button key={m} type="button" aria-pressed={minutes === m && !custom} onClick={() => { setMinutes(m); setCustom('') }} className="min-h-11 rounded-full border px-4 text-sm" style={chip(minutes === m && !custom)}>{m} min</button>)}
-            <input className="field !w-24" inputMode="numeric" value={custom} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 3); setCustom(v); if (Number(v) > 0) setMinutes(Math.min(240, Number(v))) }} placeholder="Otro" aria-label="Minutos personalizados" />
+            <input className="field !w-24" inputMode="numeric" value={custom} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 3); setCustom(v); if (Number(v) > 0) setMinutes(Math.min(guided ? 90 : 240, Number(v))) }} placeholder="Otro" aria-label="Minutos personalizados" />
           </div>
         </fieldset>
 
@@ -275,6 +302,7 @@ export default function Focus() {
 
       <details className="mt-8 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
         <summary className="min-h-11 cursor-pointer py-2 font-semibold">Menú de pausas (opcional)</summary>
+        <label className="mt-2 flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={guided} onChange={(e) => saveGuided(e.target.checked)} /> Pausas guiadas: tras cada ronda te propongo descansar (larga cada {LONG_EVERY}) y limito las rondas a 90 min</label>
         <label className="mt-2 flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={dop.enabled} onChange={(e) => saveDop({ ...dop, enabled: e.target.checked })} /> Sugerirme algo al terminar cada ronda</label>
         <label className="mt-2 grid gap-2 text-sm">Tus opciones, una por línea
           <textarea className="field py-3" rows={5} value={dop.items.join('\n')} onChange={(e) => setDop({ ...dop, items: e.target.value.split('\n').slice(0, 30) })} onBlur={() => saveDop({ ...dop, items: dop.items.map((x) => x.trim()).filter(Boolean).slice(0, 30) })} />
