@@ -164,7 +164,7 @@ export default function Focus() {
         <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
           {run.task && <p className="max-w-md font-display text-2xl">{run.task}</p>}
           <div className="relative grid place-items-center">
-            <svg viewBox="0 0 200 200" width={260} height={260} role="timer" aria-label={`Quedan ${mmss(left)}`}>
+            <svg viewBox="0 0 200 200" width={260} height={260} className="focus-ring" data-running={run.status === 'running'} role="timer" aria-label={`Quedan ${mmss(left)}`}>
               <circle cx="100" cy="100" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
               <circle cx="100" cy="100" r={r} fill="none" stroke={isFocus ? 'var(--accent)' : 'var(--pos)'} strokeWidth="8" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - (total ? (total - left) / total : 0))} transform="rotate(-90 100 100)" style={{ transition: 'stroke-dashoffset 300ms linear' }} />
             </svg>
@@ -268,10 +268,10 @@ export default function Focus() {
       <p className="mt-2 max-w-md text-sm" style={{ color: 'var(--ink-soft)' }}>Una cosa, un tiempo. Lo que se te ocurra en medio lo anotas y sigues.</p>
       <ErrorBar msg={err || sessions.error || inbox.error} onClose={() => setErr('')} />
 
-      <dl className="mt-6 grid grid-cols-3 gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
-        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Hoy</dt><dd className="mt-1 font-semibold">{stats.todayMin} min</dd></div>
-        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Últimos 7 días</dt><dd className="mt-1 font-semibold">{stats.weekMin} min</dd></div>
-        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Notas por ronda</dt><dd className="mt-1 font-semibold">{stats.avgDistractions}</dd></div>
+      <dl className="focus-stats mt-6 text-sm">
+        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Hoy</dt><dd className="mt-1">{stats.todayMin} min</dd></div>
+        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Últimos 7 días</dt><dd className="mt-1">{stats.weekMin} min</dd></div>
+        <div><dt className="text-xs" style={{ color: 'var(--ink-faint)' }}>Notas por ronda</dt><dd className="mt-1">{stats.avgDistractions}</dd></div>
       </dl>
 
       <div className="mt-6 grid gap-5">

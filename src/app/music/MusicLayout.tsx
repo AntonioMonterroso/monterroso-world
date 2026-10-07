@@ -1,5 +1,4 @@
-import { Outlet } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 const tabs = [
     { to: '/app/musica', label: 'Canciones', end: true },
@@ -12,7 +11,7 @@ export default function MusicLayout() {
   return (
     <div>
       <SegNav label="Música" tabs={tabs} className="no-print" />
-      <Outlet />
+      <TabOutlet tabs={tabs} />
     </div>
   )
 }

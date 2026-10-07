@@ -1,6 +1,6 @@
 import { ChevronLeft } from 'lucide-react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { Link, useLocation } from 'react-router-dom'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 type Sub = { to: string; label: string }
 const GROUPS: { id: string; label: string; match: string[]; to: string; subs: Sub[] }[] = [
@@ -23,7 +23,7 @@ export default function DiscoverLayout() {
           {group.subs.length > 1 && <div className="mb-6"><SegNav label={group.label} className="!mb-0 seg-sub" tabs={group.subs.map((s) => ({ to: s.to, label: s.label }))} /></div>}
         </>
       )}
-      <Outlet />
+      <TabOutlet />
     </div>
   )
 }

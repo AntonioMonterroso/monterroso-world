@@ -1,5 +1,4 @@
-import { Outlet } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 const tabs = [
     { to: '/app/mente', label: 'Hábitos', end: true },
@@ -18,7 +17,7 @@ export default function MindLayout() {
   return (
     <div>
       <SegNav label="Mente y cuerpo" tabs={tabs} />
-      <Outlet />
+      <TabOutlet tabs={tabs} />
     </div>
   )
 }

@@ -1,5 +1,4 @@
-import { Outlet } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 const tabs = [
     { to: '/app/planear', label: 'Horario', end: true },
@@ -11,7 +10,7 @@ export default function PlanLayout() {
   return (
     <div>
       <SegNav label="Planear" tabs={tabs} />
-      <Outlet />
+      <TabOutlet tabs={tabs} />
     </div>
   )
 }

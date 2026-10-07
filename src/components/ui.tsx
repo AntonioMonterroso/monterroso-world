@@ -1,7 +1,7 @@
 import { Check as CheckIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
-import { useId, type ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { currentMonth, monthLabel, shiftMonth } from '../lib/projects'
 
 const spring = { type: 'spring', bounce: 0, duration: 0.38 } as const
@@ -24,8 +24,18 @@ export function PageHeader({ eyebrow, title, sub, action }: { eyebrow?: string; 
 export function SegNav({ label, tabs, className = '' }: { label: string; tabs: { to: string; label: string; end?: boolean; active?: boolean }[]; className?: string }) {
   const id = useId()
   const calm = useReducedMotion()
+  const ref = useRef<HTMLElement>(null)
+  const [edge, setEdge] = useState({ l: false, r: false })
+  const measure = () => { const el = ref.current; if (el) setEdge({ l: el.scrollLeft > 4, r: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 }) }
+  const { pathname } = useLocation()
+  // La pestaña activa siempre queda a la vista, y los bordes se difuminan si hay más a los lados
+  useEffect(() => {
+    const el = ref.current
+    el?.querySelector<HTMLElement>('.is-on')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: calm ? 'auto' : 'smooth' })
+    measure()
+  }, [pathname, calm])
   return (
-    <nav aria-label={label} className={`seg seg-nav ${className}`}>
+    <nav ref={ref} onScroll={measure} aria-label={label} className={`seg seg-nav ${edge.l ? 'fade-l' : ''} ${edge.r ? 'fade-r' : ''} ${className}`}>
       {tabs.map((t) => (
         <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `seg-item ${(t.active ?? isActive) ? 'is-on' : ''}`} aria-current={t.active === undefined ? undefined : t.active ? 'page' : undefined}>
           {({ isActive }) => (
@@ -38,6 +48,16 @@ export function SegNav({ label, tabs, className = '' }: { label: string; tabs: {
       ))}
     </nav>
   )
+}
+
+/** El contenido de una pestaña entra deslizándose desde el lado al que fuiste (derecha si avanzas, izquierda si retrocedes). */
+export function TabOutlet({ tabs }: { tabs?: { to: string }[] }) {
+  const { pathname } = useLocation()
+  const idx = tabs ? tabs.reduce((best, t, i) => (pathname === t.to || pathname.startsWith(t.to + '/') ? (best < 0 || t.to.length >= tabs[best].to.length ? i : best) : best), -1) : -1
+  const prev = useRef(idx)
+  const dir = idx < 0 || prev.current < 0 ? 0 : Math.sign(idx - prev.current)
+  useEffect(() => { prev.current = idx }, [idx])
+  return <div key={pathname} className="tab-in" style={{ '--dx': `${dir * 14}px` } as React.CSSProperties}><Outlet /></div>
 }
 
 /** Selector de una opción (filtros, tipo, periodo). Mismo lenguaje que SegNav. */

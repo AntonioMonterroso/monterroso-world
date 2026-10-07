@@ -1,5 +1,4 @@
-import { Outlet } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 const tabs = [
     { to: '/app/dinero', label: 'Resumen', end: true },
@@ -16,7 +15,7 @@ export default function MoneyLayout() {
   return (
     <div>
       <SegNav label="Dinero" tabs={tabs} />
-      <Outlet />
+      <TabOutlet tabs={tabs} />
     </div>
   )
 }

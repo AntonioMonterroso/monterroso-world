@@ -1,5 +1,4 @@
-import { Outlet } from 'react-router-dom'
-import { SegNav } from '../../components/ui'
+import { SegNav, TabOutlet } from '../../components/ui'
 
 const tabs = [
     { to: '/app/pulpito', label: 'Prédicas', end: true },
@@ -10,7 +9,7 @@ export default function PulpitLayout() {
   return (
     <div>
       <SegNav label="Púlpito" tabs={tabs} />
-      <Outlet />
+      <TabOutlet tabs={tabs} />
     </div>
   )
 }
