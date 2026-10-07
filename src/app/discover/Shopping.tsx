@@ -1,3 +1,5 @@
+import type { Account } from '../../lib/accounts'
+import { AccountPick, lastAccount, rememberAccount } from '../money/AccountPick'
 import { Check, ExternalLink, Loader2, PiggyBank, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -21,6 +23,9 @@ export default function Shopping() {
   const [d, setD] = useState<Draft | null>(null)
   const [buy, setBuy] = useState<ShopItem | null>(null)
   const [buyPrice, setBuyPrice] = useState('')
+  const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
+  const accounts = accountsDb.rows.filter((a) => !a.archived)
+  const [buyAcct, setBuyAcct] = useState(lastAccount())
   const [record, setRecord] = useState(true)
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
@@ -59,8 +64,9 @@ export default function Shopping() {
     const price = buyPrice.trim() ? toNum(buyPrice) : null
     if (price !== null && !(price >= 0)) return setErr('El precio no es válido.')
     await db.update(buy.id, { status: 'bought', bought_on: localISO(), price })
-    if (record && price && price > 0) await txs.add({ kind: 'expense', amount: price, currency: buy.currency, category: expenseCategoryFor(buy.category), area: 'personal', tx_date: localISO(), note: buy.name })
-    setBuy(null); setErr(''); setMsg(record && price ? 'Listo. También quedó registrado como gasto.' : 'Listo, marcado como comprado.')
+    if (record && price && price > 0) await txs.add({ kind: 'expense', amount: price, currency: buy.currency, category: expenseCategoryFor(buy.category), area: 'personal', tx_date: localISO(), note: buy.name, account_id: buyAcct || null })
+    rememberAccount(buyAcct)
+    setBuy(null); setErr(''); setMsg(record && price ? `Listo. Quedó registrado como gasto${accounts.find((a) => a.id === buyAcct) ? ` y salió de ${accounts.find((a) => a.id === buyAcct)!.name}` : ''}.` : 'Listo, marcado como comprado.')
     setTimeout(() => setMsg(''), 4000)
   }
 
@@ -137,6 +143,7 @@ export default function Shopping() {
             <p className="font-semibold">{buy.name}</p>
             <label className="grid gap-2 text-sm">¿Cuánto costó realmente? ({buy.currency})<input className="field" inputMode="decimal" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} placeholder="0.00" autoFocus /></label>
             <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={record} onChange={(e) => setRecord(e.target.checked)} /> Registrarlo como gasto en Finanzas ({expenseCategoryFor(buy.category)})</label>
+            {record && <AccountPick accounts={accounts} value={buyAcct} onChange={setBuyAcct} label="Pagado con" />}
             {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Listo, lo compré</button>
           </form>

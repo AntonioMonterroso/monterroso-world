@@ -1,3 +1,6 @@
+import type { Account, GoalMove } from '../../lib/accounts'
+import { AccountPick, lastAccount, rememberAccount } from './AccountPick'
+import { localISO } from '../../lib/time'
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -18,6 +21,11 @@ export default function Goals() {
   const [err, setErr] = useState('')
   const [add, setAdd] = useState<Record<string, string>>({})
   const [confirm, setConfirm] = useState<string | null>(null)
+  const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
+  const moves = useTable<GoalMove & { id: string; goal_id: string; tx_date: string }>('fin_goal_moves', { col: 'tx_date', asc: false })
+  const accounts = accountsDb.rows.filter((a) => !a.archived)
+  const [acct, setAcct] = useState(lastAccount())
+  const [note, setNote] = useState('')
   const [edit, setEdit] = useState<{ id: string; title: string; target: string; due: string } | null>(null)
   const [editErr, setEditErr] = useState('')
   const [sp, setSp] = useSearchParams()
@@ -49,10 +57,19 @@ export default function Goals() {
     await db.add({ title: title.trim(), target: t, saved: 0, currency: cur, due_date: due || null })
     setOpen(false); setTitle(''); setTarget(''); setDue(''); setErr('')
   }
-  const contribute = (g: Goal, sign: 1 | -1) => {
+  const contribute = async (g: Goal, sign: 1 | -1) => {
     const n = toNum(add[g.id] ?? '')
     if (!(n > 0)) return
-    db.update(g.id, { saved: Math.max(0, Math.round((g.saved + sign * n) * 100) / 100) })
+    const real = sign === -1 ? Math.min(n, g.saved) : n   // no se retira más de lo ahorrado
+    if (!(real > 0)) return
+    await db.update(g.id, { saved: Math.max(0, Math.round((g.saved + sign * real) * 100) / 100) })
+    const a = accounts.find((x) => x.id === acct)
+    if (a) {
+      await moves.add({ goal_id: g.id, account_id: a.id, amount: sign * real, tx_date: localISO() })
+      rememberAccount(a.id)
+      setNote(sign === 1 ? `${money(real)} salieron de ${a.name} y quedaron apartados para “${g.title}”.` : `${money(real)} regresaron a ${a.name}.`)
+      setTimeout(() => setNote(''), 4500)
+    }
     setAdd({ ...add, [g.id]: '' })
   }
 
@@ -60,6 +77,8 @@ export default function Goals() {
     <div>
       <PageHeader eyebrow="Dinero" title="Metas de ahorro" action={<button className="btn btn-primary" onClick={() => setOpen(true)}><Plus size={18} aria-hidden /> Meta</button>} />
       <ErrorBar msg={db.error} onClose={db.clearError} />
+      {accounts.length > 0 && db.rows.length > 0 && <div className="mt-4"><AccountPick accounts={accounts} value={acct} onChange={setAcct} label="Aportar desde / retirar a" none="Sin cuenta" /></div>}
+      {note && <p role="status" className="mt-3 text-sm" style={{ color: 'var(--pos)' }}>{note}</p>}
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : db.rows.length === 0 ? (
         <Empty title="¿Para qué estás ahorrando?" text="Un instrumento, una laptop, un viaje. Pon el monto y ve sumando aportes." action="Crear una meta" onAction={() => setOpen(true)} />
       ) : (

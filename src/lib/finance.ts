@@ -8,8 +8,8 @@ export type Budget = { id: string; category: string; limit_amount: number; curre
 export type Goal = { id: string; title: string; target: number; saved: number; currency: string; due_date: string | null }
 export type Period = 'weekly' | 'monthly' | 'yearly'
 export type Sub = { id: string; name: string; amount: number; currency: string; period: Period; next_due: string; category: string; area: Area; url: string | null; notes: string | null; active: boolean; account_id?: string | null }
-export type Loan = { id: string; direction: 'lent' | 'borrowed'; person: string; amount: number; currency: string; loan_date: string; due_date: string | null; note: string | null }
-export type LoanPayment = { id: string; loan_id: string; amount: number; paid_on: string; note: string | null }
+export type Loan = { id: string; direction: 'lent' | 'borrowed'; person: string; amount: number; currency: string; loan_date: string; due_date: string | null; note: string | null; account_id?: string | null }
+export type LoanPayment = { id: string; loan_id: string; amount: number; paid_on: string; note: string | null; account_id?: string | null }
 
 /** Áreas y categorías con las que se siembra la primera vez; después son tuyas (ver taxonomy.ts). */
 export const DEFAULT_AREAS: { key: string; name: string; color: string }[] = [

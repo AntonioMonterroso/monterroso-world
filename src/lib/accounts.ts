@@ -9,11 +9,23 @@ export const GT_BANKS = ['BAC Credomatic', 'Banco Industrial', 'Banrural', 'G&T 
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
-/** Saldo actual: saldo inicial + ingresos − gastos + transferencias recibidas − enviadas (y comisiones). Una tarjeta suma gastos como deuda (saldo negativo). */
-export function balanceOf(a: Pick<Account, 'id' | 'opening_balance'>, txs: Pick<Tx, 'kind' | 'amount'>[] & { account_id?: string | null }[] | (Pick<Tx, 'kind' | 'amount'> & { account_id?: string | null })[], transfers: Transfer[]): number {
+export type LoanLite = { id: string; direction: 'lent' | 'borrowed'; amount: number; account_id?: string | null }
+export type PayLite = { loan_id: string; amount: number; account_id?: string | null }
+export type GoalMove = { account_id: string; amount: number }
+type TxLite = Pick<Tx, 'kind' | 'amount'> & { account_id?: string | null }
+export type Links = { loans?: LoanLite[]; payments?: PayLite[]; goalMoves?: GoalMove[] }
+
+/** Saldo actual: inicial + ingresos − gastos ± transferencias (y comisiones)
+ *  − lo que prestaste + lo que te prestaron, ± los pagos de esos préstamos, − lo apartado para metas.
+ *  Una tarjeta suma gastos como deuda (saldo negativo). */
+export function balanceOf(a: Pick<Account, 'id' | 'opening_balance'>, txs: TxLite[], transfers: Transfer[], links: Links = {}): number {
   let b = Number(a.opening_balance)
-  for (const t of txs as (Pick<Tx, 'kind' | 'amount'> & { account_id?: string | null })[]) if (t.account_id === a.id) b += t.kind === 'income' ? Number(t.amount) : -Number(t.amount)
+  for (const t of txs) if (t.account_id === a.id) b += t.kind === 'income' ? Number(t.amount) : -Number(t.amount)
   for (const x of transfers) { if (x.to_id === a.id) b += Number(x.amount); if (x.from_id === a.id) b -= Number(x.amount) + Number(x.fee) }
+  const dir = new Map((links.loans ?? []).map((l) => [l.id, l.direction]))
+  for (const l of links.loans ?? []) if (l.account_id === a.id) b += l.direction === 'lent' ? -Number(l.amount) : Number(l.amount)
+  for (const p of links.payments ?? []) if (p.account_id === a.id) b += dir.get(p.loan_id) === 'lent' ? Number(p.amount) : -Number(p.amount)
+  for (const g of links.goalMoves ?? []) if (g.account_id === a.id) b -= Number(g.amount)
   return r2(b)
 }
 

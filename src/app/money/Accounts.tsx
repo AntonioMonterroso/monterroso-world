@@ -3,11 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Stat } from '../../components/ui'
-import { ACCOUNT_SEEDS, GT_BANKS, KIND_LABEL, balanceOf, creditLeft, last4Of, reconcile, totals, type Account, type AccountKind, type Transfer } from '../../lib/accounts'
-import type { Tx } from '../../lib/finance'
+import { ACCOUNT_SEEDS, GT_BANKS, KIND_LABEL, creditLeft, last4Of, reconcile, type Account, type AccountKind } from '../../lib/accounts'
 import { money } from '../../lib/projects'
 import { supabase } from '../../lib/supabase'
-import { useTable } from '../../lib/table'
+import { useBalances } from '../../lib/balances'
 import { decryptItem, encryptItem } from '../../lib/vault'
 import { copySecret, useVaultKey } from '../../lib/vaultSession'
 import { AREA_COLORS } from '../../lib/taxonomy'
@@ -20,9 +19,7 @@ const blankA = (kind: AccountKind = 'bank'): AForm => ({ number: '', name: kind 
 
 /** Cuentas: tu dinero en efectivo y en bancos, tarjetas y billeteras, con transferencias y conciliación. */
 export default function Accounts() {
-  const accounts = useTable<Account>('fin_accounts', { col: 'position', asc: true })
-  const txs = useTable<Tx>('fin_transactions', { col: 'tx_date', asc: false })
-  const transfers = useTable<Transfer>('fin_transfers', { col: 'tx_date', asc: false })
+  const { accounts, txs, transfers, balances: bal, totals: tot, inGoals } = useBalances()
   const dk = useVaultKey()
   const [form, setForm] = useState<AForm | null>(null)
   const [moving, setMoving] = useState<{ from: string; to: string; amount: string; fee: string; date: string; note: string } | null>(null)
@@ -32,8 +29,6 @@ export default function Accounts() {
   const [msg, setMsg] = useState('')
 
   const active = useMemo(() => accounts.rows.filter((a) => !a.archived), [accounts.rows])
-  const bal = useMemo(() => Object.fromEntries(accounts.rows.map((a) => [a.id, balanceOf(a, txs.rows, transfers.rows)])), [accounts.rows, txs.rows, transfers.rows])
-  const tot = useMemo(() => totals(accounts.rows, bal), [accounts.rows, bal])
   const unassigned = useMemo(() => txs.rows.filter((t) => !t.account_id).length, [txs.rows])
   // Al abrir una cuenta con número guardado, se descifra de la Bóveda (si está desbloqueada)
   const formId = form?.id, formVault = form?.vaultId
@@ -133,6 +128,7 @@ export default function Accounts() {
             <Stat label="Disponible" value={money(tot.available)} tone={tot.available < 0 ? 'neg' : 'pos'} note="Efectivo + bancos + billeteras" />
             <Stat label="Efectivo" value={money(tot.cash)} />
             <Stat label="En bancos" value={money(tot.banks + tot.wallets)} />
+            {inGoals > 0 && <Stat label="Apartado en metas" value={money(inGoals)} note="Ya no está en tus cuentas" />}
             {tot.cards < 0 && <Stat label="Deuda en tarjetas" value={money(-tot.cards)} tone="neg" />}
           </div>
 

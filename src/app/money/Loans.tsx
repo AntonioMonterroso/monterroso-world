@@ -1,6 +1,8 @@
+import type { Account } from '../../lib/accounts'
 import { BellPlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
+import { AccountPick, lastAccount, rememberAccount } from './AccountPick'
 import { Group, PageHeader, Row, Stat } from '../../components/ui'
 import { loanBalance, loanPaid, loanTotals, type Loan, type LoanPayment } from '../../lib/finance'
 import { money } from '../../lib/projects'
@@ -9,12 +11,15 @@ import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, toNum } from './shared'
 
-type Draft = { id?: string; direction: 'lent' | 'borrowed'; person: string; amount: string; currency: string; loan_date: string; due_date: string; note: string }
-const blank = (): Draft => ({ direction: 'lent', person: '', amount: '', currency: defaultCurrency(), loan_date: localISO(), due_date: '', note: '' })
+type Draft = { id?: string; account: string; direction: 'lent' | 'borrowed'; person: string; amount: string; currency: string; loan_date: string; due_date: string; note: string }
+const blank = (): Draft => ({ account: lastAccount(), direction: 'lent', person: '', amount: '', currency: defaultCurrency(), loan_date: localISO(), due_date: '', note: '' })
 
 export default function Loans() {
   const loans = useTable<Loan>('loans', { col: 'loan_date', asc: false })
   const pays = useTable<LoanPayment>('loan_payments', { col: 'paid_on', asc: true })
+  const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
+  const accounts = accountsDb.rows.filter((a) => !a.archived)
+  const [payAcct, setPayAcct] = useState(lastAccount())
   const [d, setD] = useState<Draft | null>(null)
   const [err, setErr] = useState('')
   const [payAmt, setPayAmt] = useState('')
@@ -29,7 +34,8 @@ export default function Loans() {
     if (!d) return
     const n = toNum(d.amount)
     if (!d.person.trim() || !(n > 0)) return setErr('Escribe la persona y un monto mayor a cero.')
-    const v = { direction: d.direction, person: d.person.trim(), amount: n, currency: d.currency, loan_date: d.loan_date, due_date: d.due_date || null, note: d.note.trim() || null }
+    const v = { direction: d.direction, person: d.person.trim(), amount: n, currency: d.currency, loan_date: d.loan_date, due_date: d.due_date || null, note: d.note.trim() || null, account_id: d.account || null }
+    rememberAccount(d.account)
     if (d.id) await loans.update(d.id, v); else await loans.add(v)
     setD(null); setErr('')
   }
@@ -38,7 +44,8 @@ export default function Loans() {
     const n = toNum(payAmt)
     if (!open || !(n > 0)) return setErr('Escribe el monto del pago.')
     setErr('')
-    await pays.add({ loan_id: open.id, amount: n, paid_on: localISO(), note: null })
+    rememberAccount(payAcct)
+    await pays.add({ loan_id: open.id, amount: n, paid_on: localISO(), note: null, account_id: payAcct || null })
     setPayAmt('')
   }
 
@@ -76,7 +83,7 @@ export default function Loans() {
               <Row key={l.id} tone={l.direction === 'lent' ? 'var(--pos)' : 'var(--personal)'} title={l.person} muted={done}
                 sub={<>{l.direction === 'lent' ? 'Me debe' : 'Le debo'} · de {money(l.amount, l.currency)}{l.due_date ? ` · hasta ${l.due_date}` : ''}</>}
                 value={done ? 'Saldado' : money(bal, l.currency)} valueTone={done ? 'soft' : l.direction === 'lent' ? 'pos' : undefined}
-                onClick={() => { setD({ id: l.id, direction: l.direction, person: l.person, amount: String(l.amount), currency: l.currency, loan_date: l.loan_date, due_date: l.due_date ?? '', note: l.note ?? '' }); setMsg(''); setErr('') }} />
+                onClick={() => { setD({ id: l.id, account: l.account_id ?? '', direction: l.direction, person: l.person, amount: String(l.amount), currency: l.currency, loan_date: l.loan_date, due_date: l.due_date ?? '', note: l.note ?? '' }); setMsg(''); setErr('') }} />
             )
           })}
         </Group>
@@ -96,6 +103,7 @@ export default function Loans() {
                 <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={d.loan_date} onChange={(e) => setD({ ...d, loan_date: e.target.value })} /></label>
                 <label className="grid gap-2 text-sm">Pagar antes de<input type="date" className="field" value={d.due_date} onChange={(e) => setD({ ...d, due_date: e.target.value })} /></label>
               </div>
+              <AccountPick accounts={accounts} value={d.account} onChange={(v) => setD({ ...d, account: v })} label={d.direction === 'lent' ? 'De dónde salió el dinero' : 'A dónde entró el dinero'} />
               <label className="grid gap-2 text-sm">Nota<input className="field" value={d.note} onChange={(e) => setD({ ...d, note: e.target.value })} maxLength={500} /></label>
               <div className="flex items-center gap-3">
                 <button className="btn btn-primary">Guardar</button>
@@ -116,6 +124,7 @@ export default function Loans() {
                     </li>
                   ))}
                 </ul>
+                <div className="mt-3"><AccountPick accounts={accounts} value={payAcct} onChange={setPayAcct} label={open.direction === 'lent' ? 'Entra a' : 'Sale de'} /></div>
                 <div className="mt-3 flex gap-2">
                   <input className="field" inputMode="decimal" placeholder="Monto del pago" aria-label="Monto del pago" value={payAmt} onChange={(e) => setPayAmt(e.target.value)} />
                   <button className="btn btn-ghost shrink-0" onClick={addPayment}>Agregar</button>

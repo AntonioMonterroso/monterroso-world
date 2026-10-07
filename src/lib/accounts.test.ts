@@ -5,6 +5,23 @@ const acc = (id: string, kind: Account['kind'], opening = 0, extra: Partial<Acco
 const tx = (account_id: string | null, kind: 'income' | 'expense', amount: number) => ({ account_id, kind, amount })
 const tr = (from_id: string, to_id: string, amount: number, fee = 0): Transfer => ({ id: Math.random().toString(), from_id, to_id, amount, fee, tx_date: '2026-10-01', note: null })
 
+describe('dinero conectado', () => {
+  const a = acc('a', 'bank', 1000)
+  it('prestar baja la cuenta y pedir prestado la sube', () => {
+    expect(balanceOf(a, [], [], { loans: [{ id: 'l1', direction: 'lent', amount: 300, account_id: 'a' }] })).toBe(700)
+    expect(balanceOf(a, [], [], { loans: [{ id: 'l2', direction: 'borrowed', amount: 500, account_id: 'a' }] })).toBe(1500)
+    expect(balanceOf(a, [], [], { loans: [{ id: 'l3', direction: 'lent', amount: 300, account_id: 'otra' }] })).toBe(1000)
+  })
+  it('los pagos van en sentido contrario al préstamo', () => {
+    const loans = [{ id: 'l1', direction: 'lent' as const, amount: 300, account_id: 'a' }, { id: 'l2', direction: 'borrowed' as const, amount: 500, account_id: 'a' }]
+    const payments = [{ loan_id: 'l1', amount: 100, account_id: 'a' }, { loan_id: 'l2', amount: 200, account_id: 'a' }, { loan_id: 'l1', amount: 999, account_id: null }]
+    expect(balanceOf(a, [], [], { loans, payments })).toBe(1000 - 300 + 500 + 100 - 200)
+  })
+  it('aportar a una meta saca dinero de la cuenta y retirar lo regresa', () => {
+    expect(balanceOf(a, [], [], { goalMoves: [{ account_id: 'a', amount: 250 }, { account_id: 'a', amount: -50 }, { account_id: 'b', amount: 999 }] })).toBe(800)
+  })
+})
+
 describe('accounts', () => {
   it('saldo = inicial + ingresos − gastos', () => {
     expect(balanceOf(acc('a', 'bank', 1000), [tx('a', 'income', 500), tx('a', 'expense', 200.5), tx('b', 'income', 999), tx(null, 'expense', 50)], [])).toBe(1299.5)
