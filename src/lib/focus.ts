@@ -43,3 +43,33 @@ export function pickDopamine(items: string[], n = 3, rand: () => number = Math.r
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]] }
   return pool.slice(0, n)
 }
+
+const norm = (t: string) => t.trim().toLowerCase()
+
+/** Lo que ya le has dedicado a una tarea (mismo título), sumando todas las rondas. */
+export function taskTime(sessions: FocusSession[], title: string) {
+  const k = norm(title)
+  if (!k) return { rounds: 0, minutes: 0 }
+  const mine = sessions.filter((s) => s.task && norm(s.task) === k && s.actual_min > 0)
+  return { rounds: mine.length, minutes: mine.reduce((a, s) => a + s.actual_min, 0) }
+}
+
+/** Cuánto suele tomarte una tarea: promedio de rondas y minutos por título (solo tareas con 2+ rondas cuentan como "largas"). */
+export function taskHabits(sessions: FocusSession[]) {
+  const by = new Map<string, number[]>()
+  for (const s of sessions) if (s.task && s.actual_min > 0) by.set(norm(s.task), [...(by.get(norm(s.task)) ?? []), s.actual_min])
+  const tasks = [...by.values()]
+  if (tasks.length < 3) return null
+  const avgRounds = tasks.reduce((a, t) => a + t.length, 0) / tasks.length
+  const avgMin = tasks.reduce((a, t) => a + t.reduce((x, y) => x + y, 0), 0) / tasks.length
+  return { tasks: tasks.length, avgRounds: Math.round(avgRounds * 10) / 10, avgMin: Math.round(avgMin) }
+}
+
+/** Parte un tiempo largo en pasos de 10–25 min, parejos. */
+export function splitSteps(totalMin: number): number[] {
+  if (totalMin <= 25) return [Math.max(1, totalMin)]
+  const n = Math.ceil(totalMin / 25)
+  const base = Math.floor(totalMin / n)
+  const extra = totalMin - base * n
+  return Array.from({ length: n }, (_, i) => base + (i < extra ? 1 : 0))
+}

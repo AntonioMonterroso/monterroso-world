@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Avatar from '../../components/Avatar'
 import { chime, startAmbient, stopAmbient, type AmbientKind } from '../../lib/ambient'
-import { CAPTURE_LABEL, DEFAULT_DOPAMINE, classifyCapture, focusStats, mmss, pickDopamine, remainingSeconds, type FocusSession } from '../../lib/focus'
+import { CAPTURE_LABEL, DEFAULT_DOPAMINE, classifyCapture, focusStats, mmss, splitSteps, taskHabits, taskTime, pickDopamine, remainingSeconds, type FocusSession } from '../../lib/focus'
 import { getSettings, patchSettings } from '../../lib/settings'
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
@@ -142,6 +142,8 @@ export default function Focus() {
   const saveGuided = (v: boolean) => { setGuided(v); patchSettings({ guidedBreaks: v } as never) }
   const saveDop = (d: typeof dop) => { setDop(d); patchSettings({ dopamine: d } as never) }
   const stats = useMemo(() => focusStats(sessions.rows), [sessions.rows])
+  const habits = useMemo(() => taskHabits(sessions.rows), [sessions.rows])
+  const spent = useMemo(() => taskTime(sessions.rows, task), [sessions.rows, task])
   const msg = run ? MESSAGES[Math.min(MESSAGES.length - 1, Math.floor(((total - left) / Math.max(1, total)) * MESSAGES.length))] : ''
   const r = 90, C = 2 * Math.PI * r
 
@@ -277,12 +279,16 @@ export default function Focus() {
         </label>
         {open.length > 0 && <div className="-mt-2 flex flex-wrap gap-2" aria-label="Tus prioridades de hoy">{open.map((t) => <button key={t.id} type="button" className="min-h-11 rounded-full border px-3 text-sm" style={chip(task === t.title)} onClick={() => setTask(t.title)}>{t.title}</button>)}</div>}
 
+        {task.trim() && spent.rounds > 0 && <p className="-mt-2 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--surface)', color: 'var(--ink-soft)' }}>Esto ya lleva {spent.minutes} min en {spent.rounds} {spent.rounds === 1 ? 'ronda' : 'rondas'}.{spent.minutes >= 50 && ' Si sigue pesada, pártela en pasos más chicos.'}</p>}
+        {habits && <p className="-mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Dato de tu reloj real: tus tareas suelen llevarte ~{habits.avgMin} min ({habits.avgRounds} {habits.avgRounds === 1 ? 'ronda' : 'rondas'}). Al planear, cuenta con eso.</p>}
+
         <fieldset>
           <legend className="mb-2 text-sm">Cuánto tiempo</legend>
           <div className="flex flex-wrap items-center gap-2">
             {DURATIONS.map((m) => <button key={m} type="button" aria-pressed={minutes === m && !custom} onClick={() => { setMinutes(m); setCustom('') }} className="min-h-11 rounded-full border px-4 text-sm" style={chip(minutes === m && !custom)}>{m} min</button>)}
             <input className="field !w-24" inputMode="numeric" value={custom} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 3); setCustom(v); if (Number(v) > 0) setMinutes(Math.min(guided ? 90 : 240, Number(v))) }} placeholder="Otro" aria-label="Minutos personalizados" />
           </div>
+          {minutes > 25 && <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Se hace más fácil en pasos: {splitSteps(minutes).join(' + ')} min, con pausa entre cada uno. <button type="button" className="min-h-11 underline" onClick={() => { setMinutes(splitSteps(minutes)[0]); setCustom('') }}>Empezar con {splitSteps(minutes)[0]}</button></p>}
         </fieldset>
 
         <fieldset>
