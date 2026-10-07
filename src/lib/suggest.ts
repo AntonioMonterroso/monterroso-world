@@ -21,6 +21,8 @@ export type SuggestInput = {
   promises?: { id: string; text: string; person?: string | null; overdue: boolean }[]
   /** Cosas prestadas que ya toca pedir de vuelta. */
   chase?: { id: string; name: string; person?: string | null }[]
+  /** Vencimientos que ya entraron en su ventana de aviso. */
+  renewals?: { id: string; name: string; days: number }[]
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -57,6 +59,8 @@ export function suggest(i: SuggestInput, limit = 3): Suggestion[] {
 
   for (const p of (i.promises ?? []).slice(0, 2)) push({ id: `pr-${p.id}`, title: p.text, reason: `${p.person ? `Se lo prometiste a ${p.person}` : 'Es una promesa'} · ${p.overdue ? 'ya venció' : 'es para hoy'}`, to: '/app/mente/cosas', tone: p.overdue ? 'urgent' : 'now', score: p.overdue ? 84 : 76 })
   if ((i.chase ?? []).length > 0) push({ id: 'chase', title: i.chase!.length === 1 ? `Pide de vuelta: ${i.chase![0].name}` : `Tienes ${i.chase!.length} cosas prestadas por pedir`, reason: i.chase![0].person ? `Con ${i.chase![0].person}` : 'Llevan tiempo fuera', to: '/app/mente/cosas', tone: 'soon', score: 54 })
+
+  for (const r of (i.renewals ?? []).slice(0, 2)) push({ id: `rn-${r.id}`, title: r.name, reason: r.days < 0 ? `Venció hace ${-r.days} ${r.days === -1 ? 'día' : 'días'}` : r.days === 0 ? 'Vence hoy' : `Vence en ${r.days} ${r.days === 1 ? 'día' : 'días'}`, to: '/app/mente/vencimientos', tone: r.days <= 0 ? 'urgent' : 'soon', score: r.days <= 0 ? 82 : 60 - Math.min(r.days, 30) / 3 })
 
   for (const f of i.followUps.slice(0, 2)) push({ id: `fu-${f.id}`, title: `Dar seguimiento: ${f.title}`, reason: f.recipient ? `${f.recipient} no ha respondido` : 'Sin respuesta', to: '/app/envios', tone: 'now', score: 72 })
   if (i.toSend.length > 0) push({ id: 'to-send', title: i.toSend.length === 1 ? `Enviar: ${i.toSend[0].title}` : `Tienes ${i.toSend.length} cosas por enviar`, reason: i.toSend[0].recipient ? `Para ${i.toSend[0].recipient}` : 'Mandarlo hoy lo quita de tu cabeza', to: '/app/envios', tone: 'soon', score: 55 })

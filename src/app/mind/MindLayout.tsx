@@ -7,6 +7,7 @@ const tabs = [
     { to: '/app/mente/enfoque', label: 'Enfoque' },
     { to: '/app/mente/salida', label: 'Antes de salir' },
     { to: '/app/mente/cosas', label: 'Cosas y promesas' },
+    { to: '/app/mente/vencimientos', label: 'Vencimientos' },
     { to: '/app/mente/ocio', label: 'Ocio' },
     { to: '/app/ejercicio', label: 'Ejercicio' },
 ]

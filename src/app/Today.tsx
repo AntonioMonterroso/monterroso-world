@@ -7,6 +7,7 @@ import OutingSpotlight from '../components/OutingSpotlight'
 import ShoppingSpotlight from '../components/ShoppingSpotlight'
 import DayRitual from '../components/DayRitual'
 import { ResumeHint } from '../components/Resume'
+import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
 import { lentToChase, promiseState, sortPromises, dueLabel, type Promise_, type Stuff } from '../lib/loose'
 import OverwhelmSheet from '../components/OverwhelmSheet'
 import { useCheckins } from '../lib/checkin'
@@ -71,6 +72,7 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
 
+  const renewalsDb = useTable<Renewal>('renewals', { col: 'next_due', asc: true })
   const stuffDb = useTable<Stuff>('stuff', { col: 'created_at', asc: false })
   const promisesDb = useTable<Promise_>('promises', { col: 'created_at', asc: false })
   const openPromises = useMemo(() => sortPromises(promisesDb.rows.filter((p) => !p.done), todayISO), [promisesDb.rows, todayISO])
@@ -98,7 +100,7 @@ export default function Today() {
     next: next ? { title: next.title, startMin: next.start_min } : null,
     priorities: { open: pr.tasks.filter((t) => !t.done).length, total: pr.tasks.length },
     // Los recordatorios que nacen de una promesa o un préstamo ya salen con su propio texto: no se repiten
-    overdue: attention.overdue.filter((o) => !promisesDb.rows.some((p) => p.event_id === o.id) && !stuffDb.rows.some((i) => i.event_id === o.id)),
+    overdue: attention.overdue.filter((o) => !promisesDb.rows.some((p) => p.event_id === o.id) && !stuffDb.rows.some((i) => i.event_id === o.id) && !renewalsDb.rows.some((r) => r.event_id === o.id)),
     followUps: attention.followUps.map((d) => ({ id: d.id, title: d.title, recipient: d.recipient })),
     toSend: attention.toSend.map((d) => ({ id: d.id, title: d.title, recipient: d.recipient })),
     habitsPending: activeHabits.filter((h) => !hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).map((h) => ({ id: h.id, name: h.name })),
@@ -108,7 +110,8 @@ export default function Today() {
     exitList: departure,
     promises: openPromises.filter((p) => ['overdue', 'today'].includes(promiseState(p, todayISO))).map((p) => ({ id: p.id, text: p.text, person: p.person, overdue: promiseState(p, todayISO) === 'overdue' })),
     chase: chase.map((c) => ({ id: c.id, name: c.name, person: c.person })),
-  }), [promisesDb.rows, stuffDb.rows, openPromises, chase, departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+    renewals: renewalsDb.rows.filter((r) => stateOf(r, todayISO) !== 'later').map((r) => ({ id: r.id, name: r.name, days: daysUntil(r, todayISO) })),
+  }), [renewalsDb.rows, promisesDb.rows, stuffDb.rows, openPromises, chase, departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)

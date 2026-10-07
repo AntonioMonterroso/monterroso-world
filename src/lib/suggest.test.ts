@@ -60,6 +60,14 @@ describe('suggest con promesas y préstamos', () => {
   })
 })
 
+describe('suggest con vencimientos', () => {
+  it('uno vencido sube; uno próximo aparece con sus días', () => {
+    const r = suggest({ ...base, renewals: [{ id: 'a', name: 'Seguro', days: -2 }, { id: 'b', name: 'Dominio', days: 5 }] }, 5)
+    expect(r.find((x) => x.id === 'rn-a')!.tone).toBe('urgent')
+    expect(r.find((x) => x.id === 'rn-b')!.reason).toBe('Vence en 5 días')
+  })
+})
+
 describe('context', () => {
   it('la sección manda sobre el bloque en curso', () => {
     expect(resolveMode({ pathname: '/monterroso-world/app/musica', currentKind: 'work', hour: 10 })).toBe('music')
