@@ -116,7 +116,8 @@ export default function Focus() {
     if (!t || run) return
     const mins = Math.min(60, Math.max(1, Number(sp.get('min')) || 2))
     setTask(t)
-    if (sp.get('auto')) { setMinutes(mins); start(mins, 'focus', t) }
+    if (sp.get('min')) setMinutes(mins)
+    if (sp.get('auto')) start(mins, 'focus', t)
     setSp({}, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sp])

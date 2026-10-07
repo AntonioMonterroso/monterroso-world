@@ -17,6 +17,7 @@ import { useCheckins } from '../lib/checkin'
 import { isSoftDay } from '../lib/rhythm'
 import { exitKindFor, type ExitList } from '../lib/exitlist'
 import { suggest } from '../lib/suggest'
+import { freeGaps, peakHour, planDay } from '../lib/dayplan'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
 import { blockApplies, kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
@@ -119,6 +120,16 @@ export default function Today() {
     chase: chase.map((c) => ({ id: c.id, name: c.name, person: c.person })),
     renewals: renewalsDb.rows.filter((r) => stateOf(r, todayISO) !== 'later').map((r) => ({ id: r.id, name: r.name, days: daysUntil(r, todayISO) })),
   }), [renewalsDb.rows, promisesDb.rows, stuffDb.rows, openPromises, chase, departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+  const focusRows = useTable<{ id: string; actual_min: number; started_at: string }>('focus_sessions', { col: 'started_at', asc: false })
+  const dayPlan = useMemo(() => {
+    const open = pr.tasks.filter((t) => !t.done).map((t) => t.title)
+    if (open.length === 0) return []
+    const busy = [
+      ...todays.map((b) => ({ start: b.start_min, end: b.end_min })),
+      ...agenda.filter((o) => !o.state.done).map((o) => ({ start: o.event.start_min, end: (o.event as { end_min?: number | null }).end_min ?? o.event.start_min + 30 })),
+    ]
+    return planDay({ priorities: open, gaps: freeGaps(busy, Math.max(m, 7 * 60)), energy: checkins.today?.energy ?? null, peak: peakHour(focusRows.rows) })
+  }, [pr.tasks, todays, agenda, m, checkins.today?.energy, focusRows.rows])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
@@ -166,6 +177,13 @@ export default function Today() {
       <Group className="!mt-0" title="Ahora te conviene" aside={suggestions[0]?.id === 'free' ? undefined : `${suggestions.length}`}>
         {suggestions.map((x) => <Row key={x.id} to={x.to} tone={x.tone === 'urgent' ? 'var(--neg)' : x.tone === 'now' ? 'var(--accent)' : x.tone === 'soon' ? 'var(--sky)' : 'var(--ink-faint)'} title={x.title} sub={x.reason} />)}
       </Group>
+
+      {dayPlan.length > 0 && (
+        <Group className="!mt-0" title="Plan sugerido para hoy" aside={soft ? 'Día suave' : undefined}>
+          {dayPlan.map((p) => <Row key={p.title} to={`/app/mente/enfoque?tarea=${encodeURIComponent(p.title)}&min=${p.min}`} icon={<span className="text-xs font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMin(p.start)}</span>} tone="var(--accent)" title={p.title} sub={`${p.min} min de enfoque${soft ? ' · sin prisa' : ''}`} />)}
+          <li className="group-foot list-none">Está armado con tus huecos libres{focusRows.rows.length >= 5 ? ' y tu mejor hora de enfoque' : ''}. Es una guía, no una orden.</li>
+        </Group>
+      )}
 
       <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
 
