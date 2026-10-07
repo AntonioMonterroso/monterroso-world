@@ -7,6 +7,7 @@ import OutingSpotlight from '../components/OutingSpotlight'
 import ShoppingSpotlight from '../components/ShoppingSpotlight'
 import DayRitual from '../components/DayRitual'
 import { ResumeHint } from '../components/Resume'
+import { describe as ruleText, dueRules, type Rule } from '../lib/ifthen'
 import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
 import { lentToChase, promiseState, sortPromises, dueLabel, type Promise_, type Stuff } from '../lib/loose'
 import OverwhelmSheet from '../components/OverwhelmSheet'
@@ -72,12 +73,15 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
 
+  const rulesDb = useTable<Rule>('if_then', { col: 'created_at', asc: true })
   const renewalsDb = useTable<Renewal>('renewals', { col: 'next_due', asc: true })
   const stuffDb = useTable<Stuff>('stuff', { col: 'created_at', asc: false })
   const promisesDb = useTable<Promise_>('promises', { col: 'created_at', asc: false })
   const openPromises = useMemo(() => sortPromises(promisesDb.rows.filter((p) => !p.done), todayISO), [promisesDb.rows, todayISO])
   const chase = useMemo(() => lentToChase(stuffDb.rows, todayISO), [stuffDb.rows, todayISO])
   const exitLists = useTable<ExitList>('exit_lists', { col: 'position', asc: true })
+  const dueNow = useMemo(() => dueRules(rulesDb.rows, { nowMin: m, hour: now.getHours(), today: todayISO, blocks: blocks.filter((b) => blockApplies(b, todayISO)).map((b) => ({ kind: b.kind, title: b.title, start_min: b.start_min, end_min: b.end_min })) }), [rulesDb.rows, m, now, todayISO, blocks])
+
   // Lo próximo a lo que hay que salir (evento de hoy o bloque), para avisar de la lista de salida
   const departure = useMemo(() => {
     const cands: { kind: string | null; start: number }[] = [
@@ -163,6 +167,12 @@ export default function Today() {
       <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
 
       <OutingSpotlight />
+
+      {dueNow.length > 0 && (
+        <Group className="!mt-0" title="Te toca" aside={<Link to="/app/mente/reglas" className="underline">Mis reglas</Link>}>
+          {dueNow.map(({ rule, why }) => <Row key={rule.id} icon={<Chk on={false} />} chevron={false} title={rule.action} sub={`${why} · ${ruleText(rule)}`} onClick={() => void rulesDb.update(rule.id, { last_done: todayISO })} />)}
+        </Group>
+      )}
 
       <ShoppingSpotlight />
 

@@ -59,6 +59,7 @@ import Exit from './mind/Exit'
 import Leisure from './mind/Leisure'
 import Loose from './mind/Loose'
 import Renewals from './mind/Renewals'
+import Rules from './mind/Rules'
 import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
@@ -145,6 +146,7 @@ function Gate() {
           <Route path="ocio" element={<Leisure />} />
           <Route path="cosas" element={<Loose />} />
           <Route path="vencimientos" element={<Renewals />} />
+          <Route path="reglas" element={<Rules />} />
           <Route path="salida" element={<Exit />} />
           <Route path="rutinas/:id" element={<RoutineEditor />} />
         </Route>
