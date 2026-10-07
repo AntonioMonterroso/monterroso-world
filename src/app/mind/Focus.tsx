@@ -138,7 +138,7 @@ export default function Focus() {
     return (
       <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#07111a' }}>
         <div className="flex items-center justify-between px-3 py-2">
-          <button className="grid size-11 place-items-center rounded-full" onClick={() => finish(false).then(() => setRun(null))} aria-label="Cancelar y salir"><X size={22} aria-hidden /></button>
+          <button className="grid size-11 place-items-center rounded-full" onClick={() => void finish(false)} aria-label="Cancelar y salir"><X size={22} aria-hidden /></button>
           <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>{isFocus ? 'Enfoque' : 'Pausa'}</span>
           <button className="grid size-11 place-items-center rounded-full" onClick={() => setRun({ ...run, sound: run.sound === 'off' ? 'brown' : 'off' })} aria-label={run.sound === 'off' ? 'Activar sonido' : 'Silenciar'} aria-pressed={run.sound !== 'off'}>{run.sound === 'off' ? <VolumeX size={20} aria-hidden /> : <Volume2 size={20} aria-hidden />}</button>
         </div>
