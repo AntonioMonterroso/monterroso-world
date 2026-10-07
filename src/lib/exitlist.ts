@@ -1,6 +1,6 @@
 export type ExitKind = 'work' | 'rehearsal' | 'gig' | 'church' | 'gym' | 'client' | 'other'
 export type ExitItem = { id: string; text: string; forgot: number }
-export type ExitList = { id: string; name: string; kind: ExitKind; items: ExitItem[]; position: number }
+export type ExitList = { id: string; name: string; kind: ExitKind; items: ExitItem[]; position: number; remind_min?: number | null; event_id?: string | null }
 
 export const EXIT_KINDS: Record<ExitKind, string> = { work: 'Trabajo', rehearsal: 'Ensayo', gig: 'Tocada', church: 'Iglesia', gym: 'Gimnasio', client: 'Cliente', other: 'Otra' }
 

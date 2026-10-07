@@ -4,9 +4,10 @@ import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
 import { Chk, Group, PageHeader, Row, Segmented } from '../../components/ui'
 import { EXIT_KINDS, SEEDS, newItem, oftenForgotten, seedItems, type ExitItem, type ExitKind, type ExitList } from '../../lib/exitlist'
+import { syncReminder } from '../../lib/remind'
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
-import { localISO } from '../../lib/time'
+import { fmtMin, localISO, toMin } from '../../lib/time'
 import { Empty, ErrorBar } from '../money/shared'
 
 const KEY = 'mw_exit_checked'
@@ -22,7 +23,7 @@ async function seedOnce() {
   await supabase.from('exit_lists').insert(SEEDS.map((l, i) => ({ name: l.name, kind: l.kind, items: seedItems(l.items), position: i + 1 })))
 }
 
-type Draft = { id?: string; name: string; kind: ExitKind; text: string }
+type Draft = { id?: string; name: string; kind: ExitKind; text: string; remind: boolean; time: string; daily: boolean; date: string }
 
 /** Antes de salir: una lista por contexto. Marca lo que ya llevas; avisa lo que más olvidas. */
 export default function Exit() {
@@ -50,14 +51,18 @@ export default function Exit() {
   const reset = () => list && setChecked((c) => ({ ...c, lists: { ...c.lists, [list.id]: [] } }))
   const forgot = (item: ExitItem) => list && db.update(list.id, { items: list.items.map((i) => (i.id === item.id ? { ...i, forgot: i.forgot + 1 } : i)) })
 
-  const openEdit = (l?: ExitList) => setDraft({ id: l?.id, name: l?.name ?? '', kind: l?.kind ?? 'other', text: (l?.items ?? []).map((i) => i.text).join('\n') })
+  const openEdit = (l?: ExitList) => setDraft({ id: l?.id, name: l?.name ?? '', kind: l?.kind ?? 'other', text: (l?.items ?? []).map((i) => i.text).join('\n'), remind: l?.remind_min != null, time: fmtMin(l?.remind_min ?? 8 * 60), daily: true, date: localISO() })
   const commit = async () => {
     if (!draft || !draft.name.trim()) return
     const old = db.rows.find((l) => l.id === draft.id)
     const lines = draft.text.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 60)
     const items = lines.map((t) => old?.items.find((i) => i.text === t) ?? newItem(t))
-    if (old) await db.update(old.id, { name: draft.name.trim(), kind: draft.kind, items })
-    else { const row = await db.add({ name: draft.name.trim(), kind: draft.kind, items, position: (db.rows.at(-1)?.position ?? 0) + 1 }); if (row) setSel(row.id) }
+    const minute = draft.remind ? toMin(draft.time) : null
+    const name = draft.name.trim()
+    const event_id = await syncReminder(old?.event_id ?? null, draft.remind && minute != null ? { title: `Antes de salir: ${name}`, action: 'Revisa tu lista antes de salir', date: draft.daily ? localISO() : draft.date, daily: draft.daily, minute } : null)
+    const extra = { remind_min: minute, event_id }
+    if (old) await db.update(old.id, { name, kind: draft.kind, items, ...extra })
+    else { const row = await db.add({ name, kind: draft.kind, items, position: (db.rows.at(-1)?.position ?? 0) + 1, ...extra }); if (row) setSel(row.id) }
     setDraft(null)
   }
 
@@ -97,9 +102,17 @@ export default function Exit() {
               <select className="field" value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value as ExitKind })}>{(Object.keys(EXIT_KINDS) as ExitKind[]).map((k) => <option key={k} value={k}>{EXIT_KINDS[k]}</option>)}</select>
             </label>
             <label className="grid gap-2 text-sm">Qué llevar, una cosa por línea<textarea className="field py-3" rows={8} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} placeholder={'Cables\nPedales\nBaquetas'} /></label>
+            <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.remind} onChange={(e) => setDraft({ ...draft, remind: e.target.checked })} /> Avisarme con una notificación</label>
+            {draft.remind && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-2 text-sm">Hora<input type="time" className="field" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} /></label>
+                <label className="grid gap-2 text-sm">Cuándo<select className="field" value={draft.daily ? 'd' : 'o'} onChange={(e) => setDraft({ ...draft, daily: e.target.value === 'd' })}><option value="d">Todos los días</option><option value="o">Solo una vez</option></select></label>
+                {!draft.daily && <label className="col-span-2 grid gap-2 text-sm">Fecha<input type="date" className="field" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label>}
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: 'var(--neg)' }} onClick={async () => { await db.remove(draft.id!); setDraft(null) }}><Trash2 size={16} aria-hidden /> Eliminar</button>}
+              {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: 'var(--neg)' }} onClick={async () => { await syncReminder(db.rows.find((l) => l.id === draft.id)?.event_id ?? null, null); await db.remove(draft.id!); setDraft(null) }}><Trash2 size={16} aria-hidden /> Eliminar</button>}
             </div>
           </form>
         )}
