@@ -9,6 +9,7 @@ const tabs = [
     { to: '/app/mente/cosas', label: 'Cosas y promesas' },
     { to: '/app/mente/vencimientos', label: 'Vencimientos' },
     { to: '/app/mente/reglas', label: 'Si… entonces…' },
+    { to: '/app/mente/logros', label: 'Logros' },
     { to: '/app/mente/ocio', label: 'Ocio' },
     { to: '/app/ejercicio', label: 'Ejercicio' },
 ]

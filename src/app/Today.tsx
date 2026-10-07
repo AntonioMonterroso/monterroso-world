@@ -7,6 +7,8 @@ import OutingSpotlight from '../components/OutingSpotlight'
 import ShoppingSpotlight from '../components/ShoppingSpotlight'
 import DayRitual from '../components/DayRitual'
 import { ResumeHint } from '../components/Resume'
+import { useProgress } from '../lib/progress'
+import { pointsToGo } from '../lib/xp'
 import { describe as ruleText, dueRules, type Rule } from '../lib/ifthen'
 import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
 import { lentToChase, promiseState, sortPromises, dueLabel, type Promise_, type Stuff } from '../lib/loose'
@@ -73,6 +75,7 @@ export default function Today() {
   const [draft, setDraft] = useState('')
   const [cap, setCap] = useState('')
 
+  const prog = useProgress()
   const rulesDb = useTable<Rule>('if_then', { col: 'created_at', asc: true })
   const renewalsDb = useTable<Renewal>('renewals', { col: 'next_due', asc: true })
   const stuffDb = useTable<Stuff>('stuff', { col: 'created_at', asc: false })
@@ -184,6 +187,16 @@ export default function Today() {
       )}
 
       <ResumeHint />
+
+      {!prog.loading && (prog.earned > 0 || prog.rewards.rows.length > 0) && (() => {
+        const next = prog.rewards.rows.filter((r) => r.active).sort((a, b) => pointsToGo(prog.bal, a.cost) - pointsToGo(prog.bal, b.cost))[0]
+        const gained = prog.byDay.get(todayISO)?.total ?? 0
+        return (
+          <Group className="!mt-0" title="Tu avance">
+            <Row to="/app/mente/logros" tone="var(--accent)" title={`Nivel ${prog.level.level} · ${prog.level.pct}% al siguiente`} sub={<>{gained > 0 ? `+${gained} puntos hoy` : 'Aún no sumas hoy: cualquier cosa pequeña cuenta'}{next && (pointsToGo(prog.bal, next.cost) === 0 ? ` · ¡ya te alcanza “${next.name}”!` : ` · a ${pointsToGo(prog.bal, next.cost)} de “${next.name}”`)}</>} />
+          </Group>
+        )
+      })()}
 
       {agenda.length > 0 && (
         <section aria-labelledby="agenda">
