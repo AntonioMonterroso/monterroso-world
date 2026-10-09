@@ -1,6 +1,7 @@
 import { Delete, Fingerprint } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import Globe from '../components/Globe'
+import { bioLockDeclined, bioLockEnrolled, bioLockSupported, declineBioLock, enrollBioLock, verifyBioLock } from '../lib/biolock'
 import { checkPin, clearPin, lockedFor, pinLength, setPin } from '../lib/pin'
 
 function Dots({ n, filled, shake }: { n: number; filled: number; shake: boolean }) {
@@ -13,7 +14,7 @@ function Dots({ n, filled, shake }: { n: number; filled: number; shake: boolean 
   )
 }
 
-function Keypad({ onDigit, onDelete }: { onDigit: (d: string) => void; onDelete: () => void }) {
+function Keypad({ onDigit, onDelete, onBio }: { onDigit: (d: string) => void; onDelete: () => void; onBio?: () => void }) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (/^\d$/.test(e.key)) onDigit(e.key)
@@ -28,7 +29,7 @@ function Keypad({ onDigit, onDelete }: { onDigit: (d: string) => void; onDelete:
       {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
         <button key={d} type="button" className="pin-key" onClick={() => onDigit(d)} aria-label={d}>{d}</button>
       ))}
-      <span />
+      {onBio ? <button type="button" className="pin-key" onClick={onBio} aria-label="Usar huella o Face ID"><Fingerprint size={22} aria-hidden /></button> : <span />}
       <button type="button" className="pin-key" onClick={() => onDigit('0')} aria-label="0">0</button>
       <button type="button" className="pin-key" onClick={onDelete} aria-label="Borrar"><Delete size={20} aria-hidden /></button>
     </div>
@@ -94,6 +95,21 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
   const [shake, setShake] = useState(false)
   const [wait, setWait] = useState(lockedFor())
   const [msg, setMsg] = useState('')
+  const [bio, setBio] = useState(bioLockEnrolled())
+  const [offer, setOffer] = useState(false)
+  const [offerMsg, setOfferMsg] = useState('')
+
+  // Entra con la huella; si falla o se cancela, queda el teclado
+  const tryBio = useCallback(async () => { if (await verifyBioLock()) onUnlock() }, [onUnlock])
+  useEffect(() => { if (bio) void tryBio() }, [bio, tryBio])
+  // Tras el primer PIN correcto, ofrece activar la huella (una sola vez)
+  const afterPin = useCallback(async () => {
+    if (!bioLockEnrolled() && !bioLockDeclined() && await bioLockSupported()) setOffer(true)
+    else onUnlock()
+  }, [onUnlock])
+  const accept = async () => {
+    try { await enrollBioLock('Monterroso'); setBio(true); onUnlock() } catch { setOfferMsg('No pude activarlo en este dispositivo. Puedes intentarlo después en Ajustes.') }
+  }
 
   useEffect(() => {
     if (wait <= 0) return
@@ -107,14 +123,31 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
   useEffect(() => {
     if (value.length !== len) return
     checkPin(value).then((ok) => {
-      if (ok) return onUnlock()
+      if (ok) return void afterPin()
       setShake(true)
       const w = lockedFor()
       setWait(w)
       setMsg(w > 0 ? '' : 'PIN incorrecto')
       setTimeout(() => { setShake(false); setValue('') }, 450)
     })
-  }, [value, len, onUnlock])
+  }, [value, len, afterPin])
+
+  if (offer) {
+    return (
+      <main className="safe-top grid min-h-dvh place-items-center px-5 py-10">
+        <div className="w-full max-w-sm text-center">
+          <Fingerprint size={44} className="mx-auto" style={{ color: 'var(--accent)' }} aria-hidden />
+          <h1 className="mt-4 font-display text-3xl">¿Abrir con tu huella?</h1>
+          <p className="mx-auto mt-2 max-w-xs text-sm" style={{ color: 'var(--ink-soft)' }}>La próxima vez entras con huella o Face ID, sin escribir el PIN. El PIN sigue disponible si algo falla.</p>
+          {offerMsg && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{offerMsg}</p>}
+          <div className="mt-8 grid gap-3">
+            <button className="btn btn-primary min-h-12" onClick={() => void accept()}>Activar huella</button>
+            <button className="min-h-11 text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => { declineBioLock(); onUnlock() }}>Ahora no</button>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="safe-top grid min-h-dvh place-items-center px-5 py-10">
@@ -126,7 +159,7 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
         <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--neg)' }}>
           {wait > 0 ? `Demasiados intentos. Espera ${wait} s.` : msg}
         </p>
-        <Keypad onDigit={digit} onDelete={del} />
+        <Keypad onDigit={digit} onDelete={del} onBio={bio ? () => void tryBio() : undefined} />
         <button type="button" onClick={onForgot} className="mt-8 inline-flex min-h-11 items-center gap-2 text-sm underline" style={{ color: 'var(--ink-soft)' }}>
           <Fingerprint size={16} aria-hidden /> Olvidé mi PIN
         </button>

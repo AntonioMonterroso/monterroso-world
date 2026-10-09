@@ -1,6 +1,7 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
+import { bioLockEnrolled, bioLockSupported, enrollBioLock, removeBioLock } from '../lib/biolock'
 import { disablePush, enablePush, loadSettings, pushStatus, saveBlockAlerts, saveQuiet, sendTest, type BlockAlerts, type PushStatus, type Quiet } from '../lib/push'
 import { fmtMin, toMin } from '../lib/time'
 import { Group, PageHeader, Row, Switch } from '../components/ui'
@@ -80,6 +81,20 @@ function Alerts() {
   )
 }
 
+function BioLockRow() {
+  const [ok, setOk] = useState(false)
+  const [on, setOn] = useState(bioLockEnrolled())
+  const [msg, setMsg] = useState('')
+  useEffect(() => { bioLockSupported().then(setOk) }, [])
+  if (!ok) return null
+  const toggle = async (v: boolean) => {
+    setMsg('')
+    if (!v) { removeBioLock(); return setOn(false) }
+    try { await enrollBioLock('Monterroso'); setOn(true) } catch { setMsg('No pude activarlo. Revisa que el teléfono tenga huella o Face ID configurados.') }
+  }
+  return <Row title="Abrir con huella o Face ID" sub={msg || 'En lugar de escribir el PIN en este dispositivo'} chevron={false} trailing={<Switch checked={on} onChange={(v) => void toggle(v)} label="Abrir con huella o Face ID" />} />
+}
+
 export default function Settings({ onLock, onResetPin }: { onLock: () => void; onResetPin: () => void }) {
   const { session, signOut } = useAuth()
   return (
@@ -90,6 +105,7 @@ export default function Settings({ onLock, onResetPin }: { onLock: () => void; o
         <Row title={<span className="break-all">{session?.user.email}</span>} chevron={false} />
         <Row title="Bloquear ahora" onClick={onLock} />
         <Row title="Cambiar PIN" onClick={onResetPin} />
+        <BioLockRow />
         <Row title={<span style={{ color: 'var(--neg)' }}>Cerrar sesión</span>} onClick={signOut} />
       </Group>
     </div>

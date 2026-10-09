@@ -35,6 +35,7 @@ export async function setPin(pin: string) {
 
 export function clearPin() {
   localStorage.removeItem(KEY)
+  localStorage.removeItem('mw_biolock')
   localStorage.removeItem(TRIES)
 }
 
