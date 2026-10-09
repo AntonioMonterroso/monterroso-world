@@ -36,7 +36,8 @@ export default function Loans() {
     if (!d.person.trim() || !(n > 0)) return setErr('Escribe la persona y un monto mayor a cero.')
     const v = { direction: d.direction, person: d.person.trim(), amount: n, currency: d.currency, loan_date: d.loan_date, due_date: d.due_date || null, note: d.note.trim() || null, account_id: d.account || null }
     rememberAccount(d.account)
-    if (d.id) await loans.update(d.id, v); else await loans.add(v)
+    if (d.id) await loans.update(d.id, v)
+    else if (!(await loans.add(v))) return setErr('No se pudo guardar el préstamo. Revisa tu conexión y vuelve a intentar.')
     setD(null); setErr('')
   }
 
@@ -45,7 +46,7 @@ export default function Loans() {
     if (!open || !(n > 0)) return setErr('Escribe el monto del pago.')
     setErr('')
     rememberAccount(payAcct)
-    await pays.add({ loan_id: open.id, amount: n, paid_on: localISO(), note: null, account_id: payAcct || null })
+    if (!(await pays.add({ loan_id: open.id, amount: n, paid_on: localISO(), note: null, account_id: payAcct || null }))) return setErr('No se pudo guardar el pago.')
     setPayAmt('')
   }
 

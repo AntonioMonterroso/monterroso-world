@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { Account } from '../../lib/accounts'
 
 /** Chips para elegir de/a qué cuenta va el dinero. Recuerda la última elegida. */
@@ -6,6 +7,9 @@ export const lastAccount = () => { try { return localStorage.getItem(LAST_KEY) ?
 export const rememberAccount = (id: string) => { try { if (id) localStorage.setItem(LAST_KEY, id) } catch { /* sin almacenamiento */ } }
 
 export function AccountPick({ accounts, value, onChange, label, none = 'Sin cuenta' }: { accounts: Account[]; value: string; onChange: (id: string) => void; label: string; none?: string }) {
+  // Si la cuenta recordada ya no existe (borrada o archivada), se limpia: si no, el guardado fallaba en silencio
+  const stale = Boolean(value) && !accounts.some((a) => a.id === value)
+  useEffect(() => { if (stale) onChange('') }, [stale, onChange])
   if (accounts.length === 0) return null
   return (
     <fieldset>
