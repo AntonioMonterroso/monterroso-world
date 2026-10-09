@@ -9,7 +9,7 @@ import { currentMonth, money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
-import { CurrencySelect, Empty, ErrorBar, defaultCurrency, rememberCurrency, toNum } from './shared'
+import { Empty, ErrorBar, defaultCurrency, rememberCurrency, toNum } from './shared'
 
 type Draft = { id?: string; account: string; kind: Kind; amount: string; currency: string; category: string; area: Area; date: string; note: string }
 const lastAcct = () => { try { return localStorage.getItem('mw_acct') ?? '' } catch { return '' } }
@@ -22,9 +22,8 @@ function Form({ d, setD, onSave, onDelete, err, tax, accounts }: { d: Draft; set
       <div className="inline-flex w-fit rounded-full p-1" style={{ background: 'var(--bg)' }} role="group" aria-label="Tipo">
         {(['expense', 'income'] as const).map((k) => <button key={k} type="button" aria-pressed={d.kind === k} onClick={() => setD({ ...d, kind: k, category: tax.cats(k)[0]?.name ?? '' })} className="min-h-11 rounded-full px-4 text-sm font-semibold" style={{ background: d.kind === k ? (k === 'income' ? 'var(--pos)' : 'var(--personal)') : 'transparent', color: d.kind === k ? 'var(--bg)' : 'var(--ink-soft)' }}>{k === 'income' ? 'Ingreso' : 'Gasto'}</button>)}
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3">
         <label className="grid gap-2 text-sm">Monto<input className="field" inputMode="decimal" value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value })} placeholder="0.00" autoFocus /></label>
-        <CurrencySelect value={d.currency} onChange={(v) => setD({ ...d, currency: v })} />
       </div>
       {accounts.length > 0 && (
         <fieldset>

@@ -10,7 +10,7 @@ import { hostOf } from '../../lib/learn'
 import { money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
-import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, toNum } from '../money/shared'
+import { Empty, ErrorBar, chip, defaultCurrency, toNum } from '../money/shared'
 import { PageHeader } from '../../components/ui'
 
 type Draft = { id?: string; name: string; priority: 1 | 2 | 3; category: string; price: string; currency: string; store: string; url: string; notes: string }
@@ -121,9 +121,8 @@ export default function Shopping() {
             <label className="grid gap-2 text-sm">Qué es<input className="field" value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} maxLength={200} placeholder="Pedal de reverb" autoFocus /></label>
             <div className="flex gap-2" role="group" aria-label="Prioridad">{PRIORITIES.map((p) => <button key={p.id} type="button" aria-pressed={d.priority === p.id} onClick={() => setD({ ...d, priority: p.id })} className="min-h-11 rounded-full border px-4 text-sm" style={chip(d.priority === p.id, p.color)}>{p.label}</button>)}</div>
             <label className="grid gap-2 text-sm">Categoría<input className="field" list="scat" value={d.category} onChange={(e) => setD({ ...d, category: e.target.value })} maxLength={60} /><datalist id="scat">{SHOP_CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist></label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3">
               <label className="grid gap-2 text-sm">Precio<input className="field" inputMode="decimal" value={d.price} onChange={(e) => setD({ ...d, price: e.target.value })} placeholder="0.00" /></label>
-              <CurrencySelect value={d.currency} onChange={(v) => setD({ ...d, currency: v })} />
             </div>
             <label className="grid gap-2 text-sm">Dónde<input className="field" value={d.store} onChange={(e) => setD({ ...d, store: e.target.value })} maxLength={200} placeholder="Tienda o sitio" /></label>
             <label className="grid gap-2 text-sm">Enlace (opcional)<input className="field" inputMode="url" value={d.url} onChange={(e) => setD({ ...d, url: e.target.value })} maxLength={1000} placeholder="https://" /></label>

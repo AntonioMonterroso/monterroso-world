@@ -9,14 +9,14 @@ import { PageHeader } from '../../components/ui'
 import type { Goal } from '../../lib/finance'
 import { money } from '../../lib/projects'
 import { useTable } from '../../lib/table'
-import { CurrencySelect, Empty, ErrorBar, defaultCurrency, toNum } from './shared'
+import { Empty, ErrorBar, defaultCurrency, toNum } from './shared'
 
 export default function Goals() {
   const db = useTable<Goal>('savings_goals', { col: 'created_at', asc: true })
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [target, setTarget] = useState('')
-  const [cur, setCur] = useState(defaultCurrency())
+  const [cur] = useState(defaultCurrency())
   const [due, setDue] = useState('')
   const [err, setErr] = useState('')
   const [add, setAdd] = useState<Record<string, string>>({})
@@ -123,9 +123,8 @@ export default function Goals() {
       <Sheet open={open} title="Nueva meta" onClose={() => setOpen(false)}>
         <form className="grid gap-4" onSubmit={create}>
           <label className="grid gap-2 text-sm">¿Qué quieres lograr?<input className="field" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} placeholder="Pedal de guitarra" /></label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3">
             <label className="grid gap-2 text-sm">Meta<input className="field" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="0.00" /></label>
-            <CurrencySelect value={cur} onChange={setCur} />
           </div>
           <label className="grid gap-2 text-sm">Fecha límite (opcional)<input type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></label>
           {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}

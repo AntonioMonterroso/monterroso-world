@@ -9,7 +9,7 @@ import { money } from '../../lib/projects'
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
-import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, toNum } from './shared'
+import { Empty, ErrorBar, chip, defaultCurrency, toNum } from './shared'
 
 type Draft = { id?: string; account: string; direction: 'lent' | 'borrowed'; person: string; amount: string; currency: string; loan_date: string; due_date: string; note: string }
 const blank = (): Draft => ({ account: lastAccount(), direction: 'lent', person: '', amount: '', currency: defaultCurrency(), loan_date: localISO(), due_date: '', note: '' })
@@ -99,8 +99,7 @@ export default function Loans() {
               </div>
               <label className="grid gap-2 text-sm">Persona<input className="field" value={d.person} onChange={(e) => setD({ ...d, person: e.target.value })} maxLength={200} /></label>
               <div className="grid grid-cols-2 gap-3">
-                <label className="grid gap-2 text-sm">Monto<input className="field" inputMode="decimal" value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value })} /></label>
-                <CurrencySelect value={d.currency} onChange={(v) => setD({ ...d, currency: v })} />
+                <label className="col-span-2 grid gap-2 text-sm">Monto<input className="field" inputMode="decimal" value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value })} /></label>
                 <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={d.loan_date} onChange={(e) => setD({ ...d, loan_date: e.target.value })} /></label>
                 <label className="grid gap-2 text-sm">Pagar antes de<input type="date" className="field" value={d.due_date} onChange={(e) => setD({ ...d, due_date: e.target.value })} /></label>
               </div>

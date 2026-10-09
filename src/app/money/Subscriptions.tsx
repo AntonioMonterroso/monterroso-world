@@ -10,7 +10,7 @@ import { money } from '../../lib/projects'
 import { dayNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
-import { CurrencySelect, Empty, ErrorBar, chip, defaultCurrency, toNum } from './shared'
+import { Empty, ErrorBar, chip, defaultCurrency, toNum } from './shared'
 
 type Draft = { id?: string; account: string; name: string; amount: string; currency: string; period: Period; next_due: string; category: string; area: Area; url: string }
 const blank = (): Draft => ({ account: '', name: '', amount: '', currency: defaultCurrency(), period: 'monthly', next_due: localISO(), category: 'Software y servicios', area: 'personal', url: '' })
@@ -79,9 +79,8 @@ export default function Subscriptions() {
         {d && (
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); save() }}>
             <label className="grid gap-2 text-sm">Nombre<input className="field" value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} maxLength={200} placeholder="Dominio, hosting, Spotify…" /></label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3">
               <label className="grid gap-2 text-sm">Monto<input className="field" inputMode="decimal" value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value })} /></label>
-              <CurrencySelect value={d.currency} onChange={(v) => setD({ ...d, currency: v })} />
             </div>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Frecuencia">{PERIODS.map(([v, l]) => <button key={v} type="button" aria-pressed={d.period === v} onClick={() => setD({ ...d, period: v })} className="min-h-11 rounded-full border px-4 text-sm" style={chip(d.period === v)}>{l}</button>)}</div>
             <label className="grid gap-2 text-sm">Próximo cobro<input type="date" className="field" value={d.next_due} onChange={(e) => setD({ ...d, next_due: e.target.value })} /></label>

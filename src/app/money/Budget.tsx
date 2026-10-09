@@ -7,7 +7,7 @@ import { useTaxonomy } from '../../lib/taxonomy'
 import { CategoryField } from './fields'
 import { currentMonth, money, monthLabel } from '../../lib/projects'
 import { useTable } from '../../lib/table'
-import { CurrencySelect, Empty, ErrorBar, defaultCurrency, toNum } from './shared'
+import { Empty, ErrorBar, defaultCurrency, toNum } from './shared'
 
 const color = { ok: 'var(--pos)', warn: 'var(--personal)', over: 'var(--neg)' }
 
@@ -20,7 +20,7 @@ export default function Budget() {
   const [open, setOpen] = useState(false)
   const [cat, setCat] = useState('Comida')
   const [limit, setLimit] = useState('')
-  const [cur, setCur] = useState(defaultCurrency())
+  const [cur] = useState(defaultCurrency())
   const [err, setErr] = useState('')
 
   const add = async (e: React.FormEvent) => {
@@ -53,9 +53,8 @@ export default function Budget() {
       <Sheet open={open} title="Nuevo límite mensual" onClose={() => setOpen(false)}>
         <form className="grid gap-4" onSubmit={add}>
           <CategoryField kind="expense" value={cat} onChange={setCat} tax={tax} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3">
             <label className="grid gap-2 text-sm">Límite al mes<input className="field" inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="0.00" /></label>
-            <CurrencySelect value={cur} onChange={setCur} />
           </div>
           {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Guardar</button>
