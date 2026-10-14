@@ -11,7 +11,7 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 
 export type LoanLite = { id: string; direction: 'lent' | 'borrowed'; amount: number; account_id?: string | null }
 export type PayLite = { loan_id: string; amount: number; account_id?: string | null }
-export type GoalMove = { account_id: string; amount: number }
+export type GoalMove = { account_id: string | null; amount: number }
 type TxLite = Pick<Tx, 'kind' | 'amount'> & { account_id?: string | null }
 export type Links = { loans?: LoanLite[]; payments?: PayLite[]; goalMoves?: GoalMove[]; work?: { account_id: string; amount: number }[] }
 

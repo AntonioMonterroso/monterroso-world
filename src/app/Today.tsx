@@ -18,6 +18,9 @@ import { isSoftDay } from '../lib/rhythm'
 import { exitKindFor, type ExitList } from '../lib/exitlist'
 import { suggest } from '../lib/suggest'
 import { freeGaps, peakHour, planDay } from '../lib/dayplan'
+import { duePlans, type Plan } from '../lib/savings'
+import type { Goal } from '../lib/finance'
+import { money } from '../lib/projects'
 import { useAttention } from '../lib/attention'
 import Avatar, { propForHour, type Prop } from '../components/Avatar'
 import { blockApplies, kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
@@ -120,6 +123,9 @@ export default function Today() {
     chase: chase.map((c) => ({ id: c.id, name: c.name, person: c.person })),
     renewals: renewalsDb.rows.filter((r) => stateOf(r, todayISO) !== 'later').map((r) => ({ id: r.id, name: r.name, days: daysUntil(r, todayISO) })),
   }), [renewalsDb.rows, promisesDb.rows, stuffDb.rows, openPromises, chase, departure, soft, m, current, next, pr.tasks, attention, activeHabits, hlogs.rows, todayISO, routineNow, routineStepsNow.length, routineRunNow, routineProgress.done, inbox.items.length])
+  const savingsPlans = useTable<Plan>('savings_plans', { col: 'planned_for', asc: true })
+  const savingsGoals = useTable<Goal>('savings_goals', { col: 'created_at', asc: true })
+  const dueSavings = useMemo(() => duePlans(savingsPlans.rows, todayISO), [savingsPlans.rows, todayISO])
   const focusRows = useTable<{ id: string; actual_min: number; started_at: string }>('focus_sessions', { col: 'started_at', asc: false })
   const dayPlan = useMemo(() => {
     const open = pr.tasks.filter((t) => !t.done).map((t) => t.title)
@@ -182,6 +188,12 @@ export default function Today() {
         <Group className="!mt-0" title="Plan sugerido para hoy" aside={soft ? 'Día suave' : undefined}>
           {dayPlan.map((p) => <Row key={p.title} to={`/app/mente/enfoque?tarea=${encodeURIComponent(p.title)}&min=${p.min}`} icon={<span className="text-xs font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMin(p.start)}</span>} tone="var(--accent)" title={p.title} sub={`${p.min} min de enfoque${soft ? ' · sin prisa' : ''}`} />)}
           <li className="group-foot list-none">Está armado con tus huecos libres{focusRows.rows.length >= 5 ? ' y tu mejor hora de enfoque' : ''}. Es una guía, no una orden.</li>
+        </Group>
+      )}
+
+      {dueSavings.length > 0 && (
+        <Group className="!mt-0" title="Retiro planeado de tu ahorro" aside={<Link to="/app/dinero/metas" className="underline">Ver ahorro</Link>}>
+          {dueSavings.map((pl) => <Row key={pl.id} to={`/app/dinero/metas?plan=${pl.id}`} tone="var(--accent)" title={`${money(pl.amount)} de ${savingsGoals.rows.find((g) => g.id === pl.goal_id)?.title ?? 'tu ahorro'}`} sub={`“${pl.reason}” · tú decides si lo confirmas`} />)}
         </Group>
       )}
 

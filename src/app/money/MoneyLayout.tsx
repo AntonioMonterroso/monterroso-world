@@ -6,7 +6,7 @@ const tabs = [
     { to: '/app/dinero/cuentas', label: 'Cuentas' },
     { to: '/app/dinero/reparto', label: 'Reparto' },
     { to: '/app/dinero/presupuesto', label: 'Presupuesto' },
-    { to: '/app/dinero/metas', label: 'Metas' },
+    { to: '/app/dinero/metas', label: 'Ahorro' },
     { to: '/app/dinero/suscripciones', label: 'Suscripciones' },
     { to: '/app/dinero/prestamos', label: 'Préstamos' },
     { to: '/app/dinero/categorias', label: 'Categorías' },
