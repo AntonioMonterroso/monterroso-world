@@ -13,7 +13,7 @@ export type LoanLite = { id: string; direction: 'lent' | 'borrowed'; amount: num
 export type PayLite = { loan_id: string; amount: number; account_id?: string | null }
 export type GoalMove = { account_id: string; amount: number }
 type TxLite = Pick<Tx, 'kind' | 'amount'> & { account_id?: string | null }
-export type Links = { loans?: LoanLite[]; payments?: PayLite[]; goalMoves?: GoalMove[] }
+export type Links = { loans?: LoanLite[]; payments?: PayLite[]; goalMoves?: GoalMove[]; work?: { account_id: string; amount: number }[] }
 
 /** Saldo actual: inicial + ingresos − gastos ± transferencias (y comisiones)
  *  − lo que prestaste + lo que te prestaron, ± los pagos de esos préstamos, − lo apartado para metas.
@@ -26,6 +26,7 @@ export function balanceOf(a: Pick<Account, 'id' | 'opening_balance'>, txs: TxLit
   for (const l of links.loans ?? []) if (l.account_id === a.id) b += l.direction === 'lent' ? -Number(l.amount) : Number(l.amount)
   for (const p of links.payments ?? []) if (p.account_id === a.id) b += dir.get(p.loan_id) === 'lent' ? Number(p.amount) : -Number(p.amount)
   for (const g of links.goalMoves ?? []) if (g.account_id === a.id) b -= Number(g.amount)
+  for (const w of links.work ?? []) if (w.account_id === a.id) b += Number(w.amount)
   return r2(b)
 }
 

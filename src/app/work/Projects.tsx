@@ -1,7 +1,8 @@
 import { ChevronRight, Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { STATUSES, currentMonth, money, receivedOf, statusMeta, summarize, useProjects, type Payment, type Project, type Status } from '../../lib/projects'
+import { STATUSES, activeIn, currentMonth, hasBilling, monthlyStates, money, setupMonth, setupPaid, receivedOf, statusMeta, summarizeMonth, useProjects, type Payment, type Project, type Status } from '../../lib/projects'
+import { syncReminder } from '../../lib/remind'
 import { dayNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
@@ -13,14 +14,16 @@ function ProjectCard({ p, payments, onOpen, onAdvance }: { p: Project; payments:
   const pct = p.amount > 0 ? Math.min(100, Math.round((got / p.amount) * 100)) : 0
   const s = statusMeta(p.status)
   const done = p.checklist.filter((c) => c.done).length
-  const late = p.due_date && p.status !== 'closed' && p.status !== 'delivered' ? dayNum(localISO()) - dayNum(p.due_date) : 0
+  const lateDays = p.due_date && p.status !== 'closed' && p.status !== 'delivered' ? dayNum(localISO()) - dayNum(p.due_date) : 0
   const next = STATUSES[STATUSES.findIndex((x) => x.id === p.status) + 1]
-  const sub = [p.client, p.due_date && `entrega ${p.due_date}`, p.checklist.length > 0 && `${done}/${p.checklist.length} pendientes`].filter(Boolean).join(' · ') || 'Sin cliente'
+  const setupLate = Number(p.setup_fee ?? 0) > 0 && !setupPaid(p, payments) && setupMonth(p) < currentMonth()
+  const late = hasBilling(p) ? monthlyStates(p, payments, currentMonth()).filter((x) => x.late).length : 0
+  const sub = [p.client, Number(p.monthly_fee ?? 0) > 0 && `${money(Number(p.monthly_fee), p.currency)} al mes`, Number(p.setup_fee ?? 0) > 0 && `instalación ${money(Number(p.setup_fee), p.currency)}`, p.due_date && `entrega ${p.due_date}`, p.checklist.length > 0 && `${done}/${p.checklist.length} pendientes`].filter(Boolean).join(' · ') || 'Sin cliente'
   return (
     <Row tone={s.color} title={p.title} onClick={onOpen}
-      sub={<>{sub}{late > 0 && <span style={{ color: 'var(--neg)' }}> · pasó hace {late} {late === 1 ? 'día' : 'días'}</span>}</>}
+      sub={<>{sub}{lateDays > 0 && <span style={{ color: 'var(--neg)' }}> · pasó hace {lateDays} {lateDays === 1 ? 'día' : 'días'}</span>}{setupLate && <span style={{ color: 'var(--neg)' }}> · instalación sin cobrar</span>}{late > 0 && <span style={{ color: 'var(--neg)' }}> · {late} {late === 1 ? 'mensualidad atrasada' : 'mensualidades atrasadas'}</span>}</>}
       value={p.amount > 0 ? money(p.amount, p.currency) : undefined}>
-      {p.amount > 0 && (
+      {p.amount > 0 && !hasBilling(p) && (
         <div className="px-4 pb-3 pl-[3.75rem]">
           <div className="meter" style={{ ['--meter' as string]: 'var(--pos)' }} role="img" aria-label={`Cobrado ${pct}%`}><i style={{ width: `${pct}%` }} /></div>
           <p className="mt-1 flex justify-between text-xs" style={{ color: 'var(--ink-faint)' }}><span>Cobrado {money(got, p.currency)}</span><span>Falta {money(Math.max(0, p.amount - got), p.currency)}</span></p>
@@ -48,14 +51,15 @@ export default function Projects() {
     setSp({}, { replace: true })
   }, [sp, db.loading, db.projects, setSp])
 
-  const inMonth = useMemo(() => db.projects.filter((p) => p.month === month), [db.projects, month])
-  const carry = useMemo(() => (month === currentMonth() ? db.projects.filter((p) => p.month < month && p.status !== 'closed') : []), [db.projects, month])
+  // Un cliente con mensualidad aparece en todos los meses en que sigue activo
+  const inMonth = useMemo(() => db.projects.filter((p) => p.month === month || (activeIn(p, month) && p.status !== 'closed')), [db.projects, month])
+  const carry = useMemo(() => (month === currentMonth() ? db.projects.filter((p) => p.month < month && p.status !== 'closed' && !activeIn(p, month)) : []), [db.projects, month])
   const shown = inMonth.filter((p) => filter === 'all' || p.status === filter)
-  const totals = useMemo(() => summarize(inMonth, db.payments), [inMonth, db.payments])
+  const totals = useMemo(() => summarizeMonth(inMonth, db.payments, month), [inMonth, db.payments])
   const editingProject = db.projects.find((p) => p.id === editing) ?? null
 
   const create = async () => {
-    const p = await db.add({ title: 'Nuevo trabajo', client: null, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [] })
+    const p = await db.add({ title: 'Nuevo trabajo', client: null, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [], setup_fee: 0, monthly_fee: 0, billing_day: null, monthly_start: null, monthly_end: null, account_id: null })
     if (p) setEditing(p.id)
   }
   const advance = (p: Project) => {
@@ -102,8 +106,20 @@ export default function Projects() {
       )}
 
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
-        onSave={async (id, patch) => { await db.update(id, patch); setEditing(null) }}
-        onDelete={(id) => { db.remove(id); setEditing(null) }}
+        onSave={async (id, patch) => {
+          // Aviso mensual el día de cobro (se reemplaza o se quita según lo guardado)
+          const cur = db.projects.find((x) => x.id === id)
+          const mf = Number(patch.monthly_fee ?? 0)
+          let reminder_event_id = cur?.reminder_event_id ?? null
+          if (mf > 0 && patch.billing_day) {
+            const t = new Date(), day = patch.billing_day
+            const first = new Date(t.getFullYear(), t.getMonth() + (t.getDate() > day ? 1 : 0), day)
+            reminder_event_id = await syncReminder(reminder_event_id, { title: `Cobrar mensualidad: ${patch.title ?? cur?.title}`, action: `${money(mf)} de ${patch.client || patch.title || 'tu cliente'}`, date: localISO(first), monthly: true, minute: 9 * 60 })
+          } else reminder_event_id = await syncReminder(reminder_event_id, null)
+          await db.update(id, { ...patch, reminder_event_id })
+          setEditing(null)
+        }}
+        onDelete={(id) => { void syncReminder(db.projects.find((x) => x.id === id)?.reminder_event_id ?? null, null); db.remove(id); setEditing(null) }}
         onAddPayment={db.addPayment} onUpdatePayment={db.updatePayment} onRemovePayment={db.removePayment} />
     </div>
   )

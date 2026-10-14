@@ -25,6 +25,16 @@ export type Project = {
   site_url: string | null
   notes: string | null
   checklist: CheckTask[]
+  /** Cobro único de arranque (instalación, inscripción). */
+  setup_fee?: number
+  /** Mensualidad que se repite cada mes, desde `monthly_start` hasta `monthly_end` (o sin fin). */
+  monthly_fee?: number
+  billing_day?: number | null
+  monthly_start?: string | null
+  monthly_end?: string | null
+  /** Cuenta a la que cae lo que cobras de este trabajo. */
+  account_id?: string | null
+  reminder_event_id?: string | null
 }
 export type NewProject = Omit<Project, 'id'>
 
@@ -36,7 +46,11 @@ export type Payment = {
   paid_at: string | null
   method: string | null
   note: string | null
+  kind?: PayKind
+  period?: string | null
+  account_id?: string | null
 }
+export type PayKind = 'setup' | 'monthly' | 'other'
 export type NewPayment = Omit<Payment, 'id'>
 
 /** Todo el dinero del sistema es en quetzales. */
@@ -73,6 +87,69 @@ export function summarize(projects: Project[], payments: Payment[]): Record<stri
 
 export const receivedOf = (p: Project, payments: Payment[]) =>
   payments.filter((x) => x.project_id === p.id && x.paid_at).reduce((s, x) => s + Number(x.amount), 0)
+
+// ───────── Instalación + mensualidad ─────────
+const r2 = (n: number) => Math.round(n * 100) / 100
+const monthNum = (m: string) => { const [y, mo] = m.split('-').map(Number); return y * 12 + (mo - 1) }
+
+/** ¿Este trabajo cobra instalación o mensualidad? */
+export const hasBilling = (p: Project) => Number(p.setup_fee ?? 0) > 0 || (Number(p.monthly_fee ?? 0) > 0 && Boolean(p.monthly_start))
+
+/** Meses en que toca cobrar la mensualidad, desde el inicio hasta `upTo` (sin pasar del fin). */
+export function monthlyPeriods(p: Project, upTo: string): string[] {
+  if (!(Number(p.monthly_fee ?? 0) > 0) || !p.monthly_start) return []
+  const end = p.monthly_end && monthNum(p.monthly_end) < monthNum(upTo) ? p.monthly_end : upTo
+  const out: string[] = []
+  for (let n = monthNum(p.monthly_start); n <= monthNum(end); n++) out.push(`${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`)
+  return out
+}
+/** ¿La mensualidad de este mes aplica (ya empezó y no ha terminado)? */
+export const activeIn = (p: Project, month: string) => monthlyPeriods(p, month).includes(month)
+
+/** Mes (AAAA-MM) en que toca la instalación: el de inicio de la mensualidad, o el del trabajo. */
+export const setupMonth = (p: Project) => p.monthly_start || p.month
+
+export type PeriodState = { period: string; paid: boolean; paid_at: string | null; late: boolean }
+/** Estado de cada mensualidad hasta `upTo`. Atrasada: el mes ya pasó, o es este mes y ya pasó el día de cobro. */
+export function monthlyStates(p: Project, payments: Payment[], upTo: string, today = new Date()): PeriodState[] {
+  const now = currentMonth(today)
+  return monthlyPeriods(p, upTo).map((period) => {
+    const got = payments.find((x) => x.project_id === p.id && x.kind === 'monthly' && x.period === period && x.paid_at)
+    const late = !got && (period < now || (period === now && p.billing_day != null && today.getDate() > p.billing_day))
+    return { period, paid: Boolean(got), paid_at: got?.paid_at ?? null, late }
+  })
+}
+export const setupPaid = (p: Project, payments: Payment[]) => payments.some((x) => x.project_id === p.id && x.kind === 'setup' && x.paid_at)
+
+/** Lo que vale el trabajo hasta `upTo`: monto + instalación + mensualidades transcurridas. */
+export const expectedTotal = (p: Project, upTo: string) => r2(Number(p.amount) + Number(p.setup_fee ?? 0) + monthlyPeriods(p, upTo).length * Number(p.monthly_fee ?? 0))
+
+/** Lo cobrado/por cobrar visto desde un mes. Los trabajos con instalación o mensualidad se miden mes a mes;
+ *  el atraso de meses anteriores se suma a "por cobrar". Los demás conservan el cálculo de siempre. */
+export function summarizeMonth(projects: Project[], payments: Payment[], month: string, today = new Date()): Record<string, Totals> {
+  const out: Record<string, Totals> = {}
+  const t = (c: string) => (out[c] ??= { billed: 0, received: 0, pending: 0 })
+  const base: Project[] = []
+  for (const p of projects) {
+    if (!hasBilling(p)) { base.push(p); continue }
+    const row = t(p.currency)
+    const paidIn = (pay: Payment) => pay.project_id === p.id && pay.paid_at && (pay.period ?? pay.paid_at.slice(0, 7)) === month
+    const billed = (p.month === month ? Number(p.amount) : 0) + (setupMonth(p) === month ? Number(p.setup_fee ?? 0) : 0) + (activeIn(p, month) ? Number(p.monthly_fee ?? 0) : 0)
+    const got = payments.filter(paidIn).reduce((s, x) => s + Number(x.amount), 0)
+    row.billed += billed
+    row.received += got
+    const owed = Math.max(0, billed - got)
+    const late = month === currentMonth(today) ? monthlyStates(p, payments, month, today).filter((x) => x.late && x.period < month).length * Number(p.monthly_fee ?? 0) : 0
+    const setupLate = month === currentMonth(today) && setupMonth(p) < month && !setupPaid(p, payments) ? Number(p.setup_fee ?? 0) : 0
+    row.pending += owed + late + setupLate
+  }
+  for (const [c, x] of Object.entries(summarize(base, payments))) { const row = t(c); row.billed += x.billed; row.received += x.received; row.pending += x.pending }
+  for (const row of Object.values(out)) { row.billed = r2(row.billed); row.received = r2(row.received); row.pending = r2(row.pending) }
+  return out
+}
+
+/** Cobros ya recibidos que cayeron en una cuenta (para el saldo de la cuenta). */
+export const paidTo = (payments: Payment[]) => payments.filter((x) => x.paid_at && x.account_id).map((x) => ({ account_id: x.account_id as string, amount: Number(x.amount) }))
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])

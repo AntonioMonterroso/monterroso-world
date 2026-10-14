@@ -1,10 +1,14 @@
 import { motion } from 'motion/react'
 import { ExternalLink, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { STATUSES, money, receivedOf, type CheckTask, type NewPayment, type Payment, type Project, type Status } from '../../lib/projects'
+import { STATUSES, currentMonth, monthLabel, money, monthlyStates, receivedOf, setupPaid, type CheckTask, type NewPayment, type Payment, type Project, type Status } from '../../lib/projects'
 import { localISO } from '../../lib/time'
+import type { Account } from '../../lib/accounts'
+import { useTable } from '../../lib/table'
+import { AccountPick, lastAccount, rememberAccount } from '../money/AccountPick'
 
 const ease = [0.23, 1, 0.32, 1] as const
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 const uid = () => crypto.randomUUID().slice(0, 8)
 
 type Props = {
@@ -37,12 +41,22 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
   const [payDate, setPayDate] = useState(localISO())
   const [paidNow, setPaidNow] = useState(true)
   const [method, setMethod] = useState('')
+  // instalación + mensualidad
+  const [setupFee, setSetupFee] = useState('')
+  const [monthlyFee, setMonthlyFee] = useState('')
+  const [billDay, setBillDay] = useState('')
+  const [mStart, setMStart] = useState('')
+  const [mEnd, setMEnd] = useState('')
+  const [account, setAccount] = useState('')
+  const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
+  const accounts = accountsDb.rows.filter((a) => !a.archived)
 
   useEffect(() => {
     if (!project) return
     setTitle(project.title); setClient(project.client ?? ''); setStatus(project.status); setMonth(project.month)
     setDue(project.due_date ?? ''); setAmount(project.amount ? String(project.amount) : ''); setCurrency(project.currency)
     setUrl(project.site_url ?? ''); setNotes(project.notes ?? ''); setChecklist(project.checklist)
+    setSetupFee(project.setup_fee ? String(project.setup_fee) : ''); setMonthlyFee(project.monthly_fee ? String(project.monthly_fee) : ''); setBillDay(project.billing_day ? String(project.billing_day) : ''); setMStart(project.monthly_start ?? ''); setMEnd(project.monthly_end ?? ''); setAccount(project.account_id ?? lastAccount())
     setItem(''); setConfirm(false); setErr(''); setPayAmount(''); setMethod(''); setPaidNow(true); setPayDate(localISO())
   }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -55,7 +69,8 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
   const mine = project ? payments.filter((p) => p.project_id === project.id) : []
   const total = Number(amount) || 0
   const received = project ? receivedOf({ ...project }, payments) : 0
-  const pending = Math.max(0, total - received)
+  // Lo que falta del monto del trabajo cuenta solo cobros sueltos; la instalación y las mensualidades van aparte
+  const pending = Math.max(0, total - mine.filter((p) => p.paid_at && (p.kind ?? 'other') === 'other').reduce((x, p) => x + Number(p.amount), 0))
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,15 +78,31 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
     if (!title.trim()) return setErr('Ponle un nombre al trabajo.')
     const n = Number(amount || 0)
     if (Number.isNaN(n) || n < 0) return setErr('El monto no es válido.')
-    onSave(project.id, { title: title.trim(), client: client.trim() || null, status, month: month || project.month, due_date: due || null, amount: n, currency, site_url: url.trim() || null, notes: notes.trim() || null, checklist })
+    const sf = Number(setupFee || 0), mf = Number(monthlyFee || 0), bd = Number(billDay || 0)
+    if ([sf, mf].some((x) => Number.isNaN(x) || x < 0)) return setErr('La instalación o la mensualidad no son válidas.')
+    if (mf > 0 && !mStart) return setErr('Elige desde qué mes se cobra la mensualidad.')
+    if (mf > 0 && !(bd >= 1 && bd <= 28)) return setErr('El día de cobro va del 1 al 28.')
+    if (mEnd && mStart && mEnd < mStart) return setErr('El último mes no puede ser antes del primero.')
+    rememberAccount(account)
+    onSave(project.id, { setup_fee: sf, monthly_fee: mf, billing_day: mf > 0 ? bd : null, monthly_start: mf > 0 ? mStart : null, monthly_end: mf > 0 && mEnd ? mEnd : null, account_id: account || null, title: title.trim(), client: client.trim() || null, status, month: month || project.month, due_date: due || null, amount: n, currency, site_url: url.trim() || null, notes: notes.trim() || null, checklist })
   }
 
   const addPay = () => {
     const n = Number(payAmount)
     if (!project || !n || n <= 0) return setErr('Escribe el monto del cobro.')
     setErr('')
-    onAddPayment({ project_id: project.id, amount: n, due_date: paidNow ? null : payDate, paid_at: paidNow ? payDate : null, method: method.trim() || null, note: null })
+    rememberAccount(account)
+    onAddPayment({ project_id: project.id, amount: n, due_date: paidNow ? null : payDate, paid_at: paidNow ? payDate : null, method: method.trim() || null, note: null, kind: 'other', period: null, account_id: account || null })
     setPayAmount(''); setMethod('')
+  }
+
+  // Cobros que toca hacer según lo ya guardado: instalación y mensualidades hasta este mes
+  const states = project ? monthlyStates(project, payments, currentMonth()).reverse() : []
+  const setupDue = project && Number(project.setup_fee ?? 0) > 0 && !setupPaid(project, payments)
+  const collect = (kind: 'setup' | 'monthly', amount: number, period: string | null) => {
+    if (!project) return
+    rememberAccount(account)
+    onAddPayment({ project_id: project.id, amount, due_date: null, paid_at: localISO(), method: null, note: null, kind, period, account_id: account || null })
   }
 
   return (
@@ -129,16 +160,53 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                 </div>
               </fieldset>
 
+              <section aria-labelledby="plan" className="rounded-2xl border p-4" style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}>
+                <h3 id="plan" className="font-display text-xl">Instalación y mensualidad</h3>
+                <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Para clientes que pagan una inscripción al inicio y una cuota cada mes. Cada cobro cae en la cuenta que elijas.</p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label className="grid gap-2 text-sm">Instalación / inscripción<input className="field" inputMode="decimal" value={setupFee} onChange={(e) => setSetupFee(e.target.value.replace(',', '.'))} placeholder="0.00" /></label>
+                  <label className="grid gap-2 text-sm">Mensualidad<input className="field" inputMode="decimal" value={monthlyFee} onChange={(e) => setMonthlyFee(e.target.value.replace(',', '.'))} placeholder="0.00" /></label>
+                  {Number(monthlyFee) > 0 && <>
+                    <label className="grid gap-2 text-sm">Día de cobro (1 a 28)<input className="field" inputMode="numeric" value={billDay} onChange={(e) => setBillDay(e.target.value.replace(/\D/g, '').slice(0, 2))} placeholder="5" /></label>
+                    <label className="grid gap-2 text-sm">Desde el mes<input type="month" className="field" value={mStart} onChange={(e) => setMStart(e.target.value)} /></label>
+                    <label className="col-span-2 grid gap-2 text-sm">Hasta el mes (opcional)<input type="month" className="field" value={mEnd} onChange={(e) => setMEnd(e.target.value)} /></label>
+                  </>}
+                </div>
+                <div className="mt-3"><AccountPick accounts={accounts} value={account} onChange={setAccount} label="Cae en la cuenta" /></div>
+                <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Guarda para que los cobros de abajo y el aviso mensual se actualicen.</p>
+              </section>
+
+              {(setupDue || states.length > 0) && (
+                <section aria-labelledby="programados" className="rounded-2xl border p-4" style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}>
+                  <h3 id="programados" className="font-display text-xl">Por cobrar</h3>
+                  <ul className="mt-3 grid gap-2">
+                    {setupDue && project && (
+                      <li className="flex items-center gap-2 rounded-xl px-3" style={{ background: 'var(--surface)' }}>
+                        <span className="flex-1 py-2 text-sm"><span className="font-semibold">Instalación</span> <span style={{ color: 'var(--ink-faint)' }}>{money(Number(project.setup_fee), project.currency)}</span></span>
+                        <button type="button" className="btn btn-tint min-h-11" onClick={() => collect('setup', Number(project.setup_fee), null)}>Cobrar</button>
+                      </li>
+                    )}
+                    {states.slice(0, 12).map((x) => project && (
+                      <li key={x.period} className="flex items-center gap-2 rounded-xl px-3" style={{ background: 'var(--surface)' }}>
+                        <span className="flex-1 py-2 text-sm"><span className="font-semibold">{cap(monthLabel(x.period))}</span> <span style={{ color: x.paid ? 'var(--pos)' : x.late ? 'var(--neg)' : 'var(--ink-faint)' }}>{x.paid ? `cobrada ${x.paid_at}` : x.late ? 'atrasada' : 'próxima'} · {money(Number(project.monthly_fee), project.currency)}</span></span>
+                        {!x.paid && <button type="button" className="btn btn-tint min-h-11" onClick={() => collect('monthly', Number(project.monthly_fee), x.period)}>Cobrar</button>}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               <section aria-labelledby="cobros" className="rounded-2xl border p-4" style={{ borderColor: 'var(--line)', background: 'var(--bg)' }}>
                 <h3 id="cobros" className="font-display text-xl">Cobros</h3>
                 <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>
-                  Cobrado <strong style={{ color: 'var(--pos)' }}>{money(received, currency)}</strong> · Por cobrar <strong style={{ color: 'var(--personal)' }}>{money(pending, currency)}</strong>
+                  Cobrado <strong style={{ color: 'var(--pos)' }}>{money(received, currency)}</strong>{total > 0 && <> · Por cobrar <strong style={{ color: 'var(--personal)' }}>{money(pending, currency)}</strong></>}
                 </p>
                 <ul className="mt-3 grid gap-2">
                   {mine.map((p) => (
                     <li key={p.id} className="flex items-center gap-2 rounded-xl px-3" style={{ background: 'var(--surface)' }}>
                       <div className="min-w-0 flex-1 py-2 text-sm">
                         <span className="font-semibold">{money(p.amount, currency)}</span>
+                        {p.kind === 'setup' && <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>instalación</span>}{p.kind === 'monthly' && p.period && <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>{p.period}</span>}
                         <span className="ml-2" style={{ color: p.paid_at ? 'var(--pos)' : 'var(--personal)' }}>{p.paid_at ? `cobrado ${p.paid_at}` : p.due_date ? `esperado ${p.due_date}` : 'pendiente'}</span>
                         {p.method && <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>{p.method}</span>}
                       </div>
@@ -147,6 +215,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                     </li>
                   ))}
                 </ul>
+                <div className="mt-3"><AccountPick accounts={accounts} value={account} onChange={setAccount} label="Cae en" /></div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <input className="field" inputMode="decimal" value={payAmount} onChange={(e) => setPayAmount(e.target.value.replace(',', '.'))} placeholder={pending > 0 ? String(pending) : 'Monto'} aria-label="Monto del cobro" />
                   <input type="date" className="field" value={payDate} onChange={(e) => setPayDate(e.target.value)} aria-label={paidNow ? 'Fecha de cobro' : 'Fecha esperada'} />
