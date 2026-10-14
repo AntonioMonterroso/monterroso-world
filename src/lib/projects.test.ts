@@ -87,3 +87,15 @@ describe('instalación y mensualidad', () => {
     expect(balanceOf({ id: 'cta', opening_balance: 100 }, [], [], { work })).toBe(600)
   })
 })
+
+import { workIncomeRows, workKindLabel } from './projects'
+describe('cobros de trabajos como movimientos', () => {
+  it('solo los cobrados, con su origen', () => {
+    const rows = workIncomeRows([rec()], [mpay('2026-10', 500, { account_id: 'cta' }), { ...pay('r', 99, false) }, { ...pay('r', 300, true), kind: 'setup', paid_at: '2026-10-02' }])
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({ kind: 'income', amount: 500, tx_date: '2026-10-05', account_id: 'cta', category: 'Trabajo: r', area: 'web' })
+    expect(workKindLabel(rows[0].work)).toBe('Mensualidad de octubre de 2026')
+    expect(workKindLabel(rows[1].work)).toBe('Instalación')
+  })
+  it('ignora cobros de trabajos que ya no existen', () => { expect(workIncomeRows([], [mpay('2026-10')])).toEqual([]) })
+})

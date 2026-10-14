@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Tx } from './finance'
 import { supabase } from './supabase'
 
 export type Status = 'idea' | 'active' | 'review' | 'delivered' | 'closed'
@@ -147,6 +148,17 @@ export function summarizeMonth(projects: Project[], payments: Payment[], month: 
   for (const row of Object.values(out)) { row.billed = r2(row.billed); row.received = r2(row.received); row.pending = r2(row.pending) }
   return out
 }
+
+export type WorkTx = Tx & { work: { project_id: string; title: string; kind: PayKind; period: string | null } }
+/** Los cobros recibidos de Trabajos, como movimientos de ingreso que dicen de dónde vienen. */
+export function workIncomeRows(projects: Project[], payments: Payment[]): WorkTx[] {
+  const name = new Map(projects.map((p) => [p.id, p]))
+  return payments.filter((x) => x.paid_at && name.has(x.project_id)).map((x) => {
+    const p = name.get(x.project_id)!
+    return { id: `work-${x.id}`, kind: 'income' as const, amount: Number(x.amount), currency: p.currency, category: `Trabajo: ${p.title}`, area: 'web', tx_date: x.paid_at!, note: null, account_id: x.account_id ?? null, work: { project_id: p.id, title: p.title, kind: x.kind ?? 'other', period: x.period ?? null } }
+  })
+}
+export const workKindLabel = (w: WorkTx['work']) => (w.kind === 'setup' ? 'Instalación' : w.kind === 'monthly' && w.period ? `Mensualidad de ${monthLabel(w.period)}` : 'Cobro')
 
 /** Cobros ya recibidos que cayeron en una cuenta (para el saldo de la cuenta). */
 export const paidTo = (payments: Payment[]) => payments.filter((x) => x.paid_at && x.account_id).map((x) => ({ account_id: x.account_id as string, amount: Number(x.amount) }))

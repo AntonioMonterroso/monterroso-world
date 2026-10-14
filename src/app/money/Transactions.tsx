@@ -5,7 +5,7 @@ import { type Area, type Kind, type Tx } from '../../lib/finance'
 import type { Account } from '../../lib/accounts'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { AreaField, CategoryField } from './fields'
-import { currentMonth, money } from '../../lib/projects'
+import { currentMonth, money, useProjects, workIncomeRows, workKindLabel, type WorkTx } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
@@ -53,6 +53,7 @@ export default function Transactions() {
   const accounts = useMemo(() => accountsDb.rows.filter((a) => !a.archived), [accountsDb.rows])
   const [acct, setAcct] = useState('all')
   const db = useTable<Tx>('fin_transactions', { col: 'tx_date', asc: false })
+  const work = useProjects()
   const [month, setMonth] = useState(currentMonth())
   const [kind, setKind] = useState<Kind | 'all'>('all')
   const [area, setArea] = useState<Area | 'all'>('all')
@@ -61,8 +62,10 @@ export default function Transactions() {
 
   useEffect(() => { if (!draft) setErr('') }, [draft])
 
-  const list = useMemo(() => db.rows.filter((t) => t.tx_date.startsWith(month) && (kind === 'all' || t.kind === kind) && (area === 'all' || t.area === area) && (acct === 'all' || (acct === 'none' ? !t.account_id : t.account_id === acct))), [db.rows, month, kind, area, acct])
-  const groups = useMemo(() => { const m = new Map<string, Tx[]>(); for (const t of list) m.set(t.tx_date, [...(m.get(t.tx_date) ?? []), t]); return [...m.entries()] }, [list])
+  // Los cobros de Trabajos entran como ingresos y dicen de dónde vienen
+  const all = useMemo<(Tx | WorkTx)[]>(() => [...db.rows, ...workIncomeRows(work.projects, work.payments)].sort((a, b) => b.tx_date.localeCompare(a.tx_date)), [db.rows, work.projects, work.payments])
+  const list = useMemo(() => all.filter((t) => t.tx_date.startsWith(month) && (kind === 'all' || t.kind === kind) && (area === 'all' || t.area === area) && (acct === 'all' || (acct === 'none' ? !t.account_id : t.account_id === acct))), [all, month, kind, area, acct])
+  const groups = useMemo(() => { const m = new Map<string, (Tx | WorkTx)[]>(); for (const t of list) m.set(t.tx_date, [...(m.get(t.tx_date) ?? []), t]); return [...m.entries()] }, [list])
 
   const save = async () => {
     if (!draft) return
@@ -98,7 +101,7 @@ export default function Transactions() {
       <ErrorBar msg={db.error} onClose={db.clearError} />
 
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : groups.length === 0 ? (
-        <Empty title="Sin movimientos" text="Registra lo que entra y lo que sale. Los cobros de tus trabajos ya se cuentan solos en el Resumen." action="Registrar uno" onAction={() => setDraft(blank())} />
+        <Empty title="Sin movimientos" text="Registra lo que entra y lo que sale. Los cobros de tus trabajos aparecen solos aquí, marcados como «Viene de Trabajo»." action="Registrar uno" onAction={() => setDraft(blank())} />
       ) : (
         <>
           <div className="stats mt-6">
@@ -108,7 +111,11 @@ export default function Transactions() {
           </div>
           {groups.map(([date, items]) => (
             <Group key={date} title={new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}>
-              {items.map((t) => (
+              {items.map((t) => 'work' in t ? (
+                <Row key={t.id} to={`/app/trabajo?abrir=${t.work.project_id}`} tone={tax.areaMeta(t.area).color} title={t.work.title}
+                  sub={<><span style={{ color: 'var(--accent)' }}>Viene de Trabajo</span> · {workKindLabel(t.work)}{accounts.find((a) => a.id === t.account_id) ? ` · ${accounts.find((a) => a.id === t.account_id)!.name}` : ''}</>}
+                  value={`+${money(Number(t.amount), t.currency)}`} valueTone="pos" />
+              ) : (
                 <Row key={t.id} tone={tax.areaMeta(t.area).color} title={t.category} sub={<>{accounts.find((a) => a.id === t.account_id)?.name ? `${accounts.find((a) => a.id === t.account_id)!.name} · ` : ''}{tax.areaMeta(t.area).name}{t.note ? ` · ${t.note}` : ''}</>}
                   value={`${t.kind === 'income' ? '+' : '−'}${money(Number(t.amount), t.currency)}`} valueTone={t.kind === 'income' ? 'pos' : undefined}
                   onClick={() => setDraft({ id: t.id, account: t.account_id ?? '', kind: t.kind, amount: String(t.amount), currency: t.currency, category: t.category, area: t.area, date: t.tx_date, note: t.note ?? '' })} />

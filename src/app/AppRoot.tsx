@@ -61,6 +61,7 @@ import Loose from './mind/Loose'
 import Renewals from './mind/Renewals'
 import Rules from './mind/Rules'
 import Wins from './mind/Wins'
+import Calculator from './money/Calculator'
 import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
@@ -169,6 +170,7 @@ function Gate() {
           <Route path="metas" element={<Goals />} />
           <Route path="suscripciones" element={<Subscriptions />} />
           <Route path="prestamos" element={<Loans />} />
+          <Route path="reparto" element={<Calculator />} />
         </Route>
         <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
         <Route path="pulpito" element={<PulpitLayout />}>
