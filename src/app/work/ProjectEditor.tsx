@@ -7,6 +7,8 @@ import { localISO } from '../../lib/time'
 import type { Account } from '../../lib/accounts'
 import { useTable } from '../../lib/table'
 import { AccountPick, lastAccount, rememberAccount } from '../money/AccountPick'
+import type { Goal } from '../../lib/finance'
+import { NO_RULE, PCTS, applyRule, loadRule, ruleActive, ruleAmount, saveRule, type Rule } from '../../lib/savingsRule'
 
 const ease = [0.23, 1, 0.32, 1] as const
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
@@ -18,7 +20,7 @@ type Props = {
   onClose: () => void
   onSave: (id: string, patch: Partial<Omit<Project, 'id'>>) => void
   onDelete: (id: string) => void
-  onAddPayment: (v: NewPayment) => void
+  onAddPayment: (v: NewPayment) => Promise<Payment | null> | void
   onUpdatePayment: (id: string, patch: Partial<NewPayment>) => void
   onRemovePayment: (id: string) => void
 }
@@ -51,6 +53,14 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
   const [account, setAccount] = useState('')
   const [tab, setTab] = useState<'datos' | 'cobros' | 'pendientes'>('datos')
   const [mode, setMode] = useState<'single' | 'recurring'>('single')
+  // ahorro conectado: de cada cobro se aparta un porcentaje
+  const goalsDb = useTable<Goal>('savings_goals', { col: 'created_at', asc: true })
+  const movesDb = useTable<{ id: string; amount: number; source_payment_id?: string | null }>('fin_goal_moves', { col: 'tx_date', asc: false })
+  const [rule, setRule] = useState<Rule>(NO_RULE)
+  const [offer, setOffer] = useState<{ paymentId: string; amount: number; accountId: string | null; pct: number; goalId: string } | null>(null)
+  const [saved, setSaved] = useState('')
+  const [declined, setDeclined] = useState(false)
+  useEffect(() => { void loadRule().then(setRule) }, [])
   const accountsDb = useTable<Account>('fin_accounts', { col: 'position', asc: true })
   const accounts = accountsDb.rows.filter((a) => !a.archived)
 
@@ -60,7 +70,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
     setDue(project.due_date ?? ''); setAmount(project.amount ? String(project.amount) : ''); setCurrency(project.currency)
     setUrl(project.site_url ?? ''); setNotes(project.notes ?? ''); setChecklist(project.checklist)
     setSetupFee(project.setup_fee ? String(project.setup_fee) : ''); setMonthlyFee(project.monthly_fee ? String(project.monthly_fee) : ''); setBillDay(project.billing_day ? String(project.billing_day) : ''); setMStart(project.monthly_start ?? ''); setMEnd(project.monthly_end ?? ''); setAccount(project.account_id ?? lastAccount())
-    setMode(hasBilling(project) ? 'recurring' : 'single'); setTab('datos')
+    setMode(hasBilling(project) ? 'recurring' : 'single'); setTab('datos'); setOffer(null); setSaved('')
     setItem(''); setConfirm(false); setErr(''); setPayAmount(''); setMethod(''); setPaidNow(true); setPayDate(localISO())
   }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -96,17 +106,42 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
     if (!project || !n || n <= 0) return setErr('Escribe el monto del cobro.')
     setErr('')
     rememberAccount(account)
-    onAddPayment({ project_id: project.id, amount: n, due_date: paidNow ? null : payDate, paid_at: paidNow ? payDate : null, method: method.trim() || null, note: null, kind: 'other', period: null, account_id: account || null })
+    void Promise.resolve(onAddPayment({ project_id: project.id, amount: n, due_date: paidNow ? null : payDate, paid_at: paidNow ? payDate : null, method: method.trim() || null, note: null, kind: 'other', period: null, account_id: account || null })).then((pay) => { if (paidNow) void afterCollected(pay, n) })
     setPayAmount(''); setMethod('')
   }
 
   // Cobros que toca hacer según lo ya guardado: instalación y mensualidades hasta este mes
   const states = project ? monthlyStates(project, payments, currentMonth()).reverse() : []
   const setupDue = project && Number(project.setup_fee ?? 0) > 0 && !setupPaid(project, payments)
-  const collect = (kind: 'setup' | 'monthly', amount: number, period: string | null) => {
+  const afterCollected = async (pay: Payment | null | void, amount: number) => {
+    if (!pay || !project) return
+    const goals = goalsDb.rows
+    const goalId = ruleActive(rule) && goals.some((g) => g.id === rule.goalId) ? (rule.goalId as string) : goals[0]?.id ?? ''
+    if (!goalId) return
+    if (ruleActive(rule) && rule.auto) {
+      const got = await applyRule({ goalId, amount: ruleAmount(amount, rule.pct), accountId: pay.account_id ?? null, title: project.title, paymentId: pay.id, date: localISO() })
+      void movesDb.reload(); void goalsDb.reload()
+      setSaved(got ? `Apartaste ${money(got)} de este cobro (${rule.pct}%) para “${goals.find((g) => g.id === goalId)?.title}”.` : 'No pude apartar para tu ahorro. Hazlo desde Ahorro.')
+      return
+    }
+    if (!ruleActive(rule) && declined) return
+    setSaved('')
+    setOffer({ paymentId: pay.id, amount, accountId: pay.account_id ?? null, pct: ruleActive(rule) ? rule.pct : 20, goalId })
+  }
+  const acceptOffer = async () => {
+    if (!offer || !project) return
+    const amt = ruleAmount(offer.amount, offer.pct)
+    const got = await applyRule({ goalId: offer.goalId, amount: amt, accountId: offer.accountId, title: project.title, paymentId: offer.paymentId, date: localISO() })
+    void movesDb.reload(); void goalsDb.reload()
+    if (got && !ruleActive(rule)) { const r = { pct: offer.pct, goalId: offer.goalId, auto: false }; setRule(r); void saveRule(r) }
+    setSaved(got ? `Apartaste ${money(got)} para “${goalsDb.rows.find((g) => g.id === offer.goalId)?.title}”. Está en Ahorro, con su origen.` : 'No pude apartar para tu ahorro. Hazlo desde Ahorro.')
+    setOffer(null)
+  }
+  const collect = async (kind: 'setup' | 'monthly', amount: number, period: string | null) => {
     if (!project) return
     rememberAccount(account)
-    onAddPayment({ project_id: project.id, amount, due_date: null, paid_at: localISO(), method: null, note: null, kind, period, account_id: account || null })
+    const pay = await onAddPayment({ project_id: project.id, amount, due_date: null, paid_at: localISO(), method: null, note: null, kind, period, account_id: account || null })
+    await afterCollected(pay, amount)
   }
 
   // ¿Cambiaste algo de lo que se cobra y aún no guardas? Entonces la lista de "por cobrar" espera al guardado
@@ -155,6 +190,25 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
 
             {tab === 'cobros' && (
               <div className="mt-4 grid gap-5">
+                {saved && <p role="status" className="rounded-xl px-4 py-3 text-sm" style={{ background: 'color-mix(in oklab, var(--pos) 12%, var(--surface-2))', color: 'var(--ink)' }}>{saved}</p>}
+                {offer && (
+                  <section aria-label="Apartar para tu ahorro" className="rounded-2xl p-4" style={{ background: 'color-mix(in oklab, var(--accent) 10%, var(--bg))', boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent)' }}>
+                    <p className="text-sm font-semibold">Cobraste {money(offer.amount)}. ¿Apartas una parte para tu ahorro?</p>
+                    {!ruleActive(rule) && <p className="mt-1 text-xs" style={{ color: 'var(--ink-soft)' }}>Elige cuánto de cada cobro y para qué meta. Te lo pregunto cada vez; tú decides.</p>}
+                    <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Porcentaje a apartar">
+                      {PCTS.map((n) => <button key={n} type="button" aria-pressed={offer.pct === n} onClick={() => setOffer({ ...offer, pct: n })} className="min-h-11 rounded-full px-4 text-sm" style={{ background: offer.pct === n ? 'color-mix(in oklab, var(--accent) 22%, transparent)' : 'var(--surface-2)', color: offer.pct === n ? 'var(--accent)' : 'var(--ink-soft)', boxShadow: offer.pct === n ? 'inset 0 0 0 1.5px var(--accent)' : 'none' }}>{n}%</button>)}
+                    </div>
+                    {goalsDb.rows.length > 1 && (
+                      <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Meta">
+                        {goalsDb.rows.map((g) => <button key={g.id} type="button" aria-pressed={offer.goalId === g.id} onClick={() => setOffer({ ...offer, goalId: g.id })} className="min-h-11 rounded-full px-4 text-sm" style={{ background: offer.goalId === g.id ? 'color-mix(in oklab, var(--pos) 20%, transparent)' : 'var(--surface-2)', color: offer.goalId === g.id ? 'var(--pos)' : 'var(--ink-soft)' }}>{g.title}</button>)}
+                      </div>
+                    )}
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <button type="button" className="btn btn-primary" onClick={() => void acceptOffer()}>Apartar {money(ruleAmount(offer.amount, offer.pct))}{goalsDb.rows.length === 1 ? ` para ${goalsDb.rows[0].title}` : ''}</button>
+                      <button type="button" className="min-h-11 text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => { setOffer(null); if (!ruleActive(rule)) setDeclined(true) }}>Hoy no</button>
+                    </div>
+                  </section>
+                )}
                 {/* 1 · Cómo cobras */}
                 <section aria-labelledby="como">
                   <h3 id="como" className="text-sm font-semibold">1 · ¿Cómo cobras este trabajo?</h3>
@@ -187,6 +241,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                 <section aria-labelledby="donde">
                   <h3 id="donde" className="text-sm font-semibold">2 · ¿A qué cuenta te llega?</h3>
                   <div className="mt-2"><AccountPick accounts={accounts} value={account} onChange={setAccount} label="Elige una; sube el saldo de esa cuenta al cobrar" none="Sin cuenta" /></div>
+                  {goalsDb.rows.length === 0 && <p className="mt-1 text-xs" style={{ color: 'var(--ink-faint)' }}>Tip: crea una meta en Dinero → Ahorro y, al cobrar, te propongo apartar una parte.</p>}
                   {accounts.length === 0 && <p className="mt-1 text-xs" style={{ color: 'var(--ink-faint)' }}>Aún no tienes cuentas. Créalas en Dinero → Cuentas para que los cobros sumen a tu saldo.</p>}
                 </section>
 
@@ -229,6 +284,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                                   <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>{pay.kind === 'setup' ? 'instalación' : pay.kind === 'monthly' && pay.period ? cap(monthLabel(pay.period)) : 'abono'}</span>
                                   <span className="ml-2" style={{ color: pay.paid_at ? 'var(--pos)' : 'var(--personal)' }}>{pay.paid_at ? `cobrado ${pay.paid_at}` : pay.due_date ? `esperado ${pay.due_date}` : 'pendiente'}</span>
                                   {pay.method && <span className="ml-2" style={{ color: 'var(--ink-faint)' }}>{pay.method}</span>}
+                                  {(() => { const sv = movesDb.rows.filter((m) => m.source_payment_id === pay.id).reduce((x, m) => x + Number(m.amount), 0); return sv > 0 ? <span className="ml-2" style={{ color: 'var(--accent)' }}>· apartaste {money(sv)} para ahorro</span> : null })()}
                                 </div>
                                 {!pay.paid_at && <button type="button" className="min-h-11 px-2 text-sm underline" onClick={() => onUpdatePayment(pay.id, { paid_at: localISO() })}>Marcar cobrado</button>}
                                 <button type="button" className="grid size-11 place-items-center" aria-label="Eliminar cobro" onClick={() => onRemovePayment(pay.id)}><Trash2 size={16} aria-hidden /></button>

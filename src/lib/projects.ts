@@ -213,10 +213,12 @@ export function useProjects() {
       const { error } = await supabase.from('projects').delete().eq('id', id)
       if (error) fail('No se pudo eliminar.')
     },
-    addPayment: async (v: NewPayment) => {
+    addPayment: async (v: NewPayment): Promise<Payment | null> => {
       const { data, error } = await supabase.from('payments').insert(v).select().single()
-      if (error || !data) return fail('No se pudo registrar el cobro.')
-      setPayments((l) => [...l, { ...(data as Payment), amount: Number((data as Payment).amount) }])
+      if (error || !data) { fail('No se pudo registrar el cobro.'); return null }
+      const row = { ...(data as Payment), amount: Number((data as Payment).amount) }
+      setPayments((l) => [...l, row])
+      return row
     },
     updatePayment: async (id: string, patch: Partial<NewPayment>) => {
       setPayments((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x)))

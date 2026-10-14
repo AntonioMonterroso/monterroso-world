@@ -3,7 +3,7 @@ import { dayNum, isoFromNum } from './recur'
 
 /** Ahorro: el dinero apartado para metas no se toca, y si se toca, queda dicho por qué. */
 export type ReasonKind = 'emergency' | 'planned' | 'other'
-export type Move = { id: string; goal_id: string; account_id: string; amount: number; tx_date: string; reason?: string | null; reason_kind?: ReasonKind | null; plan_id?: string | null }
+export type Move = { id: string; goal_id: string; account_id: string; amount: number; tx_date: string; reason?: string | null; reason_kind?: ReasonKind | null; plan_id?: string | null; source_payment_id?: string | null }
 export type Plan = { id: string; goal_id: string; account_id: string | null; amount: number; planned_for: string; reason: string; status: 'pending' | 'done' | 'cancelled'; event_id?: string | null }
 
 export const REASONS: { id: ReasonKind; label: string; hint: string }[] = [

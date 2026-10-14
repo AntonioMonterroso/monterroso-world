@@ -2,10 +2,11 @@ import { CalendarClock, Loader2, Pencil, Plus, ShieldAlert, Trash2 } from 'lucid
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
-import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
+import { Group, MonthStepper, PageHeader, Row, Segmented, Stat, Switch } from '../../components/ui'
 import type { Account } from '../../lib/accounts'
 import { lastMonths, type Goal, type Tx } from '../../lib/finance'
-import { currentMonth, money } from '../../lib/projects'
+import { currentMonth, money, useProjects } from '../../lib/projects'
+import { NO_RULE, PCTS, loadRule, ruleActive, saveRule, workStats, type Rule } from '../../lib/savingsRule'
 import { syncReminder } from '../../lib/remind'
 import { REASONS, emergencyTarget, paceOf, pendingPlans, reasonLabel, summarize, withdrawalImpact, type Move, type Plan, type ReasonKind } from '../../lib/savings'
 import { useTable } from '../../lib/table'
@@ -16,6 +17,7 @@ import { Empty, ErrorBar, defaultCurrency, toNum } from './shared'
 type Tab = 'goals' | 'history'
 type W = { goal: Goal; when: 'now' | 'later'; amount: string; kind: ReasonKind | ''; note: string; acct: string; date: string; plan?: Plan }
 type D = { goal: Goal; amount: string; acct: string }
+type R = { pct: number; goalId: string; auto: boolean }
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 
 /** Ahorro: tus metas, de dónde viene y a dónde va cada quetzal. Sacarlo es posible, pero pide un motivo y tu confirmación. */
@@ -41,12 +43,21 @@ export default function Goals() {
   // retiro con confirmación y retiro planeado
   const [w, setW] = useState<W | null>(null)
   const [wErr, setWErr] = useState('')
+  const work = useProjects()
+  const [rule, setRule] = useState<Rule>(NO_RULE)
+  const [rs, setRs] = useState<R | null>(null)
+  useEffect(() => { void loadRule().then(setRule) }, [])
   const [d, setD] = useState<D | null>(null)
   const [dErr, setDErr] = useState('')
   const [sp, setSp] = useSearchParams()
 
   const goalName = (id: string) => db.rows.find((g) => g.id === id)?.title ?? 'Meta eliminada'
   const accName = (id?: string | null) => accounts.find((a) => a.id === id)?.name ?? accountsDb.rows.find((a) => a.id === id)?.name
+  const stats = useMemo(() => workStats(work.payments, moves.rows, rule, month), [work.payments, moves.rows, rule, month])
+  const ruleGoal = db.rows.find((g) => g.id === rule.goalId)
+  const openRule = () => setRs({ pct: ruleActive(rule) ? rule.pct : 20, goalId: ruleGoal?.id ?? db.rows[0]?.id ?? '', auto: rule.auto })
+  const saveRuleSheet = async () => { if (!rs) return; const r = { pct: rs.pct, goalId: rs.goalId || null, auto: rs.auto }; setRule(r); await saveRule(r); setRs(null); flash(r.pct > 0 ? `Listo: de cada cobro de Trabajo apartarás el ${r.pct}%.` : 'Apagaste el ahorro automático de cobros.') }
+  const projectName = (paymentId?: string | null) => { const pay = work.payments.find((x) => x.id === paymentId); return work.projects.find((x) => x.id === pay?.project_id)?.title }
   const summary = useMemo(() => summarize(db.rows, moves.rows, month), [db.rows, moves.rows, month])
   const pending = useMemo(() => pendingPlans(plans.rows), [plans.rows])
   const avgExpense = useMemo(() => { const s = lastMonths(txs.rows, currentMonth(), 3, 'GTQ').filter((x) => x.expense > 0); return s.length ? s.reduce((a, x) => a + x.expense, 0) / s.length : 0 }, [txs.rows])
@@ -80,7 +91,7 @@ export default function Goals() {
 
   const flash = (m: string) => { setNote(m); setTimeout(() => setNote(''), 5000) }
 
-  const openDeposit = (g: Goal) => { setDErr(''); setD({ goal: g, amount: '', acct: lastAccount() }) }
+  const openDeposit = (g: Goal, amount = '') => { setDErr(''); setD({ goal: g, amount, acct: lastAccount() }) }
   const deposit = async () => {
     if (!d) return
     const n = toNum(d.amount)
@@ -159,6 +170,17 @@ export default function Goals() {
 
       {loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : tab === 'goals' ? (
         <>
+          {db.rows.length > 0 && (
+            <Group className="!mt-5" title="Ahorro desde tus trabajos">
+              <Row tone="var(--accent)" title={ruleActive(rule) && ruleGoal ? `Aparto el ${rule.pct}% de cada cobro` : 'Apartar un % de cada cobro'} sub={ruleActive(rule) && ruleGoal ? `Para «${ruleGoal.title}» · ${rule.auto ? 'se aparta solo' : 'te pregunto cada vez'}` : 'Conecta lo que cobras en Trabajo con tu ahorro'} value={ruleActive(rule) ? 'Cambiar' : 'Activar'} valueTone="soft" onClick={openRule} />
+              {ruleActive(rule) && ruleGoal && stats.collected > 0 && (
+                <Row chevron={false} tone="var(--pos)" title={`Este mes cobraste ${money(stats.collected)}`} sub={`Te tocaba apartar ${money(stats.shouldSave)} · apartaste ${money(stats.saved)}`} value={stats.left > 0 ? `Faltan ${money(stats.left)}` : '¡Al día!'} valueTone={stats.left > 0 ? undefined : 'pos'}>
+                  {stats.left > 0 && <div className="px-4 pb-3 pl-[3.75rem]"><button type="button" className="btn btn-tint min-h-11" onClick={() => openDeposit(ruleGoal, String(stats.left))}>Apartar lo que falta</button></div>}
+                </Row>
+              )}
+            </Group>
+          )}
+
           {pending.length > 0 && (
             <Group className="!mt-5" title="Retiros que planeaste" footer="Nada se saca solo: el día que llegue, tú decides si lo confirmas.">
               {pending.map((pl) => {
@@ -221,7 +243,7 @@ export default function Goals() {
               {items.map((m) => {
                 const out = Number(m.amount) < 0
                 return <Row key={m.id} chevron={false} tone={out ? 'var(--neg)' : 'var(--pos)'} title={goalName(m.goal_id)}
-                  sub={<>{out ? <strong style={{ color: 'var(--neg)' }}>Sacaste</strong> : 'Apartaste'}{out && m.reason_kind ? ` · ${reasonLabel(m.reason_kind)}` : ''}{m.plan_id ? ' · planeado' : ''}{accName(m.account_id) ? ` · ${out ? 'hacia' : 'desde'} ${accName(m.account_id)}` : ''}{m.reason ? ` · “${m.reason}”` : ''}</>}
+                  sub={<>{out ? <strong style={{ color: 'var(--neg)' }}>Sacaste</strong> : 'Apartaste'}{out && m.reason_kind ? ` · ${reasonLabel(m.reason_kind)}` : ''}{m.plan_id ? ' · planeado' : ''}{m.source_payment_id && projectName(m.source_payment_id) ? ` · viene de Trabajo: ${projectName(m.source_payment_id)}` : ''}{accName(m.account_id) ? ` · ${out ? 'hacia' : 'desde'} ${accName(m.account_id)}` : ''}{m.reason ? ` · “${m.reason}”` : ''}</>}
                   value={`${out ? '−' : '+'}${money(Math.abs(Number(m.amount)))}`} valueTone={out ? undefined : 'pos'} />
               })}
             </Group>
@@ -280,6 +302,32 @@ export default function Goals() {
               <button type="button" className="btn btn-primary" onClick={() => setW(null)}>Mejor no</button>
               <button type="button" className="btn btn-ghost" style={{ color: w.when === 'now' ? 'var(--neg)' : undefined }} onClick={() => void confirmWithdraw()}>{w.when === 'now' ? `Sí, sacar ${money(toNum(w.amount) || 0)}` : 'Guardar el plan'}</button>
             </div>
+          </div>
+        )}
+      </Sheet>
+
+      {/* Regla: apartar un porcentaje de cada cobro */}
+      <Sheet open={Boolean(rs)} title="Ahorro desde tus trabajos" onClose={() => setRs(null)}>
+        {rs && (
+          <div className="grid gap-4">
+            <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Cada vez que marques un cobro de Trabajo como cobrado, aparto un porcentaje para tu ahorro. Así se ahorra primero, antes de gastar.</p>
+            <fieldset>
+              <legend className="mb-2 text-sm">¿Qué porcentaje de cada cobro?</legend>
+              <div className="flex flex-wrap gap-2">{[0, ...PCTS].map((n) => <button key={n} type="button" aria-pressed={rs.pct === n} onClick={() => setRs({ ...rs, pct: n })} className="min-h-11 rounded-full px-4 text-sm" style={{ background: rs.pct === n ? 'color-mix(in oklab, var(--accent) 22%, transparent)' : 'var(--surface-2)', color: rs.pct === n ? 'var(--accent)' : 'var(--ink-soft)', boxShadow: rs.pct === n ? 'inset 0 0 0 1.5px var(--accent)' : 'none' }}>{n === 0 ? 'Apagado' : `${n}%`}</button>)}</div>
+            </fieldset>
+            {rs.pct > 0 && (
+              <>
+                <fieldset>
+                  <legend className="mb-2 text-sm">¿Para qué meta?</legend>
+                  <div className="flex flex-wrap gap-2">{db.rows.map((g) => <button key={g.id} type="button" aria-pressed={rs.goalId === g.id} onClick={() => setRs({ ...rs, goalId: g.id })} className="min-h-11 rounded-full px-4 text-sm" style={{ background: rs.goalId === g.id ? 'color-mix(in oklab, var(--pos) 20%, transparent)' : 'var(--surface-2)', color: rs.goalId === g.id ? 'var(--pos)' : 'var(--ink-soft)' }}>{g.title}</button>)}</div>
+                </fieldset>
+                <label className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--surface-2)' }}>
+                  <span><strong>Apartar sin preguntar</strong><br /><span style={{ color: 'var(--ink-faint)' }}>Si lo apagas, te pregunto cada vez y tú confirmas.</span></span>
+                  <Switch checked={rs.auto} onChange={(v) => setRs({ ...rs, auto: v })} label="Apartar sin preguntar" />
+                </label>
+              </>
+            )}
+            <button type="button" className="btn btn-primary w-fit" onClick={() => void saveRuleSheet()}>Guardar</button>
           </div>
         )}
       </Sheet>
