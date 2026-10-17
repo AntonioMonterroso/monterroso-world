@@ -61,6 +61,10 @@ import Loose from './mind/Loose'
 import Renewals from './mind/Renewals'
 import Rules from './mind/Rules'
 import Wins from './mind/Wins'
+import WorkLayout from './work/WorkLayout'
+import PricesEditor from './work/PricesEditor'
+import Quotes from './work/Quotes'
+import QuoteSheet from './work/QuoteSheet'
 import Calculator from './money/Calculator'
 import Share from './Share'
 import Overview from './money/Overview'
@@ -117,6 +121,7 @@ function Gate() {
 
   return (
     <Routes>
+      <Route path="trabajo/propuestas/:id/documento" element={<QuoteSheet />} />
       <Route element={<Shell onLock={lock} onSignOut={signOutAll} />}>
         <Route index element={<Today />} />
         <Route path="mas" element={<More />} />
@@ -126,7 +131,11 @@ function Gate() {
           <Route path="agenda" element={<Agenda />} />
           <Route path="calendario" element={<Calendar />} />
         </Route>
-        <Route path="trabajo" element={<Projects />} />
+        <Route path="trabajo" element={<WorkLayout />}>
+          <Route index element={<Projects />} />
+          <Route path="propuestas" element={<Quotes />} />
+          <Route path="precios" element={<PricesEditor />} />
+        </Route>
         <Route path="envios" element={<Deliveries />} />
         <Route path="avisos" element={<Notices />} />
         <Route path="descubrir" element={<DiscoverLayout />}>

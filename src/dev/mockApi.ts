@@ -1,12 +1,19 @@
 // Solo desarrollo: imita lo mínimo de PostgREST en memoria para probar la interfaz sin sesión real.
 type Row = Record<string, unknown>
-const db: Record<string, Row[]> = { schedule_blocks: [], settings: [], tasks: [], inbox_items: [], events: [], occurrence_state: [], projects: [], payments: [], songs: [], setlists: [], practice_logs: [], sermons: [], sermon_phases: [], sermon_slides: [], faith_notes: [], fin_transactions: [], fin_budgets: [], savings_goals: [], subscriptions: [], loans: [], loan_payments: [], workouts: [], workout_items: [], training_partners: [], workout_logs: [], body_metrics: [], health_days: [], share_links: [], habits: [], habit_logs: [], focus_sessions: [], vault_meta: [], vault_items: [], videos: [], video_notes: [], links: [], boards: [], inspirations: [], trips: [], places: [], shopping_items: [], voice_notes: [], song_shares: [], routines: [], routine_steps: [], routine_runs: [], deliveries: [], rewards: [], reward_claims: [], if_then: [], fin_goal_moves: [], savings_plans: [], renewals: [], stuff: [], promises: [], fin_accounts: [], fin_transfers: [], exit_lists: [], day_checkins: [], fin_areas: [], fin_categories: [], block_notification_log: [], notification_log: [] }
+const db: Record<string, Row[]> = { schedule_blocks: [], settings: [], tasks: [], inbox_items: [], events: [], occurrence_state: [], projects: [], payments: [], songs: [], setlists: [], practice_logs: [], sermons: [], sermon_phases: [], sermon_slides: [], faith_notes: [], fin_transactions: [], fin_budgets: [], savings_goals: [], subscriptions: [], loans: [], loan_payments: [], workouts: [], workout_items: [], training_partners: [], workout_logs: [], body_metrics: [], health_days: [], share_links: [], habits: [], habit_logs: [], focus_sessions: [], vault_meta: [], vault_items: [], videos: [], video_notes: [], links: [], boards: [], inspirations: [], trips: [], places: [], shopping_items: [], voice_notes: [], song_shares: [], routines: [], routine_steps: [], routine_runs: [], deliveries: [], rewards: [], reward_claims: [], if_then: [], fin_goal_moves: [], savings_plans: [], quote_packages: [], quote_extras: [], quote_page: [], quotes: [], renewals: [], stuff: [], promises: [], fin_accounts: [], fin_transfers: [], exit_lists: [], day_checkins: [], fin_areas: [], fin_categories: [], block_notification_log: [], notification_log: [] }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 export function installMockApi() {
   const real = window.fetch.bind(window)
   window.fetch = async (input, init) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+    const rpc = url.pathname.match(/\/rest\/v1\/rpc\/(\w+)/)
+    if (rpc) {
+      const body = init?.body ? JSON.parse(String(init.body)) : {}
+      if (rpc[1] === 'public_pricing') return json({ page: (db.quote_page[0]?.data as object) ?? {}, packages: db.quote_packages.filter((r) => r.published), extras: db.quote_extras.filter((r) => r.published) })
+      if (rpc[1] === 'quote_by_token') { const q = db.quotes.find((r) => r.share_token === body.t && r.shared); return json(q ? { ...q, page: (db.quote_page[0]?.data as object) ?? {} } : null) }
+      return real(input, init)
+    }
     const m = url.pathname.match(/\/rest\/v1\/(\w+)/)
     if (!m || !(m[1] in db)) return real(input, init)
     const rows = db[m[1]]

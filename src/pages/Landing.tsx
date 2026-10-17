@@ -80,6 +80,7 @@ export default function Landing() {
           <nav aria-label="Principal" className="flex items-center gap-1 text-sm">
             <a href="#tarjeta" className="hidden min-h-11 items-center px-3 sm:inline-flex">Tarjeta</a>
             <a href="#obra" className="hidden min-h-11 items-center px-3 sm:inline-flex">Mi trabajo</a>
+            <Link to="/precios" className="hidden min-h-11 items-center px-3 sm:inline-flex">Precios</Link>
             <Link to="/app" className="btn btn-ghost">Entrar</Link>
           </nav>
         </div>
@@ -102,6 +103,7 @@ export default function Landing() {
               <motion.div {...hero(0.32, 10)} className="mt-8 flex flex-wrap gap-3">
                 <a href={`mailto:${profile.email}`} className="btn btn-primary"><Mail size={18} aria-hidden /> Escríbeme</a>
                 <a href="#tarjeta" className="btn btn-ghost">Ver mi tarjeta</a>
+                <Link to="/precios" className="btn btn-ghost">Ver precios</Link>
               </motion.div>
             </div>
             <motion.div initial={{ opacity: 0, transform: 'scale(0.95)' }} animate={{ opacity: 1, transform: 'scale(1)' }} transition={{ duration: 0.8, delay: 0.15, ease }}>
