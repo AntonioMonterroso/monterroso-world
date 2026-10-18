@@ -214,10 +214,12 @@ export default function PricesEditor() {
             </label>
             <label className="grid gap-2 text-sm">Texto del botón principal<input className="field" value={pg.heroCta} maxLength={60} onChange={(ev) => setPg({ ...pg, heroCta: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Subtítulo<textarea className="field py-3" rows={3} value={pg.sub} maxLength={400} onChange={(ev) => setPg({ ...pg, sub: ev.target.value })} /></label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="grid gap-2 text-sm">WhatsApp (con 502)<input className="field" inputMode="tel" value={pg.phone} onChange={(ev) => setPg({ ...pg, phone: ev.target.value })} /></label>
-              <label className="grid gap-2 text-sm">Cómo se ve el número<input className="field" value={pg.phone_display} onChange={(ev) => setPg({ ...pg, phone_display: ev.target.value })} /></label>
-            </div>
+            <label className="grid gap-2 text-sm">WhatsApp de los botones (con 502)
+              <input className="field" inputMode="tel" value={pg.phone} onChange={(ev) => setPg({ ...pg, phone: ev.target.value })} />
+              <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Los botones de la página abren WhatsApp con este número, pero el número no se escribe en pantalla.</span>
+            </label>
+            <label className="flex items-center justify-between gap-3 text-sm"><span>Escribir mi número en los documentos de propuesta</span><Switch checked={pg.show_phone} onChange={(v) => setPg({ ...pg, show_phone: v })} label="Mostrar mi número en los documentos" /></label>
+            {pg.show_phone && <label className="grid gap-2 text-sm">Cómo se ve el número en el documento<input className="field" value={pg.phone_display} onChange={(ev) => setPg({ ...pg, phone_display: ev.target.value })} /></label>}
             <label className="grid gap-2 text-sm">Mensaje inicial de WhatsApp<input className="field" value={pg.whatsapp_text} maxLength={200} onChange={(ev) => setPg({ ...pg, whatsapp_text: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Título de la mensualidad<input className="field" value={pg.monthlyTitle} maxLength={80} onChange={(ev) => setPg({ ...pg, monthlyTitle: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Qué cubre la mensualidad<textarea className="field py-3" rows={5} value={pg.monthlyText} maxLength={1200} onChange={(ev) => setPg({ ...pg, monthlyText: ev.target.value })} /></label>

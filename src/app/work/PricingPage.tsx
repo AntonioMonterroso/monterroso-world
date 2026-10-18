@@ -32,6 +32,8 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
   const [forced, setForced] = useState('')
   const [invoice, setInvoice] = useState(false)
   const [modes, setModes] = useState<Record<string, PayMode>>({})
+  const [exIdx, setExIdx] = useState(0)
+  const [catF, setCatF] = useState('')
   const [mode, setMode] = useState<PayMode | undefined>(undefined)
 
   useEffect(() => { if (preview) return; void fetchPricing().then((d) => { setData(d); setState(d ? 'ok' : 'fail') }) }, [preview])
@@ -53,10 +55,11 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
   const ask = (id: string) => { setForced(id); setMode(undefined); setStep(3); setTimeout(() => go('propuesta'), 30) }
   const mul = invoice ? 1 + IVA_RATE : 1
   const closed = pkgs.filter((p) => p.kind === 'closed')
+  const cats = [...new Set(closed.map((p) => p.category ?? 'Otros'))]
   const toggleGoal = (g: Goal) => setGoals((l) => (l.includes(g) ? l.filter((x) => x !== g) : [...l, g]))
 
   if (state === 'loading') return <main className="pp grid min-h-dvh place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></main>
-  if (state === 'fail') return <main className="pp grid min-h-dvh place-items-center px-6 text-center"><p>No pude cargar la página ahora mismo. Escríbeme por WhatsApp al {page.phone_display} y conversamos.</p></main>
+  if (state === 'fail') return <main className="pp grid min-h-dvh place-items-center px-6 text-center"><p>No pude cargar la página ahora mismo. Intenta de nuevo en unos minutos.</p></main>
 
   return (
     <main className="pp">
@@ -87,37 +90,36 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
         </div>
       </section>
 
-      {/* Lo que duele */}
-      <section className="pp-band">
-        <div className="pp-wrap">
-          <h2 className="pp-h2">{page.painsTitle}</h2>
-          <div className="pp-grid3">{page.pains.map((p, i) => <article key={i} className={`pp-tile t-${TINTS[i % 4]}`}><h3>{p.title}</h3><p>{p.text}</p></article>)}</div>
+      {/* Antes y después, en una sola vista */}
+      <section className="pp-wrap pp-sec pp-ba">
+        <div className="pp-ba-card t-blush">
+          <h2 className="pp-h3">{page.painsTitle}</h2>
+          <ul>{page.pains.map((x, i) => <li key={i}><b>{x.title}</b><span>{x.text}</span></li>)}</ul>
+        </div>
+        <div className="pp-ba-card t-sage">
+          <h2 className="pp-h3">{page.outcomesTitle}</h2>
+          <ul>{page.outcomes.map((x, i) => <li key={i}><Check size={16} aria-hidden /><div><b>{x.title}</b><span>{x.text}</span></div></li>)}</ul>
         </div>
       </section>
 
-      {/* Lo que cambia */}
-      <section className="pp-wrap pp-sec">
-        <h2 className="pp-h2">{page.outcomesTitle}</h2>
-        <ul className="pp-outs">{page.outcomes.map((o, i) => <li key={i}><span className="pp-tick"><Check size={16} aria-hidden /></span><div><h3>{o.title}</h3><p>{o.text}</p></div></li>)}</ul>
-      </section>
-
-      {/* Ejemplos: problemas que ya resolvemos */}
+      {/* Ejemplos: un negocio a la vez */}
       {page.examples.length > 0 && (
-        <section id="ejemplos" className="pp-band alt">
-          <div className="pp-wrap">
-            <h2 className="pp-h2">{page.examplesTitle}</h2>
-            <p className="pp-lead sm">{page.examplesSub}</p>
-            <div className="pp-ex">
-              {page.examples.map((e, i) => (
-                <article key={i} className="pp-exc">
-                  <span className={`pp-sector t-${TINTS[i % 4]}`}>{e.sector}</span>
-                  <p className="pp-ex-l">Antes</p><p>{e.problem}</p>
-                  <p className="pp-ex-l ok">Con un sistema</p><p>{e.solution}</p>
-                  <button type="button" className="pp-link" onClick={() => fromExample(e.sector)}>Quiero algo así <ArrowRight size={15} aria-hidden /></button>
-                </article>
-              ))}
-            </div>
+        <section id="ejemplos" className="pp-wrap pp-sec">
+          <h2 className="pp-h2">{page.examplesTitle}</h2>
+          <p className="pp-lead sm">{page.examplesSub}</p>
+          <div className="pp-extabs" role="tablist" aria-label="Tipos de negocio">
+            {page.examples.map((e, i) => <button key={i} type="button" role="tab" aria-selected={exIdx === i} className={`pp-chip ${exIdx === i ? 'on' : ''}`} onClick={() => setExIdx(i)}>{e.sector}</button>)}
           </div>
+          {(() => {
+            const e = page.examples[Math.min(exIdx, page.examples.length - 1)]
+            return (
+              <div className="pp-expanel" role="tabpanel" key={e.sector}>
+                <div><p className="pp-ex-l">Antes</p><p>{e.problem}</p></div>
+                <div><p className="pp-ex-l ok">Con un sistema</p><p>{e.solution}</p></div>
+                <button type="button" className="pp-btn" onClick={() => fromExample(e.sector)}>Quiero algo así <ArrowRight size={17} aria-hidden /></button>
+              </div>
+            )
+          })()}
         </section>
       )}
 
@@ -194,8 +196,14 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
             <div><h2 className="pp-h2">{page.pricesTitle}</h2><p className="pp-lead sm">{page.pricesSub}</p></div>
             <label className="pp-iva"><input type="checkbox" checked={invoice} onChange={(e) => setInvoice(e.target.checked)} /> Necesito factura (IVA +12%)</label>
           </div>
+          {cats.length > 1 && (
+            <div className="pp-extabs" role="group" aria-label="Filtrar por categoría">
+              <button type="button" aria-pressed={!catF} className={`pp-chip ${!catF ? 'on' : ''}`} onClick={() => setCatF('')}>Todos</button>
+              {cats.map((c) => <button key={c} type="button" aria-pressed={catF === c} className={`pp-chip ${catF === c ? 'on' : ''}`} onClick={() => setCatF(c)}>{c}</button>)}
+            </div>
+          )}
           <div className="pp-pgrid">
-            {closed.map((p, i) => {
+            {closed.filter((p) => !catF || (p.category ?? 'Otros') === catF).map((p, i) => {
               const opts = payOptions(p)
               const cur = opts.find((o) => o.mode === modes[p.id]) ?? opts[0]
               const show = p.show_price !== false
@@ -228,31 +236,20 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
         </section>
       )}
 
-      {/* Cómo trabajamos */}
-      {page.steps.length > 0 && (
-        <section className="pp-band">
-          <div className="pp-wrap">
-            <h2 className="pp-h2">Así trabajamos juntos</h2>
-            <ol className="pp-proc">{page.steps.map((s, i) => <li key={i} className={`t-${TINTS[i % 4]}`}><span>{i + 1}</span><b>{s.title}</b><p>{s.text}</p></li>)}</ol>
-            <p className="pp-note"><b>{page.monthlyTitle}.</b> {page.monthlyText}</p>
+      {/* Cómo trabajamos y dudas, lado a lado */}
+      <section id="dudas" className="pp-wrap pp-sec pp-duo">
+        {page.steps.length > 0 && (
+          <div>
+            <h2 className="pp-h2">Así trabajamos</h2>
+            <ol className="pp-proc2">{page.steps.map((x, i) => <li key={i}><span>{i + 1}</span><div><b>{x.title}</b><p>{x.text}</p></div></li>)}</ol>
           </div>
-        </section>
-      )}
-
-      {/* Dudas, con la inversión a la vista solo para quien la busca */}
-      <section id="dudas" className="pp-wrap pp-sec">
-        <h2 className="pp-h2">Preguntas frecuentes</h2>
-        <div className="pp-faqs">
-          {page.faq.map((f, i) => <details key={i} className="pp-faq"><summary>{f.q}</summary><p>{f.a}</p></details>)}
-          {pkgs.some((p) => p.kind === 'closed') && (
-            <details className="pp-faq"><summary>¿Cuánto cuesta?</summary>
-              <div className="pp-prices">
-                {pkgs.filter((p) => p.kind === 'closed').map((p) => <p key={p.id}><b>{p.name}:</b> activación {money(p.setup_fee)} y {money(p.monthly_fee)} al mes.</p>)}
-                {extras.map((e) => <p key={e.id}><b>{e.name}:</b> {e.approx ? '≈ ' : ''}{money(e.amount)} {PERIOD_LABEL[e.period]}.</p>)}
-                <p className="pp-fine">{page.footer}</p>
-              </div>
-            </details>
-          )}
+        )}
+        <div>
+          <h2 className="pp-h2">Preguntas frecuentes</h2>
+          <div className="pp-faqs">
+            <details className="pp-faq"><summary>{page.monthlyTitle}</summary><p>{page.monthlyText}</p></details>
+            {page.faq.map((f, i) => <details key={i} className="pp-faq"><summary>{f.q}</summary><p>{f.a}</p></details>)}
+          </div>
         </div>
       </section>
 
@@ -260,7 +257,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
         <div className="pp-wrap">
           <h2 className="pp-h2">¿Hablamos?</h2>
           <p className="pp-lead sm">Cuéntame qué necesitas. Te respondo el mismo día y, si te sirve, te preparo una propuesta.</p>
-          <a className="pp-btn" href={wa(page.whatsapp_text)} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden /> Escribir por WhatsApp · {page.phone_display}</a>
+          <a className="pp-btn" href={wa(page.whatsapp_text)} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden /> Escribir por WhatsApp</a>
         </div>
       </section>
 

@@ -24,7 +24,7 @@ export default function QuoteDocument({ q, page }: { q: DocQuote; page: PageData
   return (
     <article className="qd" aria-label={`Propuesta: ${q.title}`}>
       <header className="qd-head">
-        <div className="qd-brand"><img src={`${base}brand/am-logo-black.png`} alt="" width={64} height={52} /><div><strong>{page.brand}</strong><span>WhatsApp {page.phone_display}</span></div></div>
+        <div className="qd-brand"><img src={`${base}brand/am-logo-black.png`} alt="" width={64} height={52} /><div><strong>{page.brand}</strong>{page.show_phone && <span>WhatsApp {page.phone_display}</span>}</div></div>
         <div className="qd-meta"><strong>Fecha</strong><span>{fmt(q.created_at) || fmt(new Date().toISOString())}</span>{q.valid_until && <span>Vigente hasta el {fmt(q.valid_until)}</span>}</div>
       </header>
 

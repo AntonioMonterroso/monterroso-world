@@ -12,7 +12,7 @@ export type PageData = {
   monthlyTitle: string; monthlyText: string
   steps: Step[]; faq: Faq[]
   validity_days: number; footer: string
-  phone: string; phone_display: string; whatsapp_text: string
+  phone: string; phone_display: string; show_phone: boolean; whatsapp_text: string
   customTitle: string; customText: string
   examplesTitle: string; examplesSub: string; examples: Example[]
   pricesTitle: string; pricesSub: string
@@ -190,7 +190,7 @@ export const DEFAULT_PAGE: PageData = {
   ],
   validity_days: 15,
   footer: 'Precios expresados en quetzales. Si necesitas factura con IVA, se agrega el 12% al total. Los montos del dominio son aproximados y los fijan los proveedores globales.',
-  phone: '50237645139', phone_display: '3764 5139', whatsapp_text: 'Hola, vi tus precios y me interesa',
+  phone: '50237645139', phone_display: '3764 5139', show_phone: false, whatsapp_text: 'Hola, vi tus precios y me interesa',
   customTitle: 'A tu medida', customText: 'Programas y sistemas hechos para tu operación: contabilidad, inventarios, citas, paneles. Hacemos un análisis, definimos módulos y te entrego una propuesta formal.',
 }
 export const SEED_PACKAGES: Omit<Pkg, 'id'>[] = [
