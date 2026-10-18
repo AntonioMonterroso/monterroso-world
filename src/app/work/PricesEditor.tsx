@@ -58,7 +58,7 @@ export default function PricesEditor() {
   const [err, setErr] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const openPkg = (x?: Pkg) => { setErr(''); setP({ id: x?.id, name: x?.name ?? '', tagline: x?.tagline ?? '', kind: x?.kind ?? 'closed', billing: x ? billingOf(x) : 'monthly', once: x?.once_price ? String(x.once_price) : '', category: x?.category ?? '', showPrice: x?.show_price ?? true, setup: x ? String(x.setup_fee || '') : '', monthly: x ? String(x.monthly_fee || '') : '', note: x?.price_note ?? '', recommended: x?.recommended ?? false, published: x?.published ?? true, features: featText(x?.features ?? []) }) }
+  const openPkg = (x?: Pkg, cat = '') => { setErr(''); setP({ id: x?.id, name: x?.name ?? '', tagline: x?.tagline ?? '', kind: x?.kind ?? 'closed', billing: x ? billingOf(x) : 'monthly', once: x?.once_price ? String(x.once_price) : '', category: x?.category ?? cat, showPrice: x?.show_price ?? true, setup: x ? String(x.setup_fee || '') : '', monthly: x ? String(x.monthly_fee || '') : '', note: x?.price_note ?? '', recommended: x?.recommended ?? false, published: x?.published ?? true, features: featText(x?.features ?? []) }) }
   const savePkg = async () => {
     if (!p) return
     if (!p.name.trim()) return setErr('Ponle un nombre al paquete.')
@@ -104,7 +104,7 @@ export default function PricesEditor() {
   const savePage = async () => { if (!pg) return; await c.savePage({ ...pg, validity_days: Math.max(1, Math.round(Number(pg.validity_days) || 15)), phone: pg.phone.replace(/\D/g, '') }); setPg(null) }
   const copy = async () => { try { await navigator.clipboard.writeText(publicUrl()); setCopied(true); setTimeout(() => setCopied(false), 2500) } catch { /* sin permiso */ } }
 
-  const list = <T extends { id: string; position: number }>(rows: T[]) => rows
+  const rubros = [...new Set(c.pkgs.rows.map((x) => x.category?.trim() || ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'es')))
 
   return (
     <div>
@@ -117,12 +117,16 @@ export default function PricesEditor() {
       </div>
       <p className="mt-2 break-all text-xs" style={{ color: 'var(--ink-faint)' }}>{publicUrl()}</p>
 
-      <Group title="Paquetes" aside={<button className="underline" onClick={() => openPkg()}>Agregar</button>} footer="Los ocultos no aparecen en la página. El recomendado se destaca con borde dorado.">
-        {c.pkgs.rows.length === 0 && !c.loading ? <li className="row"><p className="row-hit text-sm" style={{ color: 'var(--ink-faint)' }}>Preparando tus paquetes de ejemplo…</p></li> : list(c.pkgs.rows).map((x) => (
-          <Row key={x.id} tone={x.recommended ? 'var(--brass)' : x.published ? 'var(--accent)' : 'var(--ink-faint)'} muted={!x.published} title={x.name} onClick={() => openPkg(x)}
-            sub={x.kind === 'custom' ? `${x.price_note ?? 'A tu medida'}${x.published ? '' : ' · oculto'}` : `${x.category ? `${x.category} · ` : ''}${billingOf(x) !== 'monthly' ? `Único ${money(Number(x.once_price))}` : ''}${billingOf(x) === 'both' ? ' o ' : ''}${billingOf(x) !== 'once' ? `${money(x.monthly_fee)} al mes + ${money(x.setup_fee)} activación` : ''}${x.recommended ? ' · recomendado' : ''}${x.published ? '' : ' · oculto'}`} />
-        ))}
-      </Group>
+      {rubros.map((r) => (
+        <Group key={r || 'sin'} title={r ? `Precios · ${r}` : 'Precios · sin rubro'} aside={<button className="underline" onClick={() => openPkg(undefined, r)}>Agregar</button>} footer={r ? 'Los ocultos no aparecen en la página. El recomendado se destaca.' : 'Ponles un rubro (Barberías, Pastelerías…) para que tu página los muestre por tipo de negocio.'}>
+          {c.pkgs.rows.filter((x) => (x.category?.trim() || '') === r).map((x) => (
+            <Row key={x.id} tone={x.recommended ? 'var(--brass)' : x.published ? 'var(--accent)' : 'var(--ink-faint)'} muted={!x.published} title={x.name} onClick={() => openPkg(x)}
+            sub={x.kind === 'custom' ? `${x.price_note ?? 'A tu medida'}${x.published ? '' : ' · oculto'}` : `${billingOf(x) !== 'monthly' ? `Único ${money(Number(x.once_price))}` : ''}${billingOf(x) === 'both' ? ' o ' : ''}${billingOf(x) !== 'once' ? `${money(x.monthly_fee)} al mes + ${money(x.setup_fee)} activación` : ''}${x.recommended ? ' · recomendado' : ''}${x.published ? '' : ' · oculto'}`} />
+          ))}
+        </Group>
+      ))}
+      {c.pkgs.rows.length === 0 && !c.loading && <p className="mt-6 text-sm" style={{ color: 'var(--ink-faint)' }}>Preparando tus paquetes de ejemplo…</p>}
+      <button className="btn btn-ghost mt-4" onClick={() => openPkg(undefined, '')}>+ Nuevo rubro o paquete</button>
 
       <Group title="Extras" aside={<button className="underline" onClick={() => openExtra()}>Agregar</button>} footer="Cosas que se suman al paquete, como el dominio. Aparecen como casillas en «Arma tu total».">
         {c.extras.rows.length === 0 ? <li className="row"><p className="row-hit text-sm" style={{ color: 'var(--ink-faint)' }}>Sin extras todavía.</p></li> : c.extras.rows.map((x) => (
@@ -159,7 +163,7 @@ export default function PricesEditor() {
                 </div>
               </div>
             ) : <label className="grid gap-2 text-sm">Texto del precio<input className="field" value={p.note} maxLength={200} onChange={(ev) => setP({ ...p, note: ev.target.value })} placeholder="Se cotiza según módulos" /></label>}
-            <label className="grid gap-2 text-sm">Categoría (opcional)<input className="field" value={p.category} maxLength={60} onChange={(ev) => setP({ ...p, category: ev.target.value })} placeholder="Barberías, Restaurantes, Oficinas…" /></label>
+            <label className="grid gap-2 text-sm">Rubro o tipo de negocio<input className="field" value={p.category} maxLength={60} onChange={(ev) => setP({ ...p, category: ev.target.value })} placeholder="Barberías, Pastelerías, Oficinas…" list="mw-rubros" /><datalist id="mw-rubros">{rubros.filter(Boolean).map((r) => <option key={r} value={r} />)}</datalist></label>
             <label className="grid gap-2 text-sm">Qué incluye, una línea por cosa
               <textarea className="field py-3" rows={8} value={p.features} onChange={(ev) => setP({ ...p, features: ev.target.value })} placeholder={'Diseño con tu logo\nno: Sin reservas en línea'} />
               <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Empieza una línea con «no:» para marcarla como NO incluida.</span>
