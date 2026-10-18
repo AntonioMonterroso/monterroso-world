@@ -8,7 +8,7 @@ type PageRow = { id: string; data: Partial<PageData> }
 let seeding: Promise<void> | null = null
 async function seedOnce() {
   // Solo la primera vez: la página con textos de arranque y los paquetes de ejemplo con los precios acordados
-  await supabase.from('quote_page').insert({ data: DEFAULT_PAGE })
+  await supabase.from('quote_page').insert({ data: {} })
   await supabase.from('quote_packages').insert(SEED_PACKAGES)
   await supabase.from('quote_extras').insert(SEED_EXTRAS)
 }
@@ -29,7 +29,9 @@ export function useCatalog() {
 
   const page: PageData = useMemo(() => ({ ...DEFAULT_PAGE, ...(pageT.rows[0]?.data ?? {}) }), [pageT.rows])
   const savePage = useCallback(async (patch: Partial<PageData>) => {
-    const next = { ...page, ...patch }
+    // Se guarda solo lo que cambiaste: así los textos nuevos de arranque llegan solos a lo que no has tocado
+    const merged = { ...page, ...patch } as Record<string, unknown>
+    const next = Object.fromEntries(Object.entries(merged).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify((DEFAULT_PAGE as Record<string, unknown>)[k])))
     const row = pageT.rows[0]
     if (row) await pageT.update(row.id, { data: next }); else await pageT.add({ data: next })
   }, [page, pageT])

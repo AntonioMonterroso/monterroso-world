@@ -11,6 +11,7 @@ export type PageData = {
   validity_days: number; footer: string
   phone: string; phone_display: string; whatsapp_text: string
   customTitle: string; customText: string
+  heroCta: string; painsTitle: string; pains: Step[]; outcomesTitle: string; outcomes: Step[]
 }
 export type Period = 'once' | 'month' | 'year'
 export type Line = { id: string; label: string; detail?: string; qty: number; unit: number; period: Period; optional?: boolean; on?: boolean }
@@ -77,6 +78,27 @@ export function newToken(): string {
 }
 export const isToken = (t: string) => /^[A-Za-z0-9_-]{16,64}$/.test(t)
 
+// ───────── Propuesta guiada: qué paquete recomendar según lo que quiere lograr ─────────
+export type Goal = 'found' | 'booking' | 'control' | 'accounting' | 'domain' | 'other'
+export const GOALS: { id: Goal; label: string; why: string }[] = [
+  { id: 'found', label: 'Que me encuentren en internet', why: 'Una página clara con tus servicios, tu ubicación y un botón de WhatsApp hace que quien te busca te encuentre y te escriba.' },
+  { id: 'booking', label: 'Recibir citas o reservas solo', why: 'Con reservas en línea, tus clientes eligen su hora a cualquier hora y tú dejas de contestar el mismo mensaje cien veces.' },
+  { id: 'control', label: 'Controlar ventas, inventario o clientes', why: 'Un sistema a tu medida te muestra cuánto entró, qué falta y quién te compra, sin hojas sueltas.' },
+  { id: 'accounting', label: 'Ordenar mi contabilidad o mis reportes', why: 'Los reportes que hoy armas a mano pueden salir solos, con tu forma de trabajar.' },
+  { id: 'domain', label: 'Tener mi propio dominio (.com)', why: 'Un .com a tu nombre se ve serio y se recuerda fácil.' },
+  { id: 'other', label: 'Otra cosa', why: 'Cuéntame y lo pensamos juntos.' },
+]
+/** Recomienda un paquete según lo que la persona quiere lograr: lo más completo que necesita, sin pasarse. */
+export function recommendPkg(goals: Goal[], pkgs: Pkg[]): Pkg | undefined {
+  const sorted = [...pkgs].sort((a, b) => a.position - b.position)
+  const closed = sorted.filter((p) => p.kind === 'closed')
+  const custom = sorted.find((p) => p.kind === 'custom')
+  if (goals.includes('control') || goals.includes('accounting')) return custom ?? closed.at(-1)
+  if (goals.includes('booking')) return closed.find((p) => p.recommended) ?? closed.at(-1) ?? custom
+  if (goals.includes('found')) return closed[0] ?? custom
+  return closed.find((p) => p.recommended) ?? closed[0] ?? custom
+}
+
 export const waLink = (phone: string, text: string) => `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`
 
 // ───────── Página pública: elegir paquete y extras ─────────
@@ -102,9 +124,23 @@ export function linesFromPick(p: Choice): Line[] {
 const f = (text: string, included = true): Feature => ({ text, included })
 export const DEFAULT_PAGE: PageData = {
   brand: 'Monterroso Dev Studio',
-  kicker: 'Precios y servicios',
-  headline: 'Sistemas y páginas web para tu negocio',
-  sub: 'Elige un paquete listo o cuéntame tu idea y la cotizo a tu medida. Precios en quetzales, sin letra pequeña.',
+  kicker: 'Páginas y sistemas web · Guatemala',
+  headline: 'Tu negocio, *ordenado* y fácil de encontrar.',
+  sub: 'Hago páginas y sistemas que te ahorran tiempo y te traen clientes. Cuéntame cómo trabajas y te propongo lo que mejor te funcione, sin compromiso.',
+  heroCta: 'Cuéntame tu negocio',
+  painsTitle: '¿Te suena familiar?',
+  pains: [
+    { title: 'Las citas se pierden entre mensajes', text: 'Entre WhatsApp, llamadas y papelitos, siempre se te escapa alguien.' },
+    { title: 'Tu negocio no se encuentra en internet', text: 'Quien te busca termina encontrando a otros primero.' },
+    { title: 'Los números viven en hojas sueltas', text: 'Para saber cuánto entró hoy tienes que ponerte a sumar.' },
+  ],
+  outcomesTitle: 'Lo que cambia cuando todo está en su lugar',
+  outcomes: [
+    { title: 'Clientes que reservan solos', text: 'Eligen su hora desde el celular; tú solo confirmas.' },
+    { title: 'Todo tu día en una pantalla', text: 'Citas, clientes y caja a la mano, en tu teléfono.' },
+    { title: 'Recordatorios casi automáticos', text: 'Menos faltas y menos mensajes repetidos.' },
+    { title: 'Tus datos son solo tuyos', text: 'Privados y con respaldo diario. Si un día te vas, te los llevas.' },
+  ],
   monthlyTitle: 'Qué incluye la mensualidad',
   monthlyText: 'El sistema funcionando 24/7, soporte por WhatsApp, cambios de precios, fotos y ajustes pequeños, actualizaciones continuas, respaldo diario de datos y la infraestructura. Mínimo de permanencia inicial de 3 meses. Tus datos son 100% tuyos. Los cambios grandes se analizan y pueden ajustar la mensualidad.',
   steps: [
@@ -125,11 +161,11 @@ export const DEFAULT_PAGE: PageData = {
   customTitle: 'A tu medida', customText: 'Programas y sistemas hechos para tu operación: contabilidad, inventarios, citas, paneles. Hacemos un análisis, definimos módulos y te entrego una propuesta formal.',
 }
 export const SEED_PACKAGES: Omit<Pkg, 'id'>[] = [
-  { name: 'Página de presentación', tagline: 'Tu vitrina en internet. Muestra tu negocio de manera profesional.', kind: 'closed', setup_fee: 500, monthly_fee: 250, price_note: null, recommended: false, published: true, position: 1,
+  { name: 'Página de presentación', tagline: 'Para que te encuentren y te escriban, con una vitrina que se ve profesional.', kind: 'closed', setup_fee: 500, monthly_fee: 250, price_note: null, recommended: false, published: true, position: 1,
     features: [f('Diseño propio con tus colores, logo y fotos'), f('Catálogo de servicios con precios'), f('Estilos, ubicación y horario'), f('Botón de WhatsApp para pedir cita'), f('Vista previa bonita al compartir el link'), f('Sin reservas en línea', false), f('Sin panel de administración', false)] },
-  { name: 'Sistema completo de citas', tagline: 'Todo lo anterior, más el sistema automatizado que trabaja por ti.', kind: 'closed', setup_fee: 600, monthly_fee: 350, price_note: null, recommended: true, published: true, position: 2,
+  { name: 'Sistema completo de citas', tagline: 'Para que tus clientes reserven solos y tú tengas todo el día en una pantalla.', kind: 'closed', setup_fee: 600, monthly_fee: 350, price_note: null, recommended: true, published: true, position: 2,
     features: [f('Reserva en línea con horas libres en tiempo real'), f('El cliente confirma, reprograma o cancela solo'), f('Panel en el teléfono (se instala como app)'), f('Avisos al teléfono: cita nueva, cancelación, confirmación'), f('Recordatorio de mañana por WhatsApp en un toque'), f('Clientes, faltas, cumpleaños y ficha de preferencias'), f('Descansos, bloqueos y lista de espera'), f('Puntos de fidelidad, referidos y combos (opcionales)'), f('Finanzas: ingresos, gastos, reportes y cierre de caja'), f('Recibo en imagen para enviar al cliente'), f('Datos de clientes totalmente protegidos y privados')] },
-  { name: 'Programa a tu medida', tagline: 'Sistemas hechos para tu operación, con módulos a tu elección.', kind: 'custom', setup_fee: 0, monthly_fee: 0, price_note: 'Se cotiza según módulos', recommended: false, published: true, position: 3,
+  { name: 'Programa a tu medida', tagline: 'Para lo que no cabe en una plantilla: contabilidad, inventarios, paneles, lo que tu operación pida.', kind: 'custom', setup_fee: 0, monthly_fee: 0, price_note: 'Se cotiza según módulos', recommended: false, published: true, position: 3,
     features: [f('Análisis de lo que necesitas'), f('Módulos a tu elección'), f('Instalación, adecuación y capacitación'), f('Soporte y garantía inicial'), f('Respaldo de la información'), f('Propuesta formal por escrito')] },
 ]
 export const SEED_EXTRAS: Omit<Extra, 'id'>[] = [

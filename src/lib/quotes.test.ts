@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
+import { recommendPkg, SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
 
 const L = (over: Partial<Line> = {}): Line => ({ id: 'a', label: 'x', qty: 1, unit: 100, period: 'once', ...over })
 
@@ -51,4 +51,13 @@ describe('paquetes y extras', () => {
     expect(lines.map((l) => [l.period, l.unit])).toEqual([['once', 600], ['month', 350], ['year', 85]])
   })
   it('las plantillas traen contenido propio y la de blanco va vacía', () => { expect(bodyFor('citas').sections.length).toBeGreaterThan(0); expect(bodyFor('custom').sections).toEqual([]) })
+})
+
+describe('propuesta guiada', () => {
+  const pk = SEED_PACKAGES.map((p, i) => ({ id: `p${i}`, ...p })) as Pkg[]
+  it('citas recomienda el sistema completo', () => { expect(recommendPkg(['booking'], pk)?.name).toBe('Sistema completo de citas') })
+  it('solo que lo encuentren: la página', () => { expect(recommendPkg(['found'], pk)?.name).toBe('Página de presentación') })
+  it('control y contabilidad van a la medida', () => { expect(recommendPkg(['found', 'control'], pk)?.kind).toBe('custom'); expect(recommendPkg(['accounting'], pk)?.kind).toBe('custom') })
+  it('sin metas claras, el recomendado', () => { expect(recommendPkg([], pk)?.recommended).toBe(true); expect(recommendPkg(['other'], pk)?.recommended).toBe(true) })
+  it('sin paquetes no inventa nada', () => { expect(recommendPkg(['booking'], [])).toBeUndefined() })
 })

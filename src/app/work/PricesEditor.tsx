@@ -15,6 +15,23 @@ type ED = { id?: string; name: string; detail: string; amount: string; period: P
 const featText = (f: Feature[]) => f.map((x) => (x.included ? x.text : `no: ${x.text}`)).join('\n')
 const parseFeat = (t: string): Feature[] => t.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 60).map((l) => (/^no:\s*/i.test(l) ? { text: l.replace(/^no:\s*/i, ''), included: false } : { text: l, included: true }))
 
+
+function Pairs({ legend, addLabel, rows, onChange }: { legend: string; addLabel: string; rows: Step[]; onChange: (r: Step[]) => void }) {
+  return (
+    <fieldset className="grid gap-2">
+      <legend className="mb-1 text-sm font-semibold">{legend}</legend>
+      {rows.map((s, i) => (
+        <div key={i} className="grid gap-2 rounded-xl p-3" style={{ background: 'var(--surface-2)' }}>
+          <input className="field" aria-label={`Título ${i + 1}`} value={s.title} maxLength={90} onChange={(ev) => onChange(rows.map((x, j) => (j === i ? { ...x, title: ev.target.value } : x)))} />
+          <textarea className="field py-2" rows={2} aria-label={`Texto ${i + 1}`} value={s.text} maxLength={300} onChange={(ev) => onChange(rows.map((x, j) => (j === i ? { ...x, text: ev.target.value } : x)))} />
+          <button type="button" className="min-h-11 justify-self-start text-xs underline" style={{ color: 'var(--ink-faint)' }} onClick={() => onChange(rows.filter((_, j) => j !== i))}>Quitar</button>
+        </div>
+      ))}
+      <button type="button" className="btn btn-ghost w-fit" onClick={() => onChange([...rows, { title: '', text: '' }])}><Plus size={16} aria-hidden /> {addLabel}</button>
+    </fieldset>
+  )
+}
+
 /** Editor de lo que se muestra en tu página pública de precios. */
 export default function PricesEditor() {
   const c = useCatalog()
@@ -147,7 +164,11 @@ export default function PricesEditor() {
           <div className="grid gap-4">
             <label className="grid gap-2 text-sm">Marca<input className="field" value={pg.brand} maxLength={80} onChange={(ev) => setPg({ ...pg, brand: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Etiqueta pequeña<input className="field" value={pg.kicker} maxLength={80} onChange={(ev) => setPg({ ...pg, kicker: ev.target.value })} /></label>
-            <label className="grid gap-2 text-sm">Titular<input className="field" value={pg.headline} maxLength={140} onChange={(ev) => setPg({ ...pg, headline: ev.target.value })} /></label>
+            <label className="grid gap-2 text-sm">Titular
+              <input className="field" value={pg.headline} maxLength={140} onChange={(ev) => setPg({ ...pg, headline: ev.target.value })} />
+              <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Pon una palabra entre asteriscos para resaltarla: Tu negocio, *ordenado*.</span>
+            </label>
+            <label className="grid gap-2 text-sm">Texto del botón principal<input className="field" value={pg.heroCta} maxLength={60} onChange={(ev) => setPg({ ...pg, heroCta: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Subtítulo<textarea className="field py-3" rows={3} value={pg.sub} maxLength={400} onChange={(ev) => setPg({ ...pg, sub: ev.target.value })} /></label>
             <div className="grid grid-cols-2 gap-3">
               <label className="grid gap-2 text-sm">WhatsApp (con 502)<input className="field" inputMode="tel" value={pg.phone} onChange={(ev) => setPg({ ...pg, phone: ev.target.value })} /></label>
@@ -158,6 +179,11 @@ export default function PricesEditor() {
             <label className="grid gap-2 text-sm">Qué cubre la mensualidad<textarea className="field py-3" rows={5} value={pg.monthlyText} maxLength={1200} onChange={(ev) => setPg({ ...pg, monthlyText: ev.target.value })} /></label>
             <label className="grid gap-2 text-sm">Vigencia (días)<input className="field" inputMode="numeric" value={String(pg.validity_days)} onChange={(ev) => setPg({ ...pg, validity_days: Number(ev.target.value.replace(/\D/g, '')) })} /></label>
             <label className="grid gap-2 text-sm">Nota al pie (IVA, dominio…)<textarea className="field py-3" rows={3} value={pg.footer} maxLength={600} onChange={(ev) => setPg({ ...pg, footer: ev.target.value })} /></label>
+
+            <label className="grid gap-2 text-sm">Título de «lo que duele»<input className="field" value={pg.painsTitle} maxLength={90} onChange={(ev) => setPg({ ...pg, painsTitle: ev.target.value })} /></label>
+            <Pairs legend="Lo que le pasa a tu cliente" addLabel="Agregar situación" rows={pg.pains} onChange={(r) => setPg({ ...pg, pains: r })} />
+            <label className="grid gap-2 text-sm">Título de «lo que cambia»<input className="field" value={pg.outcomesTitle} maxLength={90} onChange={(ev) => setPg({ ...pg, outcomesTitle: ev.target.value })} /></label>
+            <Pairs legend="Lo que cambia para él" addLabel="Agregar beneficio" rows={pg.outcomes} onChange={(r) => setPg({ ...pg, outcomes: r })} />
 
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-semibold">Pasos del proceso</legend>
