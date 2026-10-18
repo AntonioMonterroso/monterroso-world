@@ -11,7 +11,7 @@ export function installMockApi() {
     if (rpc) {
       const body = init?.body ? JSON.parse(String(init.body)) : {}
       if (rpc[1] === 'public_pricing') return json({ page: (db.quote_page[0]?.data as object) ?? {}, packages: db.quote_packages.filter((r) => r.published), extras: db.quote_extras.filter((r) => r.published) })
-      if (rpc[1] === 'quote_by_token') { const q = db.quotes.find((r) => r.share_token === body.t && r.shared); return json(q ? { ...q, page: (db.quote_page[0]?.data as object) ?? {} } : null) }
+      if (rpc[1] === 'quote_by_token') { const q = db.quotes.find((r) => r.share_token === body.t && r.shared); return json(q ? { ...q, number: undefined, page: (db.quote_page[0]?.data as object) ?? {} } : null) }
       return real(input, init)
     }
     const m = url.pathname.match(/\/rest\/v1\/(\w+)/)

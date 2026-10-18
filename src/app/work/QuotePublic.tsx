@@ -15,7 +15,7 @@ export default function QuotePublic() {
     if (!isToken(token)) { setState('fail'); return }
     void fetchQuote(token).then((d) => { setQ(d); setState(d ? 'ok' : 'fail') })
   }, [token])
-  useEffect(() => { if (q) document.title = `${q.number} · ${q.title}`; return () => { document.title = 'Monterroso World | Desarrollador web y músico' } }, [q])
+  useEffect(() => { if (q) document.title = q.title; return () => { document.title = 'Monterroso World | Desarrollador web y músico' } }, [q])
 
   if (state === 'loading') return <main className="grid min-h-dvh place-items-center" style={{ background: '#e9e6df' }}><Loader2 className="animate-spin" aria-label="Cargando" /></main>
   if (state === 'fail' || !q) return <main className="grid min-h-dvh place-items-center px-6 text-center" style={{ background: 'var(--bg)' }}><div><h1 className="font-display text-3xl">Este enlace no está disponible</h1><p className="mt-2" style={{ color: 'var(--ink-soft)' }}>Puede que haya vencido o que ya no se comparta. Pide uno nuevo a quien te lo envió.</p></div></main>

@@ -43,7 +43,7 @@ export async function fetchPricing(): Promise<Pricing | null> {
   if (error || !data) return null
   return data as Pricing
 }
-export type SharedQuote = Omit<Quote, 'shared' | 'share_token' | 'project_id'> & { page: Partial<PageData> }
+export type SharedQuote = Omit<Quote, 'shared' | 'share_token' | 'project_id' | 'number'> & { page: Partial<PageData> }
 /** Una propuesta compartida por su enlace secreto. */
 export async function fetchQuote(token: string): Promise<SharedQuote | null> {
   const { data, error } = await supabase.rpc('quote_by_token', { t: token })

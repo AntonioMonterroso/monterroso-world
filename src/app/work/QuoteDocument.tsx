@@ -2,7 +2,7 @@ import { PERIOD_LABEL, STATUS_LABEL, lineOn, lineTotal, paymentPlan, totalsOf, t
 import { money } from '../../lib/projects'
 
 const base = import.meta.env.BASE_URL
-export type DocQuote = { number: string; title: string; client_name: string; client_contact: string | null; status: Status; lines: Line[]; iva: IvaMode; upfront_pct: number; valid_until: string | null; body: Body; created_at?: string }
+export type DocQuote = { title: string; client_name: string; client_contact: string | null; status: Status; lines: Line[]; iva: IvaMode; upfront_pct: number; valid_until: string | null; body: Body; created_at?: string }
 
 const fmt = (iso?: string | null) => (iso ? new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' }) : '')
 const IVA_NOTE: Record<IvaMode, string> = {
@@ -22,10 +22,10 @@ export default function QuoteDocument({ q, page }: { q: DocQuote; page: PageData
   const b = q.body
 
   return (
-    <article className="qd" aria-label={`Propuesta ${q.number}`}>
+    <article className="qd" aria-label={`Propuesta: ${q.title}`}>
       <header className="qd-head">
         <div className="qd-brand"><img src={`${base}brand/am-logo-black.png`} alt="" width={64} height={52} /><div><strong>{page.brand}</strong><span>WhatsApp {page.phone_display}</span></div></div>
-        <div className="qd-meta"><strong>{q.number}</strong><span>{fmt(q.created_at) || fmt(new Date().toISOString())}</span>{q.valid_until && <span>Vigente hasta el {fmt(q.valid_until)}</span>}</div>
+        <div className="qd-meta"><strong>Fecha</strong><span>{fmt(q.created_at) || fmt(new Date().toISOString())}</span>{q.valid_until && <span>Vigente hasta el {fmt(q.valid_until)}</span>}</div>
       </header>
 
       <p className="qd-kicker">Propuesta de servicios</p>
