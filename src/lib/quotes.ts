@@ -179,7 +179,7 @@ export const DEFAULT_PAGE: PageData = {
   steps: [
     { title: 'Inicio del proyecto', text: 'Se abona la activación para comenzar con tu marca, logotipo, precios e imágenes.' },
     { title: 'Configuración e integración', text: 'Dejamos listo tu catálogo, horarios y el panel de administración en tu teléfono.' },
-    { title: 'Capacitación (30 min)', text: 'Te muestro cómo usar tu panel, gestionar tu información y revisar tus números.' },
+    { title: 'Capacitación', text: 'Te muestro cómo usar tu panel, gestionar tu información y revisar tus números.' },
     { title: 'Entrega y puesta en marcha', text: 'Se entrega en aproximadamente 1 semana, o menos, listo para compartir con tus clientes.' },
   ],
   faq: [
@@ -223,7 +223,7 @@ export const TEMPLATES: Record<Template, { intro: string; sections: Section[]; e
     ],
     exclusions: ['Registro del dominio, que se paga aparte al registrador', 'Equipo de cómputo, red o impresoras'],
     support: 'La mensualidad incluye el sistema funcionando 24/7, soporte por WhatsApp, actualizaciones continuas, respaldo diario de datos y la infraestructura.',
-    process: proc([['Inicio del proyecto', 'Se abona la activación para comenzar con tu marca, precios e imágenes.'], ['Configuración', 'Catálogo, horarios y panel de administración listos.'], ['Capacitación (30 min)', 'Uso del panel, recordatorios y cierres de caja.'], ['Entrega', 'En aproximadamente 1 semana, o menos.']]),
+    process: proc([['Inicio del proyecto', 'Se abona la activación para comenzar con tu marca, precios e imágenes.'], ['Configuración', 'Catálogo, horarios y panel de administración listos.'], ['Capacitación', 'Uso del panel, recordatorios y cierres de caja.'], ['Entrega', 'En aproximadamente 1 semana, o menos.']]),
     conditions: ['Mínimo de permanencia inicial de 3 meses.', 'Tus datos de clientes son 100% tuyos.'],
   },
   programa: {
