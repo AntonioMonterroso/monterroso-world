@@ -25,7 +25,22 @@ export type Template = 'web' | 'citas' | 'programa' | 'custom'
 export type Status = 'draft' | 'sent' | 'accepted' | 'rejected'
 export type Section = { title: string; items: string[] }
 export type Body = { intro: string; sections: Section[]; exclusions: string[]; support: string; process: Step[]; conditions: string[]; notes: string }
-export type Quote = { id: string; number: string; title: string; client_name: string; client_contact: string | null; template: Template; status: Status; lines: Line[]; iva: IvaMode; upfront_pct: number; valid_until: string | null; body: Body; shared: boolean; share_token: string | null; project_id: string | null; created_at?: string }
+export type MilestoneStatus = 'todo' | 'doing' | 'done'
+export type Milestone = { id: string; title: string; status: MilestoneStatus; note?: string }
+export type UpdateNote = { id: string; date: string; text: string }
+/** Lo que el cliente ve en su página de seguimiento. */
+export type Progress = { milestones?: Milestone[]; updates?: UpdateNote[]; eta?: string | null; headline?: string }
+export const MILESTONE_STATUS: Record<MilestoneStatus, string> = { todo: 'Por hacer', doing: 'En curso', done: 'Listo' }
+export const MILESTONE_TEMPLATE = ['Reunión inicial', 'Diseño y contenido', 'Construcción', 'Pruebas', 'Capacitación', 'Entrega']
+/** Porcentaje del proyecto: cada hito listo cuenta completo y el que está en curso, la mitad. */
+export function progressPct(ms: Pick<Milestone, 'status'>[] | undefined): number {
+  if (!ms || ms.length === 0) return 0
+  const pts = ms.reduce((s, m) => s + (m.status === 'done' ? 1 : m.status === 'doing' ? 0.5 : 0), 0)
+  return Math.round((pts / ms.length) * 100)
+}
+/** El hito que sigue: el que está en curso o, si no hay, el primero pendiente. */
+export const nextMilestone = (ms: Milestone[] | undefined) => ms?.find((m) => m.status === 'doing') ?? ms?.find((m) => m.status === 'todo')
+export type Quote = { id: string; number: string; title: string; client_name: string; client_contact: string | null; template: Template; status: Status; lines: Line[]; iva: IvaMode; upfront_pct: number; valid_until: string | null; body: Body; shared: boolean; share_token: string | null; project_id: string | null; progress?: Progress; created_at?: string }
 
 export const IVA_RATE = 0.12
 export const PERIOD_LABEL: Record<Period, string> = { once: 'una vez', month: 'al mes', year: 'al año' }
@@ -189,7 +204,7 @@ export const DEFAULT_PAGE: PageData = {
     { q: '¿Puedo cambiar de paquete después?', a: 'Sí. Puedes empezar con uno y subir al otro cuando quieras, pagando solo la diferencia.' },
   ],
   validity_days: 15,
-  footer: 'Precios expresados en quetzales. Si necesitas factura con IVA, se agrega el 12% al total. Los montos del dominio son aproximados y los fijan los proveedores globales.',
+  footer: 'Precios expresados en quetzales. Si necesitas factura, activa «Con impuestos» para ver el precio final. Los montos del dominio son aproximados y los fijan los proveedores globales.',
   phone: '50237645139', phone_display: '3764 5139', show_phone: false, whatsapp_text: 'Hola, vi tus precios y me interesa',
   customTitle: 'A tu medida', customText: 'Programas y sistemas hechos para tu operación: contabilidad, inventarios, citas, paneles. Hacemos un análisis, definimos módulos y te entrego una propuesta formal.',
 }

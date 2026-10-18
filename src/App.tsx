@@ -4,7 +4,7 @@ import PublicShare from './app/fit/PublicShare'
 import PublicSong from './app/music/PublicSong'
 import Live from './app/pulpit/Live'
 import Landing from './pages/Landing'
-import PricingPage from './app/work/PricingPage'
+import PricingRedirect from './app/work/PricingRedirect'
 import QuotePublic from './app/work/QuotePublic'
 
 export default function App() {
@@ -12,7 +12,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/app/*" element={<AppRoot />} />
-      <Route path="/precios" element={<PricingPage />} />
+      <Route path="/precios" element={<PricingRedirect />} />
       <Route path="/cotizacion/:token" element={<QuotePublic />} />
       <Route path="/live/:token" element={<Live />} />
       <Route path="/share/:token" element={<PublicShare />} />

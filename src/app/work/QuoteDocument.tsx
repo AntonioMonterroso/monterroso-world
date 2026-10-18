@@ -6,9 +6,9 @@ export type DocQuote = { title: string; client_name: string; client_contact: str
 
 const fmt = (iso?: string | null) => (iso ? new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' }) : '')
 const IVA_NOTE: Record<IvaMode, string> = {
-  none: 'Precios expresados en quetzales. Si requiere factura con IVA, se agrega el 12% al total.',
-  included: 'Precios expresados en quetzales, con IVA incluido.',
-  added: 'Precios expresados en quetzales. A los montos se les suma el IVA (12%).',
+  none: 'Precios expresados en quetzales. Si requiere factura, se agregan los impuestos correspondientes.',
+  included: 'Precios expresados en quetzales, con impuestos incluidos.',
+  added: 'Precios expresados en quetzales. A los montos se les suman los impuestos correspondientes.',
 }
 
 /** La propuesta como documento formal: se ve igual en pantalla, en el enlace compartido y al imprimir o guardar como PDF. */
@@ -51,7 +51,7 @@ export default function QuoteDocument({ q, page }: { q: DocQuote; page: PageData
         <table className="qd-table qd-total">
           <tbody>
             {rows.filter(([, , a]) => a.total > 0).map(([label, per, a]) => (
-              <tr key={label}><td>{label} <span className="qd-sm">({per})</span>{showIva && <span className="qd-sm">Base {money(a.base)} · IVA {money(a.iva)}</span>}</td><td className="r"><strong>{money(a.total)}</strong></td></tr>
+              <tr key={label}><td>{label} <span className="qd-sm">({per})</span>{showIva && <span className="qd-sm">Base {money(a.base)} · Impuestos {money(a.iva)}</span>}</td><td className="r"><strong>{money(a.total)}</strong></td></tr>
             ))}
           </tbody>
         </table>

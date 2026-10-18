@@ -6,9 +6,9 @@ import { useCatalog } from '../../lib/quoteData'
 import { BILLING_LABEL, PERIOD_LABEL, billingOf, type Billing, type Example, type Extra, type Faq, type Feature, type PageData, type Period, type Pkg, type Step } from '../../lib/quotes'
 import { money } from '../../lib/projects'
 import { Empty, ErrorBar, toNum } from '../money/shared'
+import { profile } from '../../lib/profile'
 
-const base = import.meta.env.BASE_URL
-const publicUrl = () => `${location.origin}${base}precios`
+const publicUrl = () => `${profile.site}#precios`
 
 type PD = { id?: string; name: string; tagline: string; kind: 'closed' | 'custom'; billing: Billing; once: string; setup: string; monthly: string; note: string; category: string; showPrice: boolean; recommended: boolean; published: boolean; features: string }
 type ED = { id?: string; name: string; detail: string; amount: string; period: Period; approx: boolean; published: boolean }
@@ -112,7 +112,7 @@ export default function PricesEditor() {
       <ErrorBar msg={c.error} />
 
       <div className="flex flex-wrap gap-2">
-        <a className="btn btn-primary" href={`${base}precios`} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> Ver mi página</a>
+        <a className="btn btn-primary" href={publicUrl()} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> Ver mi página</a>
         <button className="btn btn-ghost" onClick={() => void copy()}><Link2 size={16} aria-hidden /> {copied ? '¡Enlace copiado!' : 'Copiar enlace'}</button>
       </div>
       <p className="mt-2 break-all text-xs" style={{ color: 'var(--ink-faint)' }}>{publicUrl()}</p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { payOptions, billingOf, recommendPkg, SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
+import { MILESTONE_TEMPLATE, nextMilestone, progressPct, payOptions, billingOf, recommendPkg, SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
 
 const L = (over: Partial<Line> = {}): Line => ({ id: 'a', label: 'x', qty: 1, unit: 100, period: 'once', ...over })
 
@@ -79,4 +79,19 @@ describe('pago único o mensualidad', () => {
   it('si falta el precio único, cae a mensualidad en vez de mostrar cero', () => {
     expect(payOptions({ ...base, billing: 'once', once_price: 0 } as Pkg).map((o) => o.mode)).toEqual(['monthly'])
   })
+})
+
+describe('seguimiento del cliente', () => {
+  const m = (status: 'todo' | 'doing' | 'done') => ({ id: status, title: status, status })
+  it('sin hitos va en cero', () => { expect(progressPct(undefined)).toBe(0); expect(progressPct([])).toBe(0) })
+  it('los listos cuentan completos y el que está en curso, la mitad', () => {
+    expect(progressPct([m('done'), m('done'), m('doing'), m('todo')])).toBe(63)
+    expect(progressPct([m('done'), m('done')])).toBe(100)
+  })
+  it('el siguiente es el que está en curso, o el primero pendiente', () => {
+    expect(nextMilestone([m('done'), m('doing'), m('todo')])?.status).toBe('doing')
+    expect(nextMilestone([m('done'), m('todo')])?.status).toBe('todo')
+    expect(nextMilestone([m('done')])).toBeUndefined()
+  })
+  it('hay una plantilla de hitos para empezar', () => { expect(MILESTONE_TEMPLATE.length).toBeGreaterThanOrEqual(5) })
 })

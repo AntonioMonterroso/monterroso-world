@@ -1,17 +1,20 @@
-import { Copy, Link2, Link2Off, Plus, Printer, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Link2, Link2Off, Plus, Printer, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Segmented, Switch } from '../../components/ui'
 import { useCatalog } from '../../lib/quoteData'
-import { PERIOD_LABEL, STATUS_LABEL, billingOf, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Period, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
+import { MILESTONE_STATUS, MILESTONE_TEMPLATE, PERIOD_LABEL, STATUS_LABEL, billingOf, progressPct, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Milestone, type MilestoneStatus, type Period, type Progress, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
 import { currentMonth, money, useProjects } from '../../lib/projects'
 import { useTable } from '../../lib/table'
+import { profile } from '../../lib/profile'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, toNum } from '../money/shared'
 import QuoteDocument from './QuoteDocument'
 
 const base = import.meta.env.BASE_URL
 const link = (t: string) => `${location.origin}${base}cotizacion/${t}`
+/** La página del cliente vive en tu página del estudio: propuesta y seguimiento en un solo lugar. */
+const clientLink = (t: string) => `${profile.site}cliente?t=${t}`
 const STATUS_TONE: Record<Status, string> = { draft: 'var(--ink-faint)', sent: 'var(--sky)', accepted: 'var(--pos)', rejected: 'var(--neg)' }
 const TEMPLATES: { id: Template; hint: string }[] = [
   { id: 'citas', hint: 'Citas en línea, panel y recordatorios, como el de la barbería.' },
@@ -19,7 +22,7 @@ const TEMPLATES: { id: Template; hint: string }[] = [
   { id: 'programa', hint: 'Módulos, capacitación y soporte para un programa propio, al estilo de un sistema contable.' },
   { id: 'custom', hint: 'Empiezas de cero y escribes todo tú.' },
 ]
-type Tab = 'datos' | 'precios' | 'contenido' | 'vista'
+type Tab = 'datos' | 'precios' | 'contenido' | 'seguimiento' | 'vista'
 const inputNum = (v: string) => v.replace(',', '.')
 
 /** Propuestas por cliente: se arman con tus precios, se ven como documento formal y se comparten con un enlace o en PDF. */
@@ -33,10 +36,13 @@ export default function Quotes() {
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
   const [dirty, setDirty] = useState(false)
+  const [upText, setUpText] = useState('')
   const today = localISO()
 
+  const addUpdate = () => { const txt = upText.trim(); if (!txt) return; setProg({ updates: [...(d?.progress?.updates ?? []), { id: uid(), date: today, text: txt }] }); setUpText('') }
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4500) }
   const set = (patch: Partial<Quote>) => { setD((x) => (x ? { ...x, ...patch } : x)); setDirty(true) }
+  const setProg = (patch: Partial<Progress>) => setD((x) => { if (!x) return x; setDirty(true); return { ...x, progress: { ...(x.progress ?? {}), ...patch } } })
   const setBody = (patch: Partial<Body>) => setD((x) => { if (!x) return x; setDirty(true); return { ...x, body: { ...x.body, ...patch } } })
   const setLine = (id: string, patch: Partial<Line>) => set({ lines: (d?.lines ?? []).map((l) => (l.id === id ? { ...l, ...patch } : l)) })
 
@@ -54,7 +60,7 @@ export default function Quotes() {
   const save = async () => {
     if (!d) return
     if (!d.title.trim()) { setTab('datos'); return setErr('Ponle un título a la propuesta.') }
-    await db.update(d.id, { title: d.title.trim(), client_name: d.client_name.trim(), client_contact: d.client_contact?.trim() || null, status: d.status, lines: d.lines, iva: d.iva, upfront_pct: d.upfront_pct, valid_until: d.valid_until || null, body: d.body } as never)
+    await db.update(d.id, { title: d.title.trim(), client_name: d.client_name.trim(), client_contact: d.client_contact?.trim() || null, status: d.status, lines: d.lines, iva: d.iva, upfront_pct: d.upfront_pct, valid_until: d.valid_until || null, body: d.body, progress: d.progress ?? {} } as never)
     setDirty(false); setErr(''); flash('Guardado.')
   }
   const close = async () => { if (dirty && d) await save(); setD(null) }
@@ -66,7 +72,7 @@ export default function Quotes() {
     setD({ ...d, shared: on, share_token: token })
   }
   const printDoc = async () => { if (!d) return; if (dirty) await save(); window.open(`${base}app/trabajo/propuestas/${d.id}/documento`, '_blank') }
-  const copy = async (t: string) => { try { await navigator.clipboard.writeText(link(t)); flash('Enlace copiado.') } catch { flash(link(t)) } }
+  const copyText = async (text: string, ok: string) => { try { await navigator.clipboard.writeText(text); flash(ok) } catch { flash(text) } }
 
   // Aceptada → crea el trabajo con instalación y mensualidad, listo para cobrar y apartar ahorro
   const makeWork = async () => {
@@ -132,7 +138,7 @@ export default function Quotes() {
       <Sheet open={Boolean(d)} title={d ? d.number : ''} onClose={() => void close()}>
         {d && totals && (
           <div className="grid gap-4">
-            <Segmented label="Sección" value={tab} onChange={setTab} options={[{ id: 'datos', label: 'Datos' }, { id: 'precios', label: 'Precios' }, { id: 'contenido', label: 'Contenido' }, { id: 'vista', label: 'Vista previa' }]} />
+            <Segmented label="Sección" value={tab} onChange={setTab} options={[{ id: 'datos', label: 'Datos' }, { id: 'precios', label: 'Precios' }, { id: 'contenido', label: 'Contenido' }, { id: 'seguimiento', label: 'Seguimiento' }, { id: 'vista', label: 'Vista previa' }]} />
 
             {tab === 'datos' && (
               <div className="grid gap-4">
@@ -217,18 +223,68 @@ export default function Quotes() {
               </div>
             )}
 
+            {tab === 'seguimiento' && (() => {
+              const pr = d.progress ?? {}
+              const ms = pr.milestones ?? []
+              const ups = pr.updates ?? []
+              const setMs = (m: Milestone[]) => setProg({ milestones: m })
+              const move = (i: number, dir: -1 | 1) => { const j = i + dir; if (j < 0 || j >= ms.length) return; const c = [...ms]; [c[i], c[j]] = [c[j], c[i]]; setMs(c) }
+              return (
+                <div className="grid gap-4">
+                  <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Lo que pones aquí lo ve tu cliente en su página, junto a la propuesta. Avanza: <strong style={{ color: 'var(--ink)' }}>{progressPct(ms)}%</strong>.</p>
+                  <label className="grid gap-2 text-sm">Mensaje principal (opcional)<input className="field" value={pr.headline ?? ''} maxLength={160} onChange={(e) => setProg({ headline: e.target.value })} placeholder="Estamos construyendo tu sistema" /></label>
+                  <label className="grid gap-2 text-sm">Entrega estimada<input type="date" className="field" value={pr.eta ?? ''} onChange={(e) => setProg({ eta: e.target.value || null })} /></label>
+
+                  <fieldset className="grid gap-2">
+                    <legend className="mb-1 text-sm font-semibold">Hitos del proyecto</legend>
+                    {ms.length === 0 && <button type="button" className="btn btn-tint w-fit" onClick={() => setMs(MILESTONE_TEMPLATE.map((t, i) => ({ id: uid(), title: t, status: i === 0 ? 'doing' : 'todo' })))}>Usar hitos de ejemplo</button>}
+                    {ms.map((m, i) => (
+                      <div key={m.id} className="grid gap-2 rounded-2xl p-3" style={{ background: 'var(--surface-2)' }}>
+                        <input className="field" aria-label={`Hito ${i + 1}`} value={m.title} maxLength={100} onChange={(e) => setMs(ms.map((x) => (x.id === m.id ? { ...x, title: e.target.value } : x)))} />
+                        <div className="flex flex-wrap items-center gap-2">
+                          {(Object.keys(MILESTONE_STATUS) as MilestoneStatus[]).map((st) => <button key={st} type="button" aria-pressed={m.status === st} onClick={() => setMs(ms.map((x) => (x.id === m.id ? { ...x, status: st } : x)))} className="min-h-11 rounded-full px-3 text-sm" style={{ background: m.status === st ? (st === 'done' ? 'color-mix(in oklab, var(--pos) 22%, transparent)' : st === 'doing' ? 'color-mix(in oklab, var(--accent) 22%, transparent)' : 'var(--surface-3)') : 'transparent', color: m.status === st ? (st === 'done' ? 'var(--pos)' : st === 'doing' ? 'var(--accent)' : 'var(--ink)') : 'var(--ink-faint)', boxShadow: m.status === st ? 'none' : 'inset 0 0 0 1px var(--sep)' }}>{MILESTONE_STATUS[st]}</button>)}
+                          <span className="ml-auto flex">
+                            <button type="button" className="grid size-11 place-items-center" aria-label="Subir" onClick={() => move(i, -1)}><ArrowUp size={15} aria-hidden /></button>
+                            <button type="button" className="grid size-11 place-items-center" aria-label="Bajar" onClick={() => move(i, 1)}><ArrowDown size={15} aria-hidden /></button>
+                            <button type="button" className="grid size-11 place-items-center" aria-label="Quitar hito" onClick={() => setMs(ms.filter((x) => x.id !== m.id))}><Trash2 size={15} aria-hidden /></button>
+                          </span>
+                        </div>
+                        <input className="field" aria-label={`Nota del hito ${i + 1}`} value={m.note ?? ''} maxLength={200} onChange={(e) => setMs(ms.map((x) => (x.id === m.id ? { ...x, note: e.target.value } : x)))} placeholder="Nota para el cliente (opcional)" />
+                      </div>
+                    ))}
+                    {ms.length > 0 && <button type="button" className="btn btn-ghost w-fit" onClick={() => setMs([...ms, { id: uid(), title: '', status: 'todo' }])}><Plus size={16} aria-hidden /> Hito</button>}
+                  </fieldset>
+
+                  <fieldset className="grid gap-2">
+                    <legend className="mb-1 text-sm font-semibold">Avisos para el cliente</legend>
+                    <div className="flex gap-2">
+                      <input className="field" value={upText} maxLength={300} onChange={(e) => setUpText(e.target.value)} placeholder="Ya quedó listo el diseño de la pantalla de citas…" aria-label="Nuevo aviso" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUpdate() } }} />
+                      <button type="button" className="btn btn-primary shrink-0" onClick={addUpdate}>Publicar</button>
+                    </div>
+                    {ups.length === 0 ? <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Aún no hay avisos.</p> : [...ups].reverse().map((u) => (
+                      <div key={u.id} className="flex items-start gap-2 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--surface-2)' }}>
+                        <span className="shrink-0 text-xs" style={{ color: 'var(--ink-faint)' }}>{u.date}</span><span className="flex-1">{u.text}</span>
+                        <button type="button" className="grid size-9 place-items-center" aria-label="Quitar aviso" onClick={() => setProg({ updates: ups.filter((x) => x.id !== u.id) })}><Trash2 size={14} aria-hidden /></button>
+                      </div>
+                    ))}
+                  </fieldset>
+                </div>
+              )
+            })()}
+
             {tab === 'vista' && (
               <div className="grid gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <button type="button" className="btn btn-primary" onClick={() => void printDoc()}><Printer size={16} aria-hidden /> Imprimir o guardar PDF</button>
                   {d.shared && d.share_token
                     ? <>
-                        <button type="button" className="btn btn-ghost" onClick={() => void copy(d.share_token!)}><Copy size={16} aria-hidden /> Copiar enlace</button>
+                        <button type="button" className="btn btn-ghost" onClick={() => void copyText(clientLink(d.share_token!), 'Enlace de la página del cliente copiado.')}><Copy size={16} aria-hidden /> Copiar la página del cliente</button>
+                        <button type="button" className="btn btn-ghost" onClick={() => void copyText(link(d.share_token!), 'Enlace del documento copiado.')}><Copy size={16} aria-hidden /> Copiar el documento</button>
                         <button type="button" className="btn btn-ghost" onClick={() => void share(false)}><Link2Off size={16} aria-hidden /> Dejar de compartir</button>
                       </>
-                    : <button type="button" className="btn btn-ghost" onClick={() => void share(true)}><Link2 size={16} aria-hidden /> Compartir con un enlace</button>}
+                    : <button type="button" className="btn btn-ghost" onClick={() => void share(true)}><Link2 size={16} aria-hidden /> Compartir con el cliente</button>}
                 </div>
-                {d.shared && d.share_token && <p className="break-all text-xs" style={{ color: 'var(--ink-faint)' }}>{link(d.share_token)} · cualquiera con el enlace puede verla; nadie más.</p>}
+                {d.shared && d.share_token && <p className="break-all text-xs" style={{ color: 'var(--ink-faint)' }}>Página del cliente (propuesta y seguimiento): {clientLink(d.share_token)}<br />Documento formal para imprimir: {link(d.share_token)}<br />Cualquiera con el enlace puede verlos; nadie más.</p>}
                 {dirty && <p className="text-xs" style={{ color: 'var(--accent)' }}>Tienes cambios sin guardar: el enlace compartido muestra lo último guardado.</p>}
                 <div style={{ background: '#e9e6df', padding: '12px', borderRadius: 12, overflow: 'auto' }}><QuoteDocument q={d} page={cat.page} /></div>
               </div>
