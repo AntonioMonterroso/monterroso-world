@@ -81,7 +81,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
             <button type="button" className="pp-btn" onClick={() => { setStep(1); go('propuesta') }}>{page.heroCta} <ArrowRight size={18} aria-hidden /></button>
             <a className="pp-link" href={`${profile.site}#trabajos`}>Ver proyectos reales <ArrowUpRight size={15} aria-hidden /></a>
           </div>
-          <ul className="pp-trust"><li><Check size={15} aria-hidden /> Sin compromiso</li><li><Check size={15} aria-hidden /> Te respondo el mismo día</li><li><Check size={15} aria-hidden /> Hecho en Guatemala</li></ul>
+          <ul className="pp-trust"><li><Check size={15} aria-hidden /> Sin compromiso</li><li><Check size={15} aria-hidden /> Hecho en Guatemala</li></ul>
         </div>
         <div className="pp-visual" aria-hidden>
           <div className="pp-card pp-c1 t-butter"><CalendarCheck2 size={20} /><div><b>Nueva cita confirmada</b><span>Hoy, 4:30 pm · Corte y barba</span></div></div>
@@ -256,7 +256,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
       <section className="pp-final">
         <div className="pp-wrap">
           <h2 className="pp-h2">¿Hablamos?</h2>
-          <p className="pp-lead sm">Cuéntame qué necesitas. Te respondo el mismo día y, si te sirve, te preparo una propuesta.</p>
+          <p className="pp-lead sm">Cuéntame qué necesitas y, si te sirve, te preparo una propuesta.</p>
           <a className="pp-btn" href={wa(page.whatsapp_text)} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden /> Escribir por WhatsApp</a>
         </div>
       </section>
