@@ -1,9 +1,9 @@
 import { Check, Loader2, Minus, Phone } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchPricing, type Pricing } from '../../lib/quoteData'
 import { DEFAULT_PAGE, PERIOD_LABEL, pickTotals, waLink, type Extra, type PageData, type Pkg } from '../../lib/quotes'
 import { money } from '../../lib/projects'
+import { profile } from '../../lib/profile'
 
 const base = import.meta.env.BASE_URL
 
@@ -36,7 +36,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
     <main className="pr">
       <div className="pr-wrap">
         <header className="pr-top">
-          <Link to="/" className="pr-brand"><img src={`${base}brand/am-logo-white.png`} alt="" width={44} height={36} /><span>{page.brand}</span></Link>
+          <a href={profile.site} className="pr-brand"><img src={`${base}brand/am-logo-white.png`} alt="" width={44} height={36} /><span>{page.brand}</span></a>
           <a className="pr-call" href={wa('')} target="_blank" rel="noreferrer"><Phone size={16} aria-hidden /> {page.phone_display}</a>
         </header>
 
