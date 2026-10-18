@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Segmented, Switch } from '../../components/ui'
 import { useCatalog } from '../../lib/quoteData'
-import { PERIOD_LABEL, STATUS_LABEL, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Period, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
+import { PERIOD_LABEL, STATUS_LABEL, billingOf, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Period, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
 import { currentMonth, money, useProjects } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
@@ -91,7 +91,7 @@ export default function Quotes() {
   const plan = useMemo(() => (d && totals ? paymentPlan(totals.once.total, d.upfront_pct) : []), [d, totals])
   const addFromCatalog = (kind: 'pkg' | 'extra', id: string) => {
     if (!d) return
-    if (kind === 'pkg') { const p = cat.pkgs.rows.find((x) => x.id === id); if (p) set({ lines: [...d.lines, ...linesFromPick({ pkg: p, extras: [] })] }) }
+    if (kind === 'pkg') { const [pid, mode] = id.split(':'); const p = cat.pkgs.rows.find((x) => x.id === pid); if (p) set({ lines: [...d.lines, ...linesFromPick({ pkg: p, extras: [], mode: mode === 'once' ? 'once' : mode === 'monthly' ? 'monthly' : undefined })] }) }
     else { const e = cat.extras.rows.find((x) => x.id === id); if (e) set({ lines: [...d.lines, ...linesFromPick({ extras: [e] })] }) }
   }
 
@@ -176,7 +176,7 @@ export default function Quotes() {
                 ))}
                 <div className="flex flex-wrap gap-2">
                   <button type="button" className="btn btn-ghost" onClick={() => set({ lines: [...d.lines, { id: uid(), label: '', qty: 1, unit: 0, period: 'once' }] })}><Plus size={16} aria-hidden /> Concepto</button>
-                  {cat.pkgs.rows.filter((p) => p.kind === 'closed').map((p) => <button key={p.id} type="button" className="min-h-11 rounded-full px-3 text-sm" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }} onClick={() => addFromCatalog('pkg', p.id)}>+ {p.name}</button>)}
+                  {cat.pkgs.rows.filter((p) => p.kind === 'closed').flatMap((p) => (billingOf(p) === 'both' ? [['once', ' (pago único)'], ['monthly', ' (mensual)']] as const : [[undefined, '']] as const).map(([m, tag]) => <button key={`${p.id}${m ?? ''}`} type="button" className="min-h-11 rounded-full px-3 text-sm" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }} onClick={() => addFromCatalog('pkg', m ? `${p.id}:${m}` : p.id)}>+ {p.name}{tag}</button>))}
                   {cat.extras.rows.map((x) => <button key={x.id} type="button" className="min-h-11 rounded-full px-3 text-sm" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }} onClick={() => addFromCatalog('extra', x.id)}>+ {x.name}</button>)}
                 </div>
 

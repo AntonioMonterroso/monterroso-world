@@ -1,6 +1,9 @@
 /** Cotizaciones: precios públicos, propuestas por cliente y sus cuentas. Todo en quetzales. */
 export type Feature = { text: string; included: boolean }
-export type Pkg = { id: string; name: string; tagline: string | null; kind: 'closed' | 'custom'; setup_fee: number; monthly_fee: number; price_note: string | null; features: Feature[]; recommended: boolean; published: boolean; position: number }
+export type Billing = 'once' | 'monthly' | 'both'
+export const BILLING_LABEL: Record<Billing, string> = { once: 'Pago único', monthly: 'Mensualidad', both: 'Ambas opciones' }
+export type Pkg = { id: string; name: string; tagline: string | null; kind: 'closed' | 'custom'; setup_fee: number; monthly_fee: number; price_note: string | null; features: Feature[]; recommended: boolean; published: boolean; position: number; billing?: Billing; once_price?: number; category?: string | null; show_price?: boolean }
+export type Example = { sector: string; problem: string; solution: string }
 export type Extra = { id: string; name: string; detail: string | null; amount: number; period: 'once' | 'month' | 'year'; approx: boolean; published: boolean; position: number }
 export type Step = { title: string; text: string }
 export type Faq = { q: string; a: string }
@@ -11,6 +14,8 @@ export type PageData = {
   validity_days: number; footer: string
   phone: string; phone_display: string; whatsapp_text: string
   customTitle: string; customText: string
+  examplesTitle: string; examplesSub: string; examples: Example[]
+  pricesTitle: string; pricesSub: string
   heroCta: string; painsTitle: string; pains: Step[]; outcomesTitle: string; outcomes: Step[]
 }
 export type Period = 'once' | 'month' | 'year'
@@ -104,17 +109,33 @@ export const waLink = (phone: string, text: string) => `https://wa.me/${phone.re
 // ───────── Página pública: elegir paquete y extras ─────────
 export type Choice = { pkg?: Pkg; extras: Extra[] }
 /** Lo que pagaría alguien que elige un paquete y algunos extras: una vez, cada mes y cada año. */
-export function pickTotals(p: Choice): { once: number; month: number; year: number } {
-  let once = Number(p.pkg?.setup_fee ?? 0), month = Number(p.pkg?.monthly_fee ?? 0), year = 0
-  for (const e of p.extras) { if (e.period === 'once') once += Number(e.amount); else if (e.period === 'month') month += Number(e.amount); else year += Number(e.amount) }
-  return { once: r2(once), month: r2(month), year: r2(year) }
+export function pickTotals(p: Choice & { mode?: PayMode }): { once: number; month: number; year: number } {
+  const t = totalsOf(linesFromPick(p), 'none')
+  return { once: t.once.total, month: t.month.total, year: t.year.total }
 }
-/** Las líneas de una propuesta que salen de un paquete y sus extras. */
-export function linesFromPick(p: Choice): Line[] {
+
+/** Cómo se cobra un paquete: pago único, mensualidad (con activación) o las dos para que el cliente elija. */
+export const billingOf = (p: Pkg): Billing => p.billing ?? 'monthly'
+export type PayMode = 'once' | 'monthly'
+/** Las opciones de pago de un paquete, listas para mostrar. */
+export function payOptions(p: Pkg): { mode: PayMode; once: number; setup: number; monthly: number }[] {
+  const b = billingOf(p)
+  const out: { mode: PayMode; once: number; setup: number; monthly: number }[] = []
+  if ((b === 'once' || b === 'both') && Number(p.once_price) > 0) out.push({ mode: 'once', once: Number(p.once_price), setup: 0, monthly: 0 })
+  if (b === 'monthly' || b === 'both' || out.length === 0) out.push({ mode: 'monthly', once: 0, setup: Number(p.setup_fee), monthly: Number(p.monthly_fee) })
+  return out
+}
+/** Las líneas de una propuesta que salen de un paquete y sus extras. En paquetes de "ambas opciones", `mode` dice cuál se cobra. */
+export function linesFromPick(p: Choice & { mode?: PayMode }): Line[] {
   const out: Line[] = []
   if (p.pkg) {
-    if (p.pkg.setup_fee > 0) out.push({ id: uid(), label: `Activación · ${p.pkg.name}`, detail: 'Pago único para comenzar', qty: 1, unit: Number(p.pkg.setup_fee), period: 'once' })
-    if (p.pkg.monthly_fee > 0) out.push({ id: uid(), label: `Mensualidad · ${p.pkg.name}`, detail: p.pkg.tagline ?? undefined, qty: 1, unit: Number(p.pkg.monthly_fee), period: 'month' })
+    const opts = payOptions(p.pkg)
+    const o = opts.find((x) => x.mode === p.mode) ?? opts[0]
+    if (o.mode === 'once') out.push({ id: uid(), label: `Pago único · ${p.pkg.name}`, detail: p.pkg.tagline ?? undefined, qty: 1, unit: o.once, period: 'once' })
+    else {
+      if (o.setup > 0) out.push({ id: uid(), label: `Activación · ${p.pkg.name}`, detail: 'Pago único para comenzar', qty: 1, unit: o.setup, period: 'once' })
+      if (o.monthly > 0) out.push({ id: uid(), label: `Mensualidad · ${p.pkg.name}`, detail: p.pkg.tagline ?? undefined, qty: 1, unit: o.monthly, period: 'month' })
+    }
   }
   for (const e of p.extras) out.push({ id: uid(), label: e.name, detail: e.detail ?? undefined, qty: 1, unit: Number(e.amount), period: e.period })
   return out
@@ -128,6 +149,18 @@ export const DEFAULT_PAGE: PageData = {
   headline: 'Tu negocio, *ordenado* y fácil de encontrar.',
   sub: 'Hago páginas y sistemas que te ahorran tiempo y te traen clientes. Cuéntame cómo trabajas y te propongo lo que mejor te funcione, sin compromiso.',
   heroCta: 'Cuéntame tu negocio',
+  examplesTitle: 'Problemas que ya resolvemos',
+  examplesSub: 'Cada negocio es distinto, pero los dolores se parecen. Estos son ejemplos del tipo de proyectos que construyo.',
+  examples: [
+    { sector: 'Barbería o salón', problem: 'Las citas llegan por WhatsApp y se cruzan; los clientes faltan sin avisar.', solution: 'Reservas en línea con horas libres, recordatorios en un toque y la agenda del día en tu teléfono.' },
+    { sector: 'Pastelería y postres', problem: 'Los pedidos por encargo se anotan en una libreta: se pierden fechas, anticipos y gustos del cliente.', solution: 'Catálogo de postres con fotos y precios, pedidos con fecha de entrega, anticipo y saldo, y un aviso el día de cada entrega.' },
+    { sector: 'Restaurante o cafetería', problem: 'Menú, ventas del día y gastos viven en papeles y en la memoria de alguien.', solution: 'Un panel donde ves lo vendido hoy, los gastos y el cierre de caja, y cambias el menú tú mismo.' },
+    { sector: 'Tienda con vendedoras', problem: 'Inventario de productos únicos y comisiones calculadas a mano cada fin de mes.', solution: 'Inventario, cajas y gastos en un solo lugar, con las comisiones calculadas solas.' },
+    { sector: 'Oficina o despacho formal', problem: 'Agendas, pagos, planillas y cierres en carpetas distintas; nadie sabe qué sigue.', solution: 'Un centro de sistemas con usuarios y roles: cada persona ve lo suyo y todo queda ordenado por cliente.' },
+    { sector: 'Empresa con clientes y reportes', problem: 'Seguimiento de clientes en hojas sueltas y reportes armados a mano.', solution: 'Seguimiento de clientes y reportes descargables, siempre al día.' },
+  ],
+  pricesTitle: 'Precios de proyectos listos',
+  pricesSub: 'Si ya sabes lo que necesitas, aquí está claro. ¿Algo distinto? Pide una propuesta y la preparo a tu medida.',
   painsTitle: '¿Te suena familiar?',
   pains: [
     { title: 'Las citas se pierden entre mensajes', text: 'Entre WhatsApp, llamadas y papelitos, siempre se te escapa alguien.' },
@@ -161,11 +194,11 @@ export const DEFAULT_PAGE: PageData = {
   customTitle: 'A tu medida', customText: 'Programas y sistemas hechos para tu operación: contabilidad, inventarios, citas, paneles. Hacemos un análisis, definimos módulos y te entrego una propuesta formal.',
 }
 export const SEED_PACKAGES: Omit<Pkg, 'id'>[] = [
-  { name: 'Página de presentación', tagline: 'Para que te encuentren y te escriban, con una vitrina que se ve profesional.', kind: 'closed', setup_fee: 500, monthly_fee: 250, price_note: null, recommended: false, published: true, position: 1,
+  { name: 'Página de presentación', tagline: 'Para que te encuentren y te escriban, con una vitrina que se ve profesional.', kind: 'closed', setup_fee: 500, monthly_fee: 250, price_note: null, billing: 'monthly', once_price: 0, category: null, show_price: true, recommended: false, published: true, position: 1,
     features: [f('Diseño propio con tus colores, logo y fotos'), f('Catálogo de servicios con precios'), f('Estilos, ubicación y horario'), f('Botón de WhatsApp para pedir cita'), f('Vista previa bonita al compartir el link'), f('Sin reservas en línea', false), f('Sin panel de administración', false)] },
-  { name: 'Sistema completo de citas', tagline: 'Para que tus clientes reserven solos y tú tengas todo el día en una pantalla.', kind: 'closed', setup_fee: 600, monthly_fee: 350, price_note: null, recommended: true, published: true, position: 2,
+  { name: 'Sistema completo de citas', tagline: 'Para que tus clientes reserven solos y tú tengas todo el día en una pantalla.', kind: 'closed', setup_fee: 600, monthly_fee: 350, price_note: null, billing: 'monthly', once_price: 0, category: null, show_price: true, recommended: true, published: true, position: 2,
     features: [f('Reserva en línea con horas libres en tiempo real'), f('El cliente confirma, reprograma o cancela solo'), f('Panel en el teléfono (se instala como app)'), f('Avisos al teléfono: cita nueva, cancelación, confirmación'), f('Recordatorio de mañana por WhatsApp en un toque'), f('Clientes, faltas, cumpleaños y ficha de preferencias'), f('Descansos, bloqueos y lista de espera'), f('Puntos de fidelidad, referidos y combos (opcionales)'), f('Finanzas: ingresos, gastos, reportes y cierre de caja'), f('Recibo en imagen para enviar al cliente'), f('Datos de clientes totalmente protegidos y privados')] },
-  { name: 'Programa a tu medida', tagline: 'Para lo que no cabe en una plantilla: contabilidad, inventarios, paneles, lo que tu operación pida.', kind: 'custom', setup_fee: 0, monthly_fee: 0, price_note: 'Se cotiza según módulos', recommended: false, published: true, position: 3,
+  { name: 'Programa a tu medida', tagline: 'Para lo que no cabe en una plantilla: contabilidad, inventarios, paneles, lo que tu operación pida.', kind: 'custom', setup_fee: 0, monthly_fee: 0, price_note: 'Se cotiza según módulos', billing: 'monthly', once_price: 0, category: null, show_price: true, recommended: false, published: true, position: 3,
     features: [f('Análisis de lo que necesitas'), f('Módulos a tu elección'), f('Instalación, adecuación y capacitación'), f('Soporte y garantía inicial'), f('Respaldo de la información'), f('Propuesta formal por escrito')] },
 ]
 export const SEED_EXTRAS: Omit<Extra, 'id'>[] = [

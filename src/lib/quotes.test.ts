@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { recommendPkg, SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
+import { payOptions, billingOf, recommendPkg, SEED_EXTRAS, SEED_PACKAGES, addDays, bodyFor, isExpired, isToken, linesFromPick, lineOn, newToken, nextNumber, paymentPlan, pickTotals, totalsOf, waLink, type Extra, type Line, type Pkg } from './quotes'
 
 const L = (over: Partial<Line> = {}): Line => ({ id: 'a', label: 'x', qty: 1, unit: 100, period: 'once', ...over })
 
@@ -60,4 +60,23 @@ describe('propuesta guiada', () => {
   it('control y contabilidad van a la medida', () => { expect(recommendPkg(['found', 'control'], pk)?.kind).toBe('custom'); expect(recommendPkg(['accounting'], pk)?.kind).toBe('custom') })
   it('sin metas claras, el recomendado', () => { expect(recommendPkg([], pk)?.recommended).toBe(true); expect(recommendPkg(['other'], pk)?.recommended).toBe(true) })
   it('sin paquetes no inventa nada', () => { expect(recommendPkg(['booking'], [])).toBeUndefined() })
+})
+
+describe('pago único o mensualidad', () => {
+  const base = { id: 'p', name: 'Panel', tagline: null, kind: 'closed', setup_fee: 600, monthly_fee: 350, price_note: null, features: [], recommended: false, published: true, position: 1 } as Pkg
+  it('por defecto es mensualidad con activación', () => { expect(billingOf(base)).toBe('monthly'); expect(payOptions(base)).toEqual([{ mode: 'monthly', once: 0, setup: 600, monthly: 350 }]) })
+  it('pago único: una sola línea sin mensualidad', () => {
+    const p = { ...base, billing: 'once', once_price: 4500 } as Pkg
+    expect(payOptions(p)).toEqual([{ mode: 'once', once: 4500, setup: 0, monthly: 0 }])
+    expect(pickTotals({ pkg: p, extras: [] })).toEqual({ once: 4500, month: 0, year: 0 })
+  })
+  it('ambas: ofrece las dos y la línea sigue el modo elegido', () => {
+    const p = { ...base, billing: 'both', once_price: 4500 } as Pkg
+    expect(payOptions(p).map((o) => o.mode)).toEqual(['once', 'monthly'])
+    expect(pickTotals({ pkg: p, extras: [], mode: 'once' })).toEqual({ once: 4500, month: 0, year: 0 })
+    expect(pickTotals({ pkg: p, extras: [], mode: 'monthly' })).toEqual({ once: 600, month: 350, year: 0 })
+  })
+  it('si falta el precio único, cae a mensualidad en vez de mostrar cero', () => {
+    expect(payOptions({ ...base, billing: 'once', once_price: 0 } as Pkg).map((o) => o.mode)).toEqual(['monthly'])
+  })
 })

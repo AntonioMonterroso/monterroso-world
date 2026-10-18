@@ -730,3 +730,26 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
   .pr-tog-price { grid-column: 2; text-align: left; }
   .pr-tog-price small { display: inline; margin-left: .3rem; }
 }
+
+/* Ejemplos y precios de proyectos listos */
+.pp-links { display: none; gap: 1.4rem; } .pp-links button { min-height: 44px; font-weight: 500; color: var(--pp-soft); transition: color 150ms var(--ease-out); } .pp-links button:hover { color: #1f2933; }
+@media (min-width: 860px) { .pp-links { display: flex; margin-left: auto; margin-right: 1rem; } }
+.pp-ex { display: grid; gap: 1rem; margin-top: 2rem; } @media (min-width: 760px) { .pp-ex { grid-template-columns: repeat(2, 1fr); } } @media (min-width: 1040px) { .pp-ex { grid-template-columns: repeat(3, 1fr); } }
+.pp-exc { display: flex; flex-direction: column; gap: .3rem; padding: 1.5rem; border-radius: 24px; background: #fff; box-shadow: 0 22px 36px -30px rgba(31,41,51,.45); }
+.pp-exc p { line-height: 1.5; font-size: .96rem; } .pp-ex-l { margin-top: .7rem; font-size: .72rem !important; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--pp-soft); } .pp-ex-l.ok { color: var(--pp-deep); }
+.pp-exc .pp-link { margin-top: auto; padding-top: .8rem; justify-content: flex-start; }
+.pp-sector { align-self: flex-start; padding: .25rem .8rem; border-radius: 99px; font-size: .8rem; font-weight: 700; }
+.pp-prices-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
+.pp-iva { display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; padding: 0 1rem; border-radius: 99px; background: #f4ede0; font-size: .92rem; font-weight: 500; cursor: pointer; } .pp-iva input { width: 18px; height: 18px; accent-color: #2e6b57; }
+.pp-pgrid { display: grid; gap: 1rem; margin-top: 2rem; align-items: stretch; } @media (min-width: 760px) { .pp-pgrid { grid-template-columns: repeat(2, 1fr); } } @media (min-width: 1040px) { .pp-pgrid { grid-template-columns: repeat(3, 1fr); } }
+.pp-pc { position: relative; display: flex; flex-direction: column; gap: .6rem; padding: 1.6rem; border-radius: 26px; background: #fff; box-shadow: 0 0 0 1px var(--pp-line), 0 22px 36px -30px rgba(31,41,51,.4); } .pp-pc.rec { box-shadow: 0 0 0 2px #1f2933, 0 22px 36px -30px rgba(31,41,51,.4); }
+.pp-pc h3 { font-weight: 700; font-size: 1.35rem; letter-spacing: -.025em; line-height: 1.12; }
+.pp-pc ul, .pp-more ul { display: grid; gap: .45rem; margin: .3rem 0; padding: 0; list-style: none; font-size: .93rem; } .pp-pc li { display: flex; gap: .55rem; line-height: 1.4; } .pp-pc li svg { flex-shrink: 0; margin-top: .25rem; color: var(--pp-deep); }
+.pp-more summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; font-weight: 600; font-size: .85rem; color: var(--pp-deep); } .pp-pc .pp-btn { margin-top: auto; } .pp-pc .pp-link { justify-content: center; }
+.pp-pricebox { margin: .4rem 0; padding: 1rem 1.1rem; border-radius: 18px; background: #f4ede0; display: grid; gap: .5rem; }
+.pp-price { display: flex; align-items: baseline; gap: .5rem; margin: 0; } .pp-price b { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 2.2rem; letter-spacing: -.035em; line-height: 1; font-variant-numeric: tabular-nums; } .pp-price small { color: var(--pp-soft); font-size: .9rem; }
+.pp-price-sub { margin: 0; font-size: .88rem; color: var(--pp-soft); }
+.pp-modes { display: inline-flex; padding: 3px; border-radius: 99px; background: rgba(31,41,51,.08); align-self: flex-start; } .pp-mode { min-height: 38px; padding: 0 1rem; border-radius: 99px; font-size: .85rem; font-weight: 600; color: var(--pp-soft); transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out); } .pp-mode.on { background: #1f2933; color: #fbf7f0; }
+.pp-invest .pp-modes { margin: 0 1.2rem .8rem; }
+.pp-extras { margin-top: 1.4rem; padding: 1rem 1.25rem; border-radius: 16px; background: #f4ede0; font-size: .93rem; color: var(--pp-soft); } .pp-extras b { color: #1f2933; }
+.pp-price b { font-family: "DM Sans", system-ui, sans-serif; font-weight: 700; letter-spacing: -.03em; }

@@ -1,7 +1,7 @@
 import { ArrowRight, ArrowUpRight, Check, CalendarCheck2, Loader2, MessageCircle, Search, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchPricing, type Pricing } from '../../lib/quoteData'
-import { DEFAULT_PAGE, GOALS, PERIOD_LABEL, linesFromPick, recommendPkg, totalsOf, waLink, type Extra, type Goal, type PageData, type Pkg } from '../../lib/quotes'
+import { DEFAULT_PAGE, GOALS, IVA_RATE, PERIOD_LABEL, linesFromPick, payOptions, recommendPkg, totalsOf, waLink, type Extra, type Goal, type PageData, type PayMode, type Pkg } from '../../lib/quotes'
 import { money } from '../../lib/projects'
 import { profile } from '../../lib/profile'
 
@@ -31,6 +31,8 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
   const [name, setName] = useState('')
   const [forced, setForced] = useState('')
   const [invoice, setInvoice] = useState(false)
+  const [modes, setModes] = useState<Record<string, PayMode>>({})
+  const [mode, setMode] = useState<PayMode | undefined>(undefined)
 
   useEffect(() => { if (preview) return; void fetchPricing().then((d) => { setData(d); setState(d ? 'ok' : 'fail') }) }, [preview])
   const page: PageData = { ...DEFAULT_PAGE, ...((preview?.page ?? data?.page) as Partial<PageData>) }
@@ -41,13 +43,16 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
   const rec = forced ? pkgs.find((p) => p.id === forced) : recommendPkg(goals, pkgs)
   const wantDomain = goals.includes('domain')
   const dom = extras.find((e) => /dominio/i.test(e.name))
-  const lines = useMemo(() => linesFromPick({ pkg: rec?.kind === 'closed' ? rec : undefined, extras: wantDomain && dom ? [dom] : [] }), [rec, wantDomain, dom])
+  const lines = useMemo(() => linesFromPick({ pkg: rec?.kind === 'closed' ? rec : undefined, extras: wantDomain && dom ? [dom] : [], mode }), [rec, wantDomain, dom, mode])
   const t = useMemo(() => totalsOf(lines, invoice ? 'added' : 'none'), [lines, invoice])
 
   const wa = (text: string) => waLink(page.phone, text)
   const proposalMsg = `Hola, soy ${name.trim() || '(tu nombre)'}.${biz ? ` Mi negocio es: ${biz}.` : ''}${goals.length ? ` Quiero: ${GOALS.filter((g) => goals.includes(g.id)).map((g) => g.label.toLowerCase()).join('; ')}.` : ''}${rec ? ` Me interesa «${rec.name}».` : ''} ¿Me envías la propuesta?`
   const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-  const pick = (id: string) => { setForced(id); setStep(3); setTimeout(() => go('propuesta'), 30) }
+  const fromExample = (sector: string) => { setBiz(sector); setForced(''); setStep(2); setTimeout(() => go('propuesta'), 30) }
+  const ask = (id: string) => { setForced(id); setMode(undefined); setStep(3); setTimeout(() => go('propuesta'), 30) }
+  const mul = invoice ? 1 + IVA_RATE : 1
+  const closed = pkgs.filter((p) => p.kind === 'closed')
   const toggleGoal = (g: Goal) => setGoals((l) => (l.includes(g) ? l.filter((x) => x !== g) : [...l, g]))
 
   if (state === 'loading') return <main className="pp grid min-h-dvh place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></main>
@@ -58,6 +63,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
       <header className="pp-nav">
         <div className="pp-wrap pp-nav-in">
           <a href={profile.site} className="pp-brand"><img src={`${base}brand/am-logo-black.png`} alt="" width={38} height={31} /><span>{page.brand}</span></a>
+          <nav className="pp-links" aria-label="Secciones"><button type="button" onClick={() => go('ejemplos')}>Ejemplos</button><button type="button" onClick={() => go('propuesta')}>Mi propuesta</button><button type="button" onClick={() => go('precios')}>Precios</button><button type="button" onClick={() => go('dudas')}>Preguntas</button></nav>
           <a className="pp-btn pp-btn-sm" href={wa(page.whatsapp_text)} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> Escríbeme</a>
         </div>
       </header>
@@ -95,21 +101,19 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
         <ul className="pp-outs">{page.outcomes.map((o, i) => <li key={i}><span className="pp-tick"><Check size={16} aria-hidden /></span><div><h3>{o.title}</h3><p>{o.text}</p></div></li>)}</ul>
       </section>
 
-      {/* Caminos: sin precios a la vista */}
-      {pkgs.length > 0 && (
-        <section className="pp-band alt">
+      {/* Ejemplos: problemas que ya resolvemos */}
+      {page.examples.length > 0 && (
+        <section id="ejemplos" className="pp-band alt">
           <div className="pp-wrap">
-            <h2 className="pp-h2">Empieza por donde estés</h2>
-            <p className="pp-lead sm">Tres caminos. Si no sabes cuál es el tuyo, lo descubrimos juntos en un minuto, más abajo.</p>
-            <div className="pp-paths">
-              {pkgs.map((p, i) => (
-                <article key={p.id} className={`pp-path ${p.recommended ? 'rec' : ''}`}>
-                  {p.recommended && <span className="pp-badge">La más elegida</span>}
-                  <span className={`pp-dot t-${TINTS[i % 4]}`} aria-hidden />
-                  <h3>{p.name}</h3>
-                  {p.tagline && <p className="pp-path-tag">{p.tagline}</p>}
-                  <ul>{p.features.filter((f) => f.included).slice(0, 4).map((f, j) => <li key={j}><Check size={14} aria-hidden />{f.text}</li>)}</ul>
-                  <button type="button" className="pp-btn pp-btn-ghost" onClick={() => pick(p.id)}>Que me propongan esto <ArrowRight size={16} aria-hidden /></button>
+            <h2 className="pp-h2">{page.examplesTitle}</h2>
+            <p className="pp-lead sm">{page.examplesSub}</p>
+            <div className="pp-ex">
+              {page.examples.map((e, i) => (
+                <article key={i} className="pp-exc">
+                  <span className={`pp-sector t-${TINTS[i % 4]}`}>{e.sector}</span>
+                  <p className="pp-ex-l">Antes</p><p>{e.problem}</p>
+                  <p className="pp-ex-l ok">Con un sistema</p><p>{e.solution}</p>
+                  <button type="button" className="pp-link" onClick={() => fromExample(e.sector)}>Quiero algo así <ArrowRight size={15} aria-hidden /></button>
                 </article>
               ))}
             </div>
@@ -159,6 +163,11 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
                   <p>{rec.price_note ?? 'Se cotiza'}: primero conozco tu caso y te preparo una propuesta formal por escrito. Hasta entonces no pagas nada.</p>
                 ) : (
                   <>
+                    {payOptions(rec).length > 1 && (
+                      <div className="pp-modes" role="radiogroup" aria-label="Cómo prefieres pagar">
+                        {payOptions(rec).map((o) => <button key={o.mode} type="button" role="radio" aria-checked={(mode ?? payOptions(rec)[0].mode) === o.mode} className={`pp-mode ${(mode ?? payOptions(rec)[0].mode) === o.mode ? 'on' : ''}`} onClick={() => setMode(o.mode)}>{o.mode === 'once' ? 'Pago único' : 'Mensualidad'}</button>)}
+                      </div>
+                    )}
                     <dl>
                       {lines.map((l) => <div key={l.id}><dt>{l.label.replace(/ · .*/, '')} <small>{PERIOD_LABEL[l.period]}</small></dt><dd>{money(l.unit)}</dd></div>)}
                       {invoice && <div><dt>IVA 12%</dt><dd>{money(t.once.iva + t.month.iva + t.year.iva)}</dd></div>}
@@ -178,6 +187,47 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
         </div>
       </section>
 
+      {/* Precios, claros y a la mano para quien los busca */}
+      {closed.length > 0 && (
+        <section id="precios" className="pp-wrap pp-sec">
+          <div className="pp-prices-head">
+            <div><h2 className="pp-h2">{page.pricesTitle}</h2><p className="pp-lead sm">{page.pricesSub}</p></div>
+            <label className="pp-iva"><input type="checkbox" checked={invoice} onChange={(e) => setInvoice(e.target.checked)} /> Necesito factura (IVA +12%)</label>
+          </div>
+          <div className="pp-pgrid">
+            {closed.map((p, i) => {
+              const opts = payOptions(p)
+              const cur = opts.find((o) => o.mode === modes[p.id]) ?? opts[0]
+              const show = p.show_price !== false
+              const msg = `Hola, me interesa «${p.name}»${show ? (cur.mode === 'once' ? ` en pago único (${money(cur.once * mul)})` : ` con mensualidad (${money(cur.monthly * mul)} al mes y ${money(cur.setup * mul)} de activación)`) : ''}${invoice ? ', con factura' : ''}.`
+              const yes = p.features.filter((f) => f.included)
+              return (
+                <article key={p.id} className={`pp-pc ${p.recommended ? 'rec' : ''}`}>
+                  {p.recommended && <span className="pp-badge">La más elegida</span>}
+                  {p.category && <span className={`pp-sector t-${TINTS[i % 4]}`}>{p.category}</span>}
+                  <h3>{p.name}</h3>
+                  {p.tagline && <p className="pp-path-tag">{p.tagline}</p>}
+                  {show ? (
+                    <div className="pp-pricebox">
+                      {opts.length > 1 && <div className="pp-modes" role="radiogroup" aria-label={`Cómo pagar ${p.name}`}>{opts.map((o) => <button key={o.mode} type="button" role="radio" aria-checked={cur.mode === o.mode} className={`pp-mode ${cur.mode === o.mode ? 'on' : ''}`} onClick={() => setModes((m) => ({ ...m, [p.id]: o.mode }))}>{o.mode === 'once' ? 'Pago único' : 'Mensualidad'}</button>)}</div>}
+                      {cur.mode === 'once'
+                        ? <p className="pp-price"><b>{money(cur.once * mul)}</b> <small>pago único</small></p>
+                        : <><p className="pp-price"><b>{money(cur.monthly * mul)}</b> <small>al mes</small></p>{cur.setup > 0 && <p className="pp-price-sub">+ {money(cur.setup * mul)} de activación, una sola vez</p>}</>}
+                    </div>
+                  ) : <p className="pp-price-sub">El precio depende de tu caso. Te preparo una propuesta.</p>}
+                  <ul>{yes.slice(0, 5).map((f, j) => <li key={j}><Check size={14} aria-hidden />{f.text}</li>)}</ul>
+                  {yes.length > 5 && <details className="pp-more"><summary>Ver todo lo que incluye</summary><ul>{yes.slice(5).map((f, j) => <li key={j}><Check size={14} aria-hidden />{f.text}</li>)}</ul></details>}
+                  <a className="pp-btn" href={wa(msg)} target="_blank" rel="noreferrer">{show ? 'Pedir este proyecto' : 'Pedir propuesta'}</a>
+                  <button type="button" className="pp-link" onClick={() => ask(p.id)}>Que me lo propongan <ArrowRight size={15} aria-hidden /></button>
+                </article>
+              )
+            })}
+          </div>
+          {extras.length > 0 && <div className="pp-extras"><b>Extras:</b> {extras.map((e) => `${e.name} ${e.approx ? '≈ ' : ''}${money(e.amount * mul)} ${PERIOD_LABEL[e.period]}`).join(' · ')}</div>}
+          <p className="pp-fine">{page.footer}</p>
+        </section>
+      )}
+
       {/* Cómo trabajamos */}
       {page.steps.length > 0 && (
         <section className="pp-band">
@@ -190,7 +240,7 @@ export default function PricingPage({ preview }: { preview?: { page: PageData; p
       )}
 
       {/* Dudas, con la inversión a la vista solo para quien la busca */}
-      <section className="pp-wrap pp-sec">
+      <section id="dudas" className="pp-wrap pp-sec">
         <h2 className="pp-h2">Preguntas frecuentes</h2>
         <div className="pp-faqs">
           {page.faq.map((f, i) => <details key={i} className="pp-faq"><summary>{f.q}</summary><p>{f.a}</p></details>)}
