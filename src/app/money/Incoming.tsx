@@ -2,6 +2,8 @@ import { CalendarCheck, Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
+import { allocate, cleanBuckets, PRESETS, type Bucket } from '../../lib/plan'
+import { getSettings } from '../../lib/settings'
 import { Group, MonthStepper, PageHeader, Row, Stat } from '../../components/ui'
 import type { Account } from '../../lib/accounts'
 import type { Goal } from '../../lib/finance'
@@ -25,11 +27,12 @@ export default function Incoming() {
   const accounts = accountsDb.rows.filter((a) => !a.archived)
   const [month, setMonth] = useState(currentMonth())
   const [rule, setRule] = useState<Rule>(NO_RULE)
+  const [plan, setPlan] = useState<Bucket[]>(PRESETS[0].buckets)
   const [sheet, setSheet] = useState<Collect | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
-  useEffect(() => { void loadRule().then(setRule) }, [])
+  useEffect(() => { void loadRule().then(setRule); void getSettings().then((x) => { const b = cleanBuckets((x as { moneyPlan?: unknown }).moneyPlan); if (b) setPlan(b) }) }, [])
 
   const rows = useMemo(() => monthlyClients(work.projects, work.payments, month), [work.projects, work.payments, month])
   const totals = useMemo(() => incomingTotals(rows), [rows])
@@ -124,6 +127,13 @@ export default function Incoming() {
             )}
             <label className="grid gap-2 text-sm">Monto<input className="field" inputMode="decimal" value={sheet.amount} onChange={(e) => setSheet({ ...sheet, amount: e.target.value })} /></label>
             <AccountPick accounts={accounts} value={sheet.acct} onChange={(id) => setSheet((c) => (c ? { ...c, acct: id } : c))} label="¿A qué cuenta cayó?" />
+            {toNum(sheet.amount) > 0 && (
+              <div className="rounded-xl p-3 text-sm" style={{ background: 'var(--surface-2)' }}>
+                <p className="mb-1 font-semibold">Así se reparte según tu plan</p>
+                <ul className="grid gap-1">{allocate(toNum(sheet.amount), plan).map((r) => <li key={r.id} className="flex justify-between"><span>{plan.find((b) => b.id === r.id)?.name} · {r.pct}%</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{money(r.amount)}</span></li>)}</ul>
+                <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Es una guía. Lo único que se mueve solo es el ahorro, si tienes la regla activa. Ajusta los porcentajes en Mi plan → Reparto.</p>
+              </div>
+            )}
             {ruleActive(rule) && <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{rule.auto ? `Se apartará el ${rule.pct}% para tu ahorro.` : `Después te recuerdo apartar el ${rule.pct}%.`}</p>}
             {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <button className="btn btn-primary" disabled={busy}>{busy ? 'Guardando…' : 'Registrar cobro'}</button>

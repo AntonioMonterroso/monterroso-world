@@ -155,6 +155,17 @@ export default function Overview() {
           )}
         </div>
       )}
+
+      <details className="mt-8 rounded-[var(--r-card)] p-4 text-sm" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }}>
+        <summary className="cursor-pointer font-semibold">¿Cómo se mueve mi dinero?</summary>
+        <ol className="mt-3 grid list-decimal gap-2 pl-5" style={{ color: 'var(--ink-soft)' }}>
+          <li><strong style={{ color: 'var(--ink)' }}>Un cliente paga.</strong> Lo marcas «Cobrado» en <Link to="/app/dinero/entra" className="underline">Lo que entra</Link> y eliges a qué cuenta cayó.</li>
+          <li><strong style={{ color: 'var(--ink)' }}>Sube tu cuenta.</strong> El cobro aparece solo en Movimientos como ingreso.</li>
+          <li><strong style={{ color: 'var(--ink)' }}>Se aparta tu ahorro.</strong> Si activas la regla en <Link to="/app/dinero/metas" className="underline">Ahorro</Link>, un porcentaje de cada cobro va a tu meta.</li>
+          <li><strong style={{ color: 'var(--ink)' }}>Ves lo que queda libre.</strong> «Libre para gastar» = lo que hay en tus cuentas menos lo que pagarás en 30 días.</li>
+        </ol>
+      </details>
     </div>
   )
 }
+

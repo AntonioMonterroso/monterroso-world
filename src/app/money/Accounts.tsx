@@ -199,7 +199,7 @@ export default function Accounts() {
             {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
             <div className="flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
-              {form.id && <button type="button" className="btn btn-ghost" onClick={() => { const a = accounts.rows.find((x) => x.id === form.id)!; setForm(null); setRec({ acc: a, real: '' }); setErr('') }}><Scale size={16} aria-hidden /> Conciliar</button>}
+              {form.id && <button type="button" className="btn btn-ghost" onClick={() => { const a = accounts.rows.find((x) => x.id === form.id)!; setForm(null); setRec({ acc: a, real: '' }); setErr('') }}><Scale size={16} aria-hidden /> Cuadrar con el banco</button>}
               {form.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => { const a = accounts.rows.find((x) => x.id === form.id)!; if (confirm) void removeAccount(a); else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? 'Confirmar' : 'Quitar'}</button>}
             </div>
             {form.id && confirm && <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Si ya tiene movimientos, se archiva y conserva su historial; si no, se elimina.</p>}
@@ -226,7 +226,7 @@ export default function Accounts() {
         )}
       </Sheet>
 
-      <Sheet open={Boolean(rec)} title={rec ? `Conciliar ${rec.acc.name}` : ''} onClose={() => setRec(null)}>
+      <Sheet open={Boolean(rec)} title={rec ? `Cuadrar ${rec.acc.name} con el banco` : ''} onClose={() => setRec(null)}>
         {rec && (
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); void doReconcile() }}>
             <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>La app calcula <strong style={{ color: 'var(--ink)' }}>{money(bal[rec.acc.id] ?? 0)}</strong>. Escribe lo que muestra tu banco (o cuenta lo que hay en la cartera) y registro la diferencia como un ajuste.</p>
