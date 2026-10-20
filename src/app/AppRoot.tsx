@@ -66,6 +66,7 @@ import PricesEditor from './work/PricesEditor'
 import Quotes from './work/Quotes'
 import QuoteSheet from './work/QuoteSheet'
 import Calculator from './money/Calculator'
+import Incoming from './money/Incoming'
 import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
@@ -180,6 +181,7 @@ function Gate() {
           <Route path="suscripciones" element={<Subscriptions />} />
           <Route path="prestamos" element={<Loans />} />
           <Route path="reparto" element={<Calculator />} />
+          <Route path="entra" element={<Incoming />} />
         </Route>
         <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
         <Route path="pulpito" element={<PulpitLayout />}>

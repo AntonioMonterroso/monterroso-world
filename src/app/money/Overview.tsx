@@ -8,6 +8,8 @@ import { dayNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { useBalances } from '../../lib/balances'
+import { freeToSpend, upcomingPayments } from '../../lib/free'
+import { incomingTotals, monthlyClients } from '../../lib/incoming'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { Empty, ErrorBar } from './shared'
 
@@ -46,9 +48,12 @@ export default function Overview() {
   const bals = useBalances()
   const money_ = bals.totals
   const today = localISO()
+  const soon = useMemo(() => upcomingPayments(subs.rows, loans.rows, pays.rows, today, 30), [subs.rows, loans.rows, pays.rows, today])
+  const inc = useMemo(() => incomingTotals(monthlyClients(work.projects, work.payments, month)), [work.projects, work.payments, month])
+  const free = useMemo(() => freeToSpend(money_.available, soon), [money_.available, soon])
 
   // Cobros ya recibidos en Trabajo cuentan como ingreso (freelance web) sin registrarlos dos veces
-  const extra = useMemo(() => work.payments.filter((p) => p.paid_at).map((p) => ({ currency: work.projects.find((x) => x.id === p.project_id)?.currency ?? 'USD', amount: Number(p.amount), date: p.paid_at! })), [work.payments, work.projects])
+  const extra = useMemo(() => work.payments.filter((p) => p.paid_at).map((p) => ({ currency: work.projects.find((x) => x.id === p.project_id)?.currency ?? 'GTQ', amount: Number(p.amount), date: p.paid_at! })), [work.payments, work.projects])
 
   const totals = useMemo(() => monthTotals(txs.rows, month, extra), [txs.rows, month, extra])
   const currencies = Object.keys(totals)
@@ -78,21 +83,37 @@ export default function Overview() {
       {loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : (
         <div>
           {bals.accounts.rows.some((a) => !a.archived) && (
-            <Link to="/app/dinero/cuentas" className="mb-5 block" aria-label="Ver mis cuentas">
-              <div className="stats">
-                <Stat label="Tengo disponible" value={money(money_.available)} tone={money_.available < 0 ? 'neg' : 'pos'} />
-                <Stat label="En efectivo" value={money(money_.cash)} />
-                <Stat label="En bancos" value={money(money_.banks + money_.wallets)} />
-              </div>
-            </Link>
+            <>
+              <section className="mb-5 rounded-[var(--r-card)] p-5" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }} aria-label="Libre para gastar">
+                <p className="stat-label">Libre para gastar</p>
+                <p className="mt-1 font-display text-4xl" style={{ color: free.free < 0 ? 'var(--neg)' : 'var(--pos)', fontVariantNumeric: 'tabular-nums' }}>{money(free.free)}</p>
+                <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
+                  Tienes {money(money_.available)} en tus cuentas{free.committed > 0 ? <> y en los próximos 30 días vas a pagar {money(free.committed)}</> : null}. {bals.inGoals > 0 ? <>Tu ahorro ({money(bals.inGoals)}) ya está aparte.</> : null}
+                </p>
+                {soon.length > 0 && <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Próximos: {soon.slice(0, 3).map((u) => `${u.name} ${money(u.amount)}`).join(' · ')}{soon.length > 3 ? ` y ${soon.length - 3} más` : ''}</p>}
+              </section>
+              <Link to="/app/dinero/cuentas" className="mb-5 block" aria-label="Ver mis cuentas">
+                <div className="stats">
+                  <Stat label="En cuentas" value={money(money_.available)} tone={money_.available < 0 ? 'neg' : undefined} />
+                  <Stat label="En efectivo" value={money(money_.cash)} />
+                  <Stat label="En bancos" value={money(money_.banks + money_.wallets)} />
+                </div>
+              </Link>
+            </>
           )}
           {currencies.length > 1 && <Segmented label="Moneda" value={cur} onChange={setPick} options={currencies.map((c) => ({ id: c, label: c }))} />}
+
+          {inc.clients > 0 && (
+            <Group title="Mensualidades de clientes" aside={<Link to="/app/dinero/entra" className="underline">Ver clientes</Link>}>
+              <Row tone="var(--pos)" title={`Cobrado ${money(inc.collected)} de ${money(inc.fixed)}`} sub={`${inc.paidClients} de ${inc.clients} clientes ya pagaron${inc.pending > 0 ? ` · faltan ${money(inc.pending)}` : ' · todo cobrado'}`} to="/app/dinero/entra" />
+            </Group>
+          )}
 
           {empty ? <Empty title="Sin movimientos este mes" text="Registra un ingreso o un gasto y aquí verás el balance, las áreas y la tendencia." action="Registrar uno" onAction={() => nav('/app/dinero/movimientos')} /> : (
             <div className="stats mt-5">
               <Stat label="Ingresos" value={money(t.income, cur)} tone="pos" />
               <Stat label="Gastos" value={money(t.expense, cur)} />
-              <Stat label="Balance" value={money(t.balance, cur)} tone={t.balance < 0 ? 'neg' : undefined} />
+              <Stat label="Me sobró este mes" value={money(t.balance, cur)} tone={t.balance < 0 ? 'neg' : undefined} />
             </div>
           )}
 
