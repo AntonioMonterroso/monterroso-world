@@ -10,7 +10,7 @@ export type Place = { id: string; trip_id: string | null; name: string; category
 export type ShopItem = { id: string; name: string; priority: 1 | 2 | 3; category: string; price: number | null; currency: string; store: string | null; url: string | null; notes: string | null; status: 'pending' | 'bought'; bought_on: string | null }
 
 export const PLACE_CATEGORIES = ['País o ciudad', 'Restaurante', 'Café', 'Música y estudios', 'Iglesia', 'Tienda', 'Naturaleza', 'Cultura', 'Otro']
-export const SHOP_CATEGORIES = ['Instrumento', 'Equipo y tecnología', 'Software', 'Casa', 'Ropa', 'Libros', 'Otro']
+export const SHOP_CATEGORIES = ['Instrumento', 'Equipo y tecnología', 'Software', 'Casa', 'Súper y comida', 'Ropa', 'Libros', 'Otro']
 export const PRIORITIES: { id: 1 | 2 | 3; label: string; color: string }[] = [
   { id: 1, label: 'Alta', color: 'var(--neg)' },
   { id: 2, label: 'Media', color: 'var(--personal)' },
@@ -64,6 +64,6 @@ export function pendingTotals(items: Pick<ShopItem, 'status' | 'price' | 'curren
 }
 
 /** Categoría de gasto para registrar la compra en Finanzas. */
-export const expenseCategoryFor = (c: string) => (c === 'Instrumento' ? 'Instrumentos' : c === 'Equipo y tecnología' ? 'Equipo y tecnología' : c === 'Software' ? 'Software y servicios' : c === 'Casa' ? 'Casa' : c === 'Libros' ? 'Educación' : 'Otros')
+export const expenseCategoryFor = (c: string) => (c === 'Instrumento' ? 'Instrumentos' : c === 'Equipo y tecnología' ? 'Equipo y tecnología' : c === 'Software' ? 'Software y servicios' : c === 'Casa' ? 'Casa' : c === 'Súper y comida' ? 'Comida' : c === 'Libros' ? 'Educación' : 'Otros')
 
 export const sortShopping = <T extends Pick<ShopItem, 'priority' | 'name'>>(items: T[]) => [...items].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name, 'es'))

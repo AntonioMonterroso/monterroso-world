@@ -45,6 +45,7 @@ const SOURCES: Source[] = [
   { type: 'Por comprar', table: 'shopping_items', select: 'id,name,category,store', map: (r) => ({ id: String(r.id), title: String(r.name), sub: [cut(r.category, 40), cut(r.store, 60)].filter(Boolean).join(' · ') || undefined, to: '/app/compras' }) },
   { type: 'Nota de voz', table: 'voice_notes', select: 'id,title', map: (r) => ({ id: String(r.id), title: String(r.title), to: '/app/musica/ideas' }) },
   { type: 'Rutina diaria', table: 'routines', select: 'id,name', map: (r) => ({ id: String(r.id), title: String(r.name), to: `/app/mente/rutinas/${r.id}` }) },
+  { type: 'Receta', table: 'recipes', select: 'id,title', map: (r) => ({ id: String(r.id), title: String(r.title), to: `/app/cocina/receta/${r.id}` }) },
   { type: 'Rutina', table: 'workouts', select: 'id,title', map: (r) => ({ id: String(r.id), title: String(r.title), to: `/app/ejercicio/rutina/${r.id}` }) },
   { type: 'Compañero', table: 'training_partners', select: 'id,name', map: (r) => ({ id: String(r.id), title: String(r.name), to: '/app/ejercicio/companeros' }) },
   { type: 'Hábito', table: 'habits', select: 'id,name', map: (r) => ({ id: String(r.id), title: String(r.name), to: '/app/mente' }) },

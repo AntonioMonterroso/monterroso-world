@@ -8,6 +8,7 @@ import type { Goal, Tx } from '../../lib/finance'
 import { PRIORITIES, SHOP_CATEGORIES, expenseCategoryFor, pendingTotals, sortShopping, type ShopItem } from '../../lib/inspire'
 import { hostOf } from '../../lib/learn'
 import { money } from '../../lib/projects'
+import { FOOD_CATEGORY, restockPantry } from '../../lib/kitchenDb'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, chip, defaultCurrency, toNum } from '../money/shared'
@@ -64,6 +65,7 @@ export default function Shopping() {
     const price = buyPrice.trim() ? toNum(buyPrice) : null
     if (price !== null && !(price >= 0)) return setErr('El precio no es válido.')
     await db.update(buy.id, { status: 'bought', bought_on: localISO(), price })
+    if (buy.category === FOOD_CATEGORY) void restockPantry(buy.name)
     if (record && price && price > 0) await txs.add({ kind: 'expense', amount: price, currency: buy.currency, category: expenseCategoryFor(buy.category), area: 'personal', tx_date: localISO(), note: buy.name, account_id: buyAcct || null })
     rememberAccount(buyAcct)
     setBuy(null); setErr(''); setMsg(record && price ? `Listo. Quedó registrado como gasto${accounts.find((a) => a.id === buyAcct) ? ` y salió de ${accounts.find((a) => a.id === buyAcct)!.name}` : ''}.` : 'Listo, marcado como comprado.')

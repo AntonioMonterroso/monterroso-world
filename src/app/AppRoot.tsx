@@ -74,6 +74,10 @@ import Transactions from './money/Transactions'
 import Vault from './vault/Vault'
 import Projects from './work/Projects'
 import Shell from './Shell'
+import KitchenLayout from './kitchen/KitchenLayout'
+import Pantry from './kitchen/Pantry'
+import RecipePage from './kitchen/RecipePage'
+import Recipes from './kitchen/Recipes'
 import Today from './Today'
 
 const AWAY_LOCK_MS = 60_000
@@ -196,6 +200,11 @@ function Gate() {
           <Route path="setlists" element={<Setlists />} />
           <Route path="practica" element={<Practice />} />
           <Route path="ideas" element={<Ideas />} />
+        </Route>
+        <Route path="cocina" element={<KitchenLayout />}>
+          <Route index element={<Recipes />} />
+          <Route path="despensa" element={<Pantry />} />
+          <Route path="receta/:id" element={<RecipePage />} />
         </Route>
         <Route path="lugares" element={<Places />} />
         <Route path="compras" element={<Shopping />} />
