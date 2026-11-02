@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { loadIndex, searchHits, type Hit } from '../lib/searchIndex'
 import { supabase } from '../lib/supabase'
-import { centers } from '../lib/modules'
+import { sections } from '../lib/sections'
 import { decryptItem } from '../lib/vault'
 import { useVaultKey } from '../lib/vaultSession'
 
@@ -20,8 +20,10 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
 
   // Atajos y acciones (siempre disponibles)
   const statics = useMemo<Item[]>(() => [
-    ...centers.map((c) => ({ id: `c-${c.id}`, title: c.label, sub: c.blurb, type: 'Ir a', run: () => nav(c.id === 'hoy' ? '/app' : `/app/${c.id}`) })),
-    ...centers.flatMap((c) => c.modules.map((m) => ({ id: `m-${c.id}-${m.name}`, title: m.name, sub: c.label, type: 'Módulo', run: () => nav(m.to ?? (c.id === 'hoy' ? '/app' : `/app/${c.id}`)) }))),
+    ...sections.map((x) => ({ id: `c-${x.id}`, title: x.label, sub: x.blurb, type: 'Ir a', run: () => nav(x.to) })),
+    ...sections.flatMap((x) => x.views.map((v) => ({ id: `m-${x.id}-${v.to}`, title: v.label, sub: x.label, type: 'Módulo', run: () => nav(v.to) }))),
+    { id: 'a-areas', title: 'Áreas', sub: 'Trabajo, Música y Personal', type: 'Ir a', run: () => nav('/app/areas') },
+    { id: 'a-pendientes', title: 'Pendientes', sub: 'Lo que anotaste y lo que pide atención', type: 'Ir a', run: () => nav('/app/pendientes') },
     { id: 'a-ajustes', title: 'Ajustes', sub: 'Cuenta, PIN y avisos', type: 'Acción', run: () => nav('/app/ajustes') },
     { id: 'a-lock', title: 'Bloquear ahora', sub: 'Pedir PIN', type: 'Acción', run: onLock },
     { id: 'a-out', title: 'Cerrar sesión', sub: 'Salir de este dispositivo', type: 'Acción', run: onSignOut },

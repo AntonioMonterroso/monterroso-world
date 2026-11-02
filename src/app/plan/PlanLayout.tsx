@@ -1,17 +1,6 @@
-import { Calendar, CalendarDays, Clock } from 'lucide-react'
-import { SegNav, TabOutlet } from '../../components/ui'
+import { Outlet } from 'react-router-dom'
 
-const tabs = [
-  { to: '/app/planear', label: 'Horario', end: true, icon: Clock },
-  { to: '/app/planear/agenda', label: 'Agenda', icon: CalendarDays },
-  { to: '/app/planear/calendario', label: 'Calendario', icon: Calendar },
-]
-
+/** Las pestañas ahora las pone la sección (ver SectionLayout); este solo deja pasar las pantallas. */
 export default function PlanLayout() {
-  return (
-    <div>
-      <SegNav label="Planear" tabs={tabs} />
-      <TabOutlet tabs={tabs} />
-    </div>
-  )
+  return <Outlet />
 }

@@ -1,18 +1,6 @@
-import { Lightbulb, ListMusic, Music, Activity } from 'lucide-react'
-import { SegNav, TabOutlet } from '../../components/ui'
+import { Outlet } from 'react-router-dom'
 
-const tabs = [
-  { to: '/app/musica', label: 'Canciones', end: true, icon: Music },
-  { to: '/app/musica/setlists', label: 'Setlists', icon: ListMusic },
-  { to: '/app/musica/practica', label: 'Práctica', icon: Activity },
-  { to: '/app/musica/ideas', label: 'Ideas', icon: Lightbulb },
-]
-
+/** Las pestañas ahora las pone la sección (ver SectionLayout); este solo deja pasar las pantallas. */
 export default function MusicLayout() {
-  return (
-    <div>
-      <SegNav label="Música" tabs={tabs} className="no-print" />
-      <TabOutlet tabs={tabs} />
-    </div>
-  )
+  return <Outlet />
 }

@@ -774,3 +774,12 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .pp-duo .pp-faqs { margin-top: 1.4rem; }
 .pp-final { margin-top: clamp(3.5rem, 7vw, 6rem); padding: clamp(2.6rem, 6vw, 4rem) 0; }
 .pp-prices-head .pp-h2 { margin-bottom: 0; }
+
+/* Navegación nueva: botón ＋ Anotar y punto de color del área */
+.area-dot { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+.fab-mw { width: 60px; height: 60px; border-radius: 999px; background: var(--marca); color: var(--sobre-marca); display: grid; place-items: center; margin: -24px auto 0; box-shadow: var(--sombra-2); transition: transform .28s var(--resorte); cursor: pointer; border: 0; }
+.fab-mw:active { transform: scale(.94); }
+.fab-mw:focus-visible { outline: 2px solid var(--tinta); outline-offset: 3px; }
+.tabbar { align-items: start; }
+.tile { background: var(--superficie); border-radius: 28px; box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.25); padding: 16px; display: flex; flex-direction: column; gap: 10px; color: var(--tinta); text-decoration: none; position: relative; overflow: hidden; min-width: 0; transition: transform .28s var(--resorte); }
+.tile:active { transform: scale(.96); }

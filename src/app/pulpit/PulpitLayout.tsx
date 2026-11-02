@@ -1,16 +1,6 @@
-import { BookOpen, StickyNote } from 'lucide-react'
-import { SegNav, TabOutlet } from '../../components/ui'
+import { Outlet } from 'react-router-dom'
 
-const tabs = [
-  { to: '/app/pulpito', label: 'Prédicas', end: true, icon: BookOpen },
-  { to: '/app/pulpito/notas', label: 'Notas de fe', icon: StickyNote },
-]
-
+/** Las pestañas ahora las pone la sección (ver SectionLayout); este solo deja pasar las pantallas. */
 export default function PulpitLayout() {
-  return (
-    <div>
-      <SegNav label="Púlpito" tabs={tabs} />
-      <TabOutlet tabs={tabs} />
-    </div>
-  )
+  return <Outlet />
 }

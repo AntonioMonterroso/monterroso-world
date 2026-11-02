@@ -1,18 +1,6 @@
-import { Activity, Dumbbell, HeartPulse, Users } from 'lucide-react'
-import { SegNav, TabOutlet } from '../../components/ui'
+import { Outlet } from 'react-router-dom'
 
-const tabs = [
-  { to: '/app/ejercicio', label: 'Rutinas', end: true, icon: Dumbbell },
-  { to: '/app/ejercicio/historial', label: 'Historial', icon: Activity },
-  { to: '/app/ejercicio/cuerpo', label: 'Cuerpo', icon: HeartPulse },
-  { to: '/app/ejercicio/companeros', label: 'Compañeros', icon: Users },
-]
-
+/** Las pestañas ahora las pone la sección (ver SectionLayout); este solo deja pasar las pantallas. */
 export default function FitLayout() {
-  return (
-    <div>
-      <SegNav label="Ejercicio" tabs={tabs} />
-      <TabOutlet tabs={tabs} />
-    </div>
-  )
+  return <Outlet />
 }

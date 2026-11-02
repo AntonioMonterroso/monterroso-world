@@ -1,17 +1,6 @@
-import { Briefcase, FileText, Globe2 } from 'lucide-react'
-import { SegNav, TabOutlet } from '../../components/ui'
+import { Outlet } from 'react-router-dom'
 
-const tabs = [
-  { to: '/app/trabajo', label: 'Trabajos', end: true, icon: Briefcase },
-  { to: '/app/trabajo/propuestas', label: 'Propuestas', icon: FileText },
-  { to: '/app/trabajo/precios', label: 'Precios públicos', icon: Globe2 },
-]
-
+/** Las pestañas ahora las pone la sección (ver SectionLayout); este solo deja pasar las pantallas. */
 export default function WorkLayout() {
-  return (
-    <div>
-      <SegNav label="Trabajo" tabs={tabs} />
-      <TabOutlet tabs={tabs} />
-    </div>
-  )
+  return <Outlet />
 }

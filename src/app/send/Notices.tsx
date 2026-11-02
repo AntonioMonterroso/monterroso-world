@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck, Loader2, Send } from 'lucide-react'
+import { BellRing, CalendarCheck, Loader2, Send, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { describeLog, followUpDue, isOpen, type Delivery } from '../../lib/deliveries'
 import { useEvents } from '../../lib/events'
@@ -14,7 +14,7 @@ type Ev = { id: string; title: string }
 type BLog = { id: string; block_id: string; occ_date: string; kind: string; sent_at: string }
 type Item = { id: string; title: string; kind: string; sent_at: string; nag_count: number }
 
-/** Centro de avisos: qué requiere tu acción y qué se te ha enviado. */
+/** Pendientes: lo que anotaste sin clasificar, lo que requiere tu acción y el historial de avisos. */
 export default function Notices() {
   const today = localISO()
   const ev = useEvents()
@@ -23,6 +23,8 @@ export default function Notices() {
   const events = useTable<Ev>('events', { col: 'created_at', asc: false })
   const blockLog = useTable<BLog>('block_notification_log', { col: 'sent_at', asc: false })
   const blocks = useTable<Ev>('schedule_blocks', { col: 'created_at', asc: false })
+  const inbox = useTable<{ id: string; text: string; processed?: boolean }>('inbox_items', { col: 'created_at', asc: false })
+  const unsorted = inbox.rows.filter((x) => !x.processed)
   const [tab, setTab] = useState<'pending' | 'history'>('pending')
   const [err, setErr] = useState('')
 
@@ -35,7 +37,7 @@ export default function Notices() {
   const toSend = deliveries.rows.filter((d) => d.status === 'to_send')
   const follow = deliveries.rows.filter((d) => followUpDue(d, today))
   const waitingNoDate = deliveries.rows.filter((d) => isOpen(d) && d.status !== 'to_send' && !followUpDue(d, today)).length
-  const pendingCount = overdue.length + toSend.length + follow.length
+  const pendingCount = overdue.length + toSend.length + follow.length + unsorted.length
 
   const grouped = useMemo(() => {
     const items: Item[] = [
@@ -57,13 +59,14 @@ export default function Notices() {
 
   return (
     <div>
-      <PageHeader eyebrow="Hoy" title="Centro de avisos" />
+      <PageHeader eyebrow="Hoy" title="Pendientes" />
       <ErrorBar msg={err || ev.error || deliveries.error || log.error} onClose={() => setErr('')} />
       <Segmented label="Vista" value={tab} onChange={setTab} options={[{ id: 'pending', label: pendingCount > 0 ? `Requiere acción · ${pendingCount}` : 'Requiere acción' }, { id: 'history', label: 'Historial' }]} />
 
       {loading ? <div className="grid h-40 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : tab === 'pending' ? (
         pendingCount === 0 ? <Empty title="Todo al día" text={waitingNoDate > 0 ? `No hay nada urgente. Tienes ${waitingNoDate} ${waitingNoDate === 1 ? 'envío esperando' : 'envíos esperando'} respuesta.` : 'No tienes recordatorios sin confirmar ni envíos por dar seguimiento.'} /> : (
           <>
+            {unsorted.length > 0 && <Group title={`Sin clasificar · ${unsorted.length}`} footer="Lo que anotaste con ＋. Cuando sepas dónde va, lo pasas a su lugar y lo borras de aquí.">{unsorted.map((x) => <Row key={x.id} title={<span className="whitespace-normal break-words">{x.text}</span>} chevron={false} trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar: ${x.text}`} onClick={async () => { await supabase.from('inbox_items').delete().eq('id', x.id); void inbox.reload() }}><Trash2 size={16} aria-hidden /></button>} />)}</Group>}
             {follow.length > 0 && <Group title="Dar seguimiento">{follow.map((d) => <Row key={d.id} icon={<Send size={16} aria-hidden />} tone="var(--accent)" title={d.title} sub={d.recipient ? `Para ${d.recipient} · sin respuesta` : 'Sin respuesta'} to="/app/envios" />)}</Group>}
             {toSend.length > 0 && <Group title="Por enviar">{toSend.map((d) => <Row key={d.id} icon={<Send size={16} aria-hidden />} title={d.title} sub={d.recipient ? `Para ${d.recipient}` : undefined} to="/app/envios" />)}</Group>}
             {overdue.length > 0 && <Group title="Recordatorios sin confirmar">{overdue.map((o) => <Row key={o.event.id + o.date} icon={<CalendarCheck size={16} aria-hidden />} tone="var(--brass)" title={o.event.title} sub={`${o.date === today ? 'Hoy' : dayLabel(o.date)} · ${fmtMin(o.event.start_min)}`} to={`/app/planear/agenda?e=${o.event.id}`} />)}</Group>}

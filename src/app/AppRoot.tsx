@@ -6,7 +6,6 @@ import { clearPin, hasPin } from '../lib/pin'
 import { supabase } from '../lib/supabase'
 import CenterPage from './CenterPage'
 import Login from './Login'
-import More from './More'
 import { PinSetup, PinUnlock } from './PinGate'
 import Agenda from './plan/Agenda'
 import Calendar from './plan/Calendar'
@@ -35,7 +34,6 @@ import RoutinePage from './fit/RoutinePage'
 import Routines from './fit/Routines'
 import Session from './fit/Session'
 import DiscoverLayout from './discover/DiscoverLayout'
-import Hub from './discover/Hub'
 import Inspiration from './discover/Inspiration'
 import Learn from './discover/Learn'
 import Links from './discover/Links'
@@ -67,6 +65,8 @@ import Quotes from './work/Quotes'
 import QuoteSheet from './work/QuoteSheet'
 import Calculator from './money/Calculator'
 import Incoming from './money/Incoming'
+import Areas from './Areas'
+import SectionLayout from '../components/SectionLayout'
 import Share from './Share'
 import Overview from './money/Overview'
 import Subscriptions from './money/Subscriptions'
@@ -129,52 +129,10 @@ function Gate() {
       <Route path="trabajo/propuestas/:id/documento" element={<QuoteSheet />} />
       <Route element={<Shell onLock={lock} onSignOut={signOutAll} />}>
         <Route index element={<Today />} />
-        <Route path="mas" element={<More />} />
         <Route path="ajustes" element={<Settings onLock={lock} onResetPin={resetPin} />} />
-        <Route path="planear" element={<PlanLayout />}>
-          <Route index element={<Schedule />} />
-          <Route path="agenda" element={<Agenda />} />
-          <Route path="calendario" element={<Calendar />} />
-        </Route>
-        <Route path="trabajo" element={<WorkLayout />}>
-          <Route index element={<Projects />} />
-          <Route path="propuestas" element={<Quotes />} />
-          <Route path="precios" element={<PricesEditor />} />
-        </Route>
-        <Route path="envios" element={<Deliveries />} />
         <Route path="avisos" element={<Notices />} />
-        <Route path="descubrir" element={<DiscoverLayout />}>
-          <Route index element={<Hub />} />
-          <Route path="aprender" element={<Learn />} />
-          <Route path="video/:id" element={<VideoPage />} />
-          <Route path="links" element={<Links />} />
-          <Route path="portafolio" element={<Portfolio />} />
-          <Route path="inspiracion" element={<Inspiration />} />
-          <Route path="lugares" element={<Moved to="/app/lugares" />} />
-          <Route path="compras" element={<Moved to="/app/compras" />} />
-        </Route>
-        <Route path="boveda" element={<Vault />} />
         <Route path="mente/rutinas/:id/hacer" element={<RoutineRun />} />
-        <Route path="mente" element={<MindLayout />}>
-          <Route index element={<Habits />} />
-          <Route path="enfoque" element={<Focus />} />
-          <Route path="rutinas" element={<DailyRoutines />} />
-          <Route path="ocio" element={<Leisure />} />
-          <Route path="cosas" element={<Loose />} />
-          <Route path="vencimientos" element={<Renewals />} />
-          <Route path="reglas" element={<Rules />} />
-          <Route path="logros" element={<Wins />} />
-          <Route path="salida" element={<Exit />} />
-          <Route path="rutinas/:id" element={<RoutineEditor />} />
-        </Route>
         <Route path="ejercicio/entrenar/:id" element={<Session />} />
-        <Route path="ejercicio" element={<FitLayout />}>
-          <Route index element={<Routines />} />
-          <Route path="rutina/:id" element={<RoutinePage />} />
-          <Route path="historial" element={<History />} />
-          <Route path="cuerpo" element={<Body />} />
-          <Route path="companeros" element={<Partners />} />
-        </Route>
         <Route path="dinero" element={<MoneyLayout />}>
           <Route index element={<Overview />} />
           <Route path="cuentas" element={<Accounts />} />
@@ -188,27 +146,73 @@ function Gate() {
           <Route path="entra" element={<Incoming />} />
         </Route>
         <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
-        <Route path="pulpito" element={<PulpitLayout />}>
-          <Route index element={<Sermons />} />
-          <Route path="predica/:id" element={<SermonPage />} />
-          <Route path="notas" element={<FaithNotes />} />
-        </Route>
         <Route path="musica/cancion/:id/escenario" element={<Stage />} />
-        <Route path="musica" element={<MusicLayout />}>
-          <Route index element={<Songs />} />
-          <Route path="cancion/:id" element={<SongPage />} />
-          <Route path="setlists" element={<Setlists />} />
-          <Route path="practica" element={<Practice />} />
-          <Route path="ideas" element={<Ideas />} />
+        <Route path="areas" element={<Areas />} />
+        <Route path="mas" element={<Navigate to="/app/areas" replace />} />
+        <Route path="pendientes" element={<Notices />} />
+        <Route element={<SectionLayout />}>
+          <Route path="planear" element={<PlanLayout />}>
+            <Route index element={<Schedule />} />
+            <Route path="agenda" element={<Agenda />} />
+            <Route path="calendario" element={<Calendar />} />
+          </Route>
+          <Route path="trabajo" element={<WorkLayout />}>
+            <Route index element={<Projects />} />
+            <Route path="propuestas" element={<Quotes />} />
+            <Route path="precios" element={<PricesEditor />} />
+          </Route>
+          <Route path="envios" element={<Deliveries />} />
+          <Route path="descubrir" element={<DiscoverLayout />}>
+            <Route index element={<Navigate to="/app/descubrir/aprender" replace />} />
+            <Route path="aprender" element={<Learn />} />
+            <Route path="video/:id" element={<VideoPage />} />
+            <Route path="links" element={<Links />} />
+            <Route path="portafolio" element={<Portfolio />} />
+            <Route path="inspiracion" element={<Inspiration />} />
+            <Route path="lugares" element={<Moved to="/app/lugares" />} />
+            <Route path="compras" element={<Moved to="/app/compras" />} />
+          </Route>
+          <Route path="boveda" element={<Vault />} />
+          <Route path="mente" element={<MindLayout />}>
+            <Route index element={<Habits />} />
+            <Route path="enfoque" element={<Focus />} />
+            <Route path="rutinas" element={<DailyRoutines />} />
+            <Route path="ocio" element={<Leisure />} />
+            <Route path="cosas" element={<Loose />} />
+            <Route path="vencimientos" element={<Renewals />} />
+            <Route path="reglas" element={<Rules />} />
+            <Route path="logros" element={<Wins />} />
+            <Route path="salida" element={<Exit />} />
+            <Route path="rutinas/:id" element={<RoutineEditor />} />
+          </Route>
+          <Route path="ejercicio" element={<FitLayout />}>
+            <Route index element={<Routines />} />
+            <Route path="rutina/:id" element={<RoutinePage />} />
+            <Route path="historial" element={<History />} />
+            <Route path="cuerpo" element={<Body />} />
+            <Route path="companeros" element={<Partners />} />
+          </Route>
+          <Route path="pulpito" element={<PulpitLayout />}>
+            <Route index element={<Sermons />} />
+            <Route path="predica/:id" element={<SermonPage />} />
+            <Route path="notas" element={<FaithNotes />} />
+          </Route>
+          <Route path="musica" element={<MusicLayout />}>
+            <Route index element={<Songs />} />
+            <Route path="cancion/:id" element={<SongPage />} />
+            <Route path="setlists" element={<Setlists />} />
+            <Route path="practica" element={<Practice />} />
+            <Route path="ideas" element={<Ideas />} />
+          </Route>
+          <Route path="cocina" element={<KitchenLayout />}>
+            <Route index element={<Recipes />} />
+            <Route path="despensa" element={<Pantry />} />
+            <Route path="receta/:id" element={<RecipePage />} />
+          </Route>
+          <Route path="lugares" element={<Places />} />
+          <Route path="compras" element={<Shopping />} />
+          <Route path="compartir" element={<Share />} />
         </Route>
-        <Route path="cocina" element={<KitchenLayout />}>
-          <Route index element={<Recipes />} />
-          <Route path="despensa" element={<Pantry />} />
-          <Route path="receta/:id" element={<RecipePage />} />
-        </Route>
-        <Route path="lugares" element={<Places />} />
-        <Route path="compras" element={<Shopping />} />
-        <Route path="compartir" element={<Share />} />
         <Route path=":center" element={<CenterPage />} />
       </Route>
     </Routes>
