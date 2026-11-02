@@ -1,46 +1,40 @@
-import { HeartHandshake, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, Feather, HeartHandshake, Moon, Plus, Sparkles, Trash2, Wind, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Chk, Group, Row } from '../components/ui'
-import GoalSpotlight from '../components/GoalSpotlight'
-import OutingSpotlight from '../components/OutingSpotlight'
-import ShoppingSpotlight from '../components/ShoppingSpotlight'
+import { Link, useNavigate } from 'react-router-dom'
+import { Chk } from '../components/ui'
+import Sheet from '../components/Sheet'
 import DayRitual from '../components/DayRitual'
+import OverwhelmSheet from '../components/OverwhelmSheet'
 import { ResumeHint } from '../components/Resume'
 import { useProgress } from '../lib/progress'
-import { pointsToGo } from '../lib/xp'
-import { describe as ruleText, dueRules, type Rule } from '../lib/ifthen'
+import { dueRules, type Rule } from '../lib/ifthen'
 import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
-import { lentToChase, promiseState, sortPromises, dueLabel, type Promise_, type Stuff } from '../lib/loose'
-import OverwhelmSheet from '../components/OverwhelmSheet'
+import { lentToChase, promiseState, sortPromises, type Promise_, type Stuff } from '../lib/loose'
 import { useCheckins } from '../lib/checkin'
-import { isSoftDay } from '../lib/rhythm'
+import { ENERGY, isSoftDay } from '../lib/rhythm'
 import { exitKindFor, type ExitList } from '../lib/exitlist'
-import { suggest } from '../lib/suggest'
+import type { SuggestInput } from '../lib/suggest'
+import { ahora, readSnoozed, snooze, type Item } from '../lib/ahora'
 import { freeGaps, peakHour, planDay } from '../lib/dayplan'
 import { duePlans, type Plan } from '../lib/savings'
 import type { Goal } from '../lib/finance'
-import { money } from '../lib/projects'
+import { currentMonth, money, useProjects } from '../lib/projects'
+import { monthlyClients } from '../lib/incoming'
+import { rankRecipes, type PantryItem, type Recipe } from '../lib/kitchen'
+import { useFreeToSpend } from '../lib/useFree'
+import { supabase } from '../lib/supabase'
 import { useAttention } from '../lib/attention'
-import Avatar, { propForHour, type Prop } from '../components/Avatar'
-import { blockApplies, kindMeta, useBlocks, useInbox, usePriorities } from '../lib/data'
+import { blockApplies, useBlocks, useInbox, usePriorities } from '../lib/data'
 import { weekDone, type Habit, type HabitLog } from '../lib/habits'
 import { currentKind, isScheduled, progressOf, type Routine, type Run, type Step } from '../lib/routines'
 import { useTable } from '../lib/table'
 import { useEvents } from '../lib/events'
-import { localISO } from '../lib/time'
-import { OccurrenceCard } from './plan/Agenda'
-import EventEditor, { type EditorTarget } from './plan/EventEditor'
-import { fmtMin, nowMin } from '../lib/time'
+import { fmtMin, localISO, nowMin } from '../lib/time'
 
 const greet = (h: number) => (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches')
-const propFor = (kind: string | undefined, hour: number): Prop => {
-  if (kind === 'code' || kind === 'work') return 'laptop'
-  if (kind === 'rehearsal') return 'guitar'
-  if (kind === 'rest') return 'rest'
-  return kind ? 'wave' : propForHour(hour)
-}
-const dur = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? `${m % 60} min` : ''}`.trim() : `${m} min`)
+const softKey = (d: string) => `mw_soft_${d}`
+const readSoft = (d: string) => { try { return localStorage.getItem(softKey(d)) === '1' } catch { return false } }
+const E_LABEL: Record<number, string> = Object.fromEntries(ENERGY.map((e) => [e.n, e.label]))
 
 export default function Today() {
   const [now, setNow] = useState(() => new Date())
@@ -53,7 +47,6 @@ export default function Today() {
   const next = todays.find((b) => b.start_min > m)
 
   const evs = useEvents()
-  const [evTarget, setEvTarget] = useState<EditorTarget | null>(null)
   const todayISO = localISO(now)
   const agenda = useMemo(() => evs.between(todayISO, todayISO), [evs, todayISO])
 
@@ -77,7 +70,6 @@ export default function Today() {
   const pr = usePriorities()
   const inbox = useInbox()
   const [draft, setDraft] = useState('')
-  const [cap, setCap] = useState('')
 
   const prog = useProgress()
   const rulesDb = useTable<Rule>('if_then', { col: 'created_at', asc: true })
@@ -105,7 +97,8 @@ export default function Today() {
   const checkins = useCheckins()
   const soft = isSoftDay(checkins.today)
   const [overwhelm, setOverwhelm] = useState(false)
-  const suggestions = useMemo(() => suggest({
+  const [dump, setDump] = useState(false)
+  const suggestInput = useMemo((): SuggestInput => ({
     nowMin: m,
     current: current ? { title: current.title, endMin: current.end_min } : null,
     next: next ? { title: next.title, startMin: next.start_min } : null,
@@ -138,161 +131,240 @@ export default function Today() {
   }, [pr.tasks, todays, agenda, m, checkins.today?.energy, focusRows.rows])
   const error = pr.error || inbox.error || evs.error || habits.error || routinesDb.error
 
+
+  const nav = useNavigate()
+  const work = useProjects()
+  const recipes = useTable<Recipe>('recipes', { col: 'title', asc: true })
+  const pantry = useTable<PantryItem>('pantry_items', { col: 'name', asc: true })
+  const free = useFreeToSpend()
+  const [manualSoft, setManualSoft] = useState(() => readSoft(localISO()))
+  const [energyOpen, setEnergyOpen] = useState(false)
+  const [snoozed, setSnoozed] = useState(() => readSnoozed())
+  const [moreOpen, setMoreOpen] = useState(false)
+  const softOn = soft || manualSoft
+  const toggleSoft = () => { const v = !manualSoft; setManualSoft(v); try { localStorage.setItem(softKey(todayISO), v ? '1' : '0') } catch { /* sin almacenamiento */ } }
+
+  // Cobros que ya tocan (día de cobro llegó) o van atrasados, y recetas que se pueden hacer ya
+  const collect = useMemo(() => monthlyClients(work.projects, work.payments, currentMonth(now), now)
+    .filter((r) => r.state !== 'paid' && (r.state === 'late' || r.lateMonths.length > 0 || r.project.billing_day === now.getDate()))
+    .map((r) => ({ id: r.project.id, title: r.project.title, late: r.state === 'late' || r.lateMonths.length > 0 })), [work.projects, work.payments, now])
+  const cookReady = useMemo(() => rankRecipes(recipes.rows, pantry.rows).filter((x) => x.miss.length === 0).length, [recipes.rows, pantry.rows])
+  const savingsRows = useMemo(() => dueSavings.map((p) => ({ id: p.id, amount: money(p.amount), goal: savingsGoals.rows.find((g) => g.id === p.goal_id)?.title ?? 'tu ahorro' })), [dueSavings, savingsGoals.rows])
+
+  const items = useMemo(() => ahora(suggestInput, { collect, savings: savingsRows, cookReady }, { soft: softOn, snoozed }), [suggestInput, collect, savingsRows, cookReady, softOn, snoozed])
+  const top = items[0]
+  const rest = items.slice(1)
+
+  // Momento del día: arranque antes del primer bloque, cierre después del último
+  const firstStart = todays.length ? Math.min(...todays.map((b) => b.start_min)) : 8 * 60
+  const lastEnd = todays.length ? Math.max(...todays.map((b) => b.end_min)) : 19 * 60
+  const mode: 'arranque' | 'dia' | 'cierre' = now.getHours() >= 4 && m < firstStart ? 'arranque' : m >= lastEnd ? 'cierre' : 'dia'
+
+  const doneP = pr.tasks.filter((t) => t.done).length
+  const doneH = activeHabits.filter((h) => hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).length
+  const gained = prog.byDay.get(todayISO)?.total ?? 0
+  const shownTasks = softOn ? pr.tasks.filter((t) => !t.done).slice(0, 1).concat(pr.tasks.filter((t) => t.done)) : pr.tasks
+  const shownHabits = softOn ? activeHabits.slice(0, 2) : activeHabits
+
+  // Lo que sigue: los próximos 2 bloques o eventos de hoy
+  const upcoming = useMemo(() => {
+    const rows = [
+      ...todays.filter((b) => b.start_min > m).map((b) => ({ key: `b-${b.id}`, start: b.start_min, title: b.title, kind: 'bloque' as const, evId: null as string | null, date: todayISO })),
+      ...agenda.filter((o) => !o.state.done && o.event.start_min > m - 5).map((o) => ({ key: `e-${o.event.id}`, start: o.event.start_min, title: o.event.title, kind: 'evento' as const, evId: o.event.id as string | null, date: o.date })),
+    ].sort((a, b) => a.start - b.start).slice(0, 2)
+    return rows
+  }, [todays, agenda, m, todayISO])
+
+  const runInline = async (it: Item) => {
+    if (it.inline === 'event-done' && it.ref) await evs.setState(it.ref, todayISO, { done: true })
+    else if (it.inline === 'promise-done' && it.ref) await promisesDb.update(it.ref, { done: true, done_on: todayISO } as never)
+    else if (it.inline === 'anotar') window.dispatchEvent(new CustomEvent('mw-anotar'))
+    else if (it.inline === 'pick') { document.getElementById('mis3')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.getElementById('prio-in')?.focus(), 350) }
+  }
+  const later = (it: Item) => setSnoozed(snooze(it.id))
+  const carryOver = async () => {
+    const t = new Date(now); t.setDate(t.getDate() + 1)
+    await supabase.from('tasks').update({ priority_date: localISO(t) }).eq('priority_date', todayISO).eq('done', false)
+    void pr.reload()
+  }
+
+  const Action = ({ it, big = false }: { it: Item; big?: boolean }) => it.inline
+    ? <button className={`btn btn-primary ${big ? '' : '!min-h-10 !px-4'}`} onClick={() => void runInline(it)}>{it.act}</button>
+    : <Link to={it.to} className={`btn btn-primary ${big ? '' : '!min-h-10 !px-4'}`}>{it.act}</Link>
+
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
   useEffect(() => { if (!undo) return; const t = setTimeout(() => setUndo(null), 6000); return () => clearTimeout(t) }, [undo])
-
   const addPriority = (e: React.FormEvent) => {
     e.preventDefault()
     if (!draft.trim() || pr.tasks.length >= 3) return
     pr.add(draft.trim()); setDraft('')
   }
-  const capture = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!cap.trim()) return
-    inbox.add(cap.trim()); setCap('')
-  }
+  const status = pr.tasks.length ? `${doneP} de ${pr.tasks.length} hechas` : 'Aún no eliges tus 3'
 
   return (
-    <div className="grid gap-8">
-      <section className="flex items-center justify-between gap-4">
+    <div className="hoy grid gap-5">
+      {/* 1. Cabecera */}
+      <header className="grid gap-3">
         <div className="min-w-0">
           <p className="eyebrow">{now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <h1 className="mt-2 font-display text-4xl">{greet(now.getHours())}</h1>
-          <p className="mt-3 text-lg" style={{ color: 'var(--ink-soft)' }}>
-            {current ? (
-              <>Ahora: <strong style={{ color: kindMeta[current.kind].color }}>{current.title}</strong> · quedan {dur(current.end_min - m)}</>
-            ) : next ? (
-              <>Sigue: <strong style={{ color: 'var(--ink)' }}>{next.title}</strong> a las {fmtMin(next.start_min)}</>
-            ) : (
-              'No hay más bloques hoy. Es tu tiempo.'
-            )}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4">
-            <Link to="/app/mente/enfoque" className="btn btn-primary">Enfocarme</Link>
-            <button className="btn btn-ghost" onClick={() => setOverwhelm(true)}><HeartHandshake size={16} aria-hidden /> Estoy abrumado</button>
-            <Link to="/app/planear" className="inline-flex min-h-11 items-center text-sm underline" style={{ color: 'var(--ink-soft)' }}>Ver mi horario</Link>
-          </div>
+          <h1 className="mt-1 font-display text-4xl">{greet(now.getHours())}</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>{status}{activeHabits.length ? ` · ${doneH} de ${activeHabits.length} hábitos` : ''}</p>
         </div>
-        <div className="w-28 shrink-0 sm:w-36"><Avatar prop={propFor(current?.kind, now.getHours())} size={150} /></div>
-      </section>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" className="chip-btn" aria-pressed={softOn} onClick={toggleSoft}><Feather size={16} aria-hidden /> Día suave</button>
+          <button type="button" className="chip-btn" onClick={() => setOverwhelm(true)}><HeartHandshake size={16} aria-hidden /> Me abruma</button>
+          <button type="button" className="chip-btn" aria-expanded={energyOpen} onClick={() => setEnergyOpen((v) => !v)}><Zap size={16} aria-hidden /> Energía{checkins.today?.energy ? `: ${E_LABEL[checkins.today.energy]}` : ''}</button>
+        </div>
+        {energyOpen && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Energía de hoy">
+            {ENERGY.map((e) => <button key={e.n} type="button" className="chip-btn" aria-pressed={checkins.today?.energy === e.n} onClick={() => { void checkins.save({ energy: e.n }); setEnergyOpen(false) }}>{e.label}</button>)}
+          </div>
+        )}
+      </header>
 
-      {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{error}</p>}
+      {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{error}</p>}
 
-      <DayRitual ck={checkins} hour={now.getHours()} prioritiesDone={pr.tasks.filter((t) => t.done).length} habitsDone={activeHabits.filter((h) => hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).length} onAddPriority={(t) => { if (pr.tasks.length < 3) pr.add(t) }} />
-
-      <Group className="!mt-0" title="Ahora te conviene" aside={suggestions[0]?.id === 'free' ? undefined : `${suggestions.length}`}>
-        {suggestions.map((x) => <Row key={x.id} to={x.to} tone={x.tone === 'urgent' ? 'var(--neg)' : x.tone === 'now' ? 'var(--accent)' : x.tone === 'soon' ? 'var(--sky)' : 'var(--ink-faint)'} title={x.title} sub={x.reason} />)}
-      </Group>
-
-      {dayPlan.length > 0 && (
-        <Group className="!mt-0" title="Plan sugerido para hoy" aside={soft ? 'Día suave' : undefined}>
-          {dayPlan.map((p) => <Row key={p.title} to={`/app/mente/enfoque?tarea=${encodeURIComponent(p.title)}&min=${p.min}`} icon={<span className="text-xs font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMin(p.start)}</span>} tone="var(--accent)" title={p.title} sub={`${p.min} min de enfoque${soft ? ' · sin prisa' : ''}`} />)}
-          <li className="group-foot list-none">Está armado con tus huecos libres{focusRows.rows.length >= 5 ? ' y tu mejor hora de enfoque' : ''}. Es una guía, no una orden.</li>
-        </Group>
-      )}
-
-      {dueSavings.length > 0 && (
-        <Group className="!mt-0" title="Retiro planeado de tu ahorro" aside={<Link to="/app/dinero/metas" className="underline">Ver ahorro</Link>}>
-          {dueSavings.map((pl) => <Row key={pl.id} to={`/app/dinero/metas?plan=${pl.id}`} tone="var(--accent)" title={`${money(pl.amount)} de ${savingsGoals.rows.find((g) => g.id === pl.goal_id)?.title ?? 'tu ahorro'}`} sub={`“${pl.reason}” · tú decides si lo confirmas`} />)}
-        </Group>
-      )}
-
-      <GoalSpotlight today={todayISO} evening={now.getHours() >= 19} />
-
-      <OutingSpotlight />
-
-      {dueNow.length > 0 && (
-        <Group className="!mt-0" title="Te toca" aside={<Link to="/app/mente/reglas" className="underline">Mis reglas</Link>}>
-          {dueNow.map(({ rule, why }) => <Row key={rule.id} icon={<Chk on={false} />} chevron={false} title={rule.action} sub={`${why} · ${ruleText(rule)}`} onClick={() => void rulesDb.update(rule.id, { last_done: todayISO })} />)}
-        </Group>
-      )}
-
-      <ShoppingSpotlight />
-
-      {(openPromises.length > 0 || chase.length > 0) && (
-        <Group className="!mt-0" title="Con la gente" aside={<Link to="/app/mente/cosas" className="underline">Ver todo</Link>}>
-          {openPromises.slice(0, 3).map((p) => <Row key={p.id} to="/app/mente/cosas" chevron={false} tone={promiseState(p, todayISO) === 'overdue' ? 'var(--neg)' : promiseState(p, todayISO) === 'today' ? 'var(--accent)' : 'var(--ink-faint)'} title={p.text} sub={`${p.person ? `${p.person} · ` : ''}${dueLabel(p.due_date, todayISO)}`} />)}
-          {chase.slice(0, 2).map((c) => <Row key={c.id} to="/app/mente/cosas" chevron={false} tone="var(--clay)" title={`Pedir de vuelta: ${c.name}`} sub={`Con ${c.person ?? 'alguien'}`} />)}
-        </Group>
+      {/* 2. Ahora */}
+      {mode !== 'dia' ? (
+        <section aria-label={mode === 'arranque' ? 'Arranque del día' : 'Cierre del día'} className="grid gap-3">
+          <DayRitual ck={checkins} hour={mode === 'arranque' ? 8 : 20} prioritiesDone={doneP} habitsDone={doneH} onAddPriority={(t) => pr.add(t)} />
+          {mode === 'arranque' && routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed && (
+            <Link to={`/app/mente/rutinas/${routineNow.id}/hacer`} className="btn btn-primary w-fit"><Sparkles size={16} aria-hidden /> Empezar {routineNow.name}</Link>
+          )}
+          {mode === 'cierre' && (
+            <div className="flex flex-wrap gap-2">
+              {pr.tasks.some((t) => !t.done) && <button className="btn btn-ghost" onClick={() => void carryOver()}>Pasar lo pendiente a mañana</button>}
+              {routineNow && routineStepsNow.length > 0 && !routineRunNow?.completed && <Link to={`/app/mente/rutinas/${routineNow.id}/hacer`} className="btn btn-primary"><Moon size={16} aria-hidden /> Empezar {routineNow.name}</Link>}
+            </div>
+          )}
+        </section>
+      ) : (
+        <section aria-labelledby="ahora-t" className="ahora">
+          <p id="ahora-t" className="etq">Ahora te conviene</p>
+          {top ? (
+            <>
+              <h2 className="mt-2 font-display text-3xl leading-tight">{top.title}</h2>
+              <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>{top.reason}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2"><Action it={top} big /><button className="btn btn-ghost" onClick={() => later(top)}>Más tarde</button></div>
+              {rest.length > 0 && (
+                <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--borde)' }}>
+                  <button type="button" className="flex min-h-11 w-full items-center justify-between text-sm font-semibold" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}>{rest.length} {rest.length === 1 ? 'más' : 'más'} <ChevronDown size={16} aria-hidden style={{ transform: moreOpen ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }} /></button>
+                  {moreOpen && <ul className="mt-1 grid gap-2">{rest.map((it) => <li key={it.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'var(--surface-2)' }}><div className="min-w-0 flex-1"><p className="t font-semibold">{it.title}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{it.reason}</p></div><Action it={it} /></li>)}</ul>}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="mt-2 font-display text-3xl leading-tight">{pr.tasks.find((t) => !t.done)?.title ?? 'Nada urgente'}</h2>
+              <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>{pr.tasks.find((t) => !t.done) ? 'Es tu primera prioridad sin marcar.' : 'Buen momento para enfocarte.'}</p>
+              <div className="mt-4"><Link to="/app/mente/enfoque" className="btn btn-primary">Enfocarme</Link></div>
+            </>
+          )}
+        </section>
       )}
 
       <ResumeHint />
 
-      {!prog.loading && (prog.earned > 0 || prog.rewards.rows.length > 0) && (() => {
-        const next = prog.rewards.rows.filter((r) => r.active).sort((a, b) => pointsToGo(prog.bal, a.cost) - pointsToGo(prog.bal, b.cost))[0]
-        const gained = prog.byDay.get(todayISO)?.total ?? 0
-        return (
-          <Group className="!mt-0" title="Tu avance">
-            <Row to="/app/mente/logros" tone="var(--accent)" title={`Nivel ${prog.level.level} · ${prog.level.pct}% al siguiente`} sub={<>{gained > 0 ? `+${gained} puntos hoy` : 'Aún no sumas hoy: cualquier cosa pequeña cuenta'}{next && (pointsToGo(prog.bal, next.cost) === 0 ? ` · ¡ya te alcanza “${next.name}”!` : ` · a ${pointsToGo(prog.bal, next.cost)} de “${next.name}”`)}</>} />
-          </Group>
-        )
-      })()}
+      {/* 3. Mis 3 de hoy */}
+      <section id="mis3" aria-labelledby="mis3-t" className="bloque">
+        <div className="bloque-head"><h3 id="mis3-t">{softOn ? 'Tu cosa de hoy' : 'Mis 3 de hoy'}</h3><span>{doneP}/{pr.tasks.length || (softOn ? 1 : 3)}</span></div>
+        <ul>
+          {shownTasks.map((t) => {
+            const plan = dayPlan.find((p) => p.title === t.title)
+            return (
+              <li key={t.id} className="fila-hoy">
+                <button type="button" className="flex min-h-12 flex-1 items-center gap-3 text-left" onClick={() => pr.toggle(t.id)} aria-pressed={t.done} aria-label={`${t.title}: ${t.done ? 'hecha' : 'pendiente'}`}>
+                  <Chk on={t.done} tone="var(--personal)" /><span className="min-w-0"><span className={`block ${t.done ? 'line-through opacity-60' : ''}`}>{t.title}</span>{plan && !t.done && <span className="block text-xs" style={{ color: 'var(--ink-soft)' }}>Buen rato: {fmtMin(plan.start)} · {plan.min} min</span>}</span>
+                </button>
+                <button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar prioridad: ${t.title}`} onClick={() => { pr.remove(t.id); setUndo({ label: 'Prioridad borrada', restore: () => pr.add(t.title) }) }}><Trash2 size={15} aria-hidden /></button>
+              </li>
+            )
+          })}
+          {pr.tasks.length < (softOn ? 1 : 3) && (
+            <li className="fila-hoy">
+              <form onSubmit={addPriority} className="flex w-full items-center gap-2">
+                <label className="sr-only" htmlFor="prio-in">Nueva prioridad</label>
+                <Plus size={16} aria-hidden />
+                <input id="prio-in" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={500} placeholder={pr.tasks.length ? 'Otra prioridad' : '¿Qué es lo más importante hoy?'} className="row-input" />
+                {draft.trim() && <button className="btn btn-sec !min-h-10">Agregar</button>}
+              </form>
+            </li>
+          )}
+        </ul>
+      </section>
 
-      {agenda.length > 0 && (
-        <section aria-labelledby="agenda">
-          <div className="group-head"><h3 id="agenda">Tu agenda de hoy</h3><span><Link to="/app/planear/agenda" className="underline">Ver todo</Link></span></div>
-          <ul className="group-list">
-            {agenda.map((o) => (
-              <OccurrenceCard key={o.event.id + o.date} o={o}
-                onEdit={() => setEvTarget({ event: o.event, date: o.date })}
-                onToggleDone={() => evs.setState(o.event.id, o.date, { done: !o.state.done })}
-                onToggleCheck={(id) => evs.setState(o.event.id, o.date, { checked: o.state.checked.includes(id) ? o.state.checked.filter((x) => x !== id) : [...o.state.checked, id] })} />
+      {/* 4. Lo que sigue */}
+      {mode === 'dia' && upcoming.length > 0 && (
+        <section aria-labelledby="sigue-t" className="bloque">
+          <div className="bloque-head"><h3 id="sigue-t">Lo que sigue</h3><Link to="/app/planear/agenda" className="underline">Agenda</Link></div>
+          <ul>
+            {upcoming.map((u) => (
+              <li key={u.key} className="fila-hoy">
+                <span className="w-14 shrink-0 text-sm font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMin(u.start)}</span>
+                <span className="min-w-0 flex-1"><span className="block truncate">{u.title}</span>
+                  {departure && Math.abs(departure.mins - (u.start - m)) <= 1 && <Link to="/app/mente/salida" className="text-xs underline" style={{ color: 'var(--ink-soft)' }}>Revisar lista: {departure.name}</Link>}
+                </span>
+                {u.evId && <button className="btn btn-sec btn-chico" onClick={() => void evs.setState(u.evId!, u.date, { done: true })}>Hecho</button>}
+              </li>
             ))}
           </ul>
         </section>
       )}
 
-      {activeHabits.length > 0 && (
-        <Group className="!mt-0" title="Hábitos de hoy" aside={<Link to="/app/mente" className="underline">Ver todo</Link>}>
-          {activeHabits.map((h) => {
-            const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
-            return <Row key={h.id} icon={<Chk on={done} tone="var(--pos)" />} title={h.name} muted={done} value={`${weekDone(h.id, hlogs.rows, todayISO)}/${h.target_per_week} sem.`} valueTone="soft" chevron={false} onClick={() => toggleHabit(h)} />
-          })}
-        </Group>
+      {/* 5. Hábitos de hoy */}
+      {shownHabits.length > 0 && (
+        <section aria-labelledby="hab-t" className="bloque">
+          <div className="bloque-head"><h3 id="hab-t">Hábitos de hoy</h3><Link to="/app/mente" className="underline">Ver todo</Link></div>
+          <div className="habitos" role="group" aria-label="Hábitos de hoy">
+            {shownHabits.map((h) => {
+              const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
+              return (
+                <button key={h.id} type="button" className="habito" aria-pressed={done} onClick={() => void toggleHabit(h)} title={`${weekDone(h.id, hlogs.rows, todayISO)}/${h.target_per_week} esta semana`}>
+                  <Chk on={done} tone="var(--personal)" /><span>{h.name}</span>
+                </button>
+              )
+            })}
+          </div>
+          {!softOn && dueNow.map(({ rule, why }) => (
+            <button key={rule.id} type="button" className="fila-hoy w-full text-left" onClick={() => void rulesDb.update(rule.id, { last_done: todayISO })}><Chk on={false} tone="var(--personal)" /><span className="min-w-0"><span className="block">{rule.action}</span><span className="block text-xs" style={{ color: 'var(--ink-soft)' }}>{why}</span></span></button>
+          ))}
+        </section>
       )}
 
-      <Group className="!mt-0" title="Tres prioridades" aside={`${pr.tasks.filter((t) => t.done).length}/${pr.tasks.length || 3}`}>
-        {pr.tasks.map((t) => (
-          <Row key={t.id} icon={<Chk on={t.done} />} title={t.title} muted={t.done} chevron={false} onClick={() => pr.toggle(t.id)}
-            trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar prioridad: ${t.title}`} onClick={() => { pr.remove(t.id); setUndo({ label: 'Prioridad borrada', restore: () => pr.add(t.title) }) }}><Trash2 size={15} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>} />
-        ))}
-        {pr.tasks.length < 3 && (
-          <li className="row">
-            <form onSubmit={addPriority} className="row-hit">
-              <label className="sr-only" htmlFor="prio-in">Nueva prioridad</label>
-              <span className="row-ico" aria-hidden><Plus size={16} /></span>
-              <input id="prio-in" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={500} placeholder={pr.tasks.length ? 'Otra prioridad' : '¿Qué es lo más importante hoy?'} className="row-input" />
-              {draft.trim() && <button className="btn btn-tint !min-h-9">Agregar</button>}
-            </form>
-          </li>
+      {/* 6. Pie */}
+      <footer className="pie">
+        {mode === 'dia' && !softOn && free.hasAccounts && !free.loading && (
+          <Link to="/app/dinero" className="pie-dato"><span className="etq">Libre para gastar</span><span className="cifra" style={{ color: free.free < 0 ? 'var(--aviso-texto)' : undefined }}>{money(free.free)}</span></Link>
         )}
-      </Group>
+        {!softOn && (
+          <Link to="/app/mente/logros" className="pie-dato"><span className="etq">Puntos de hoy</span><span className="cifra">{gained > 0 ? `+${gained}` : '0'}</span></Link>
+        )}
+      </footer>
 
-      <Group className="!mt-0" title="Captura rápida" footer="Anota lo que se te ocurra. Después decides dónde va.">
-        <li className="row">
-          <form onSubmit={capture} className="row-hit">
-            <label className="sr-only" htmlFor="cap-in">Captura rápida</label>
-            <span className="row-ico" aria-hidden><Plus size={16} /></span>
-            <input id="cap-in" value={cap} onChange={(e) => setCap(e.target.value)} maxLength={2000} placeholder="Una idea, un link, una tarea…" className="row-input" />
-            {cap.trim() && <button className="btn btn-tint !min-h-9">Guardar</button>}
-          </form>
-        </li>
-        {inbox.items.map((x) => (
-          <Row key={x.id} title={<span className="whitespace-normal break-words">{x.text}</span>} chevron={false}
-            trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar captura: ${x.text}`} onClick={() => { inbox.remove(x.id); setUndo({ label: 'Captura borrada', restore: () => inbox.add(x.text) }) }}><Trash2 size={15} aria-hidden style={{ color: 'var(--ink-faint)' }} /></button>} />
-        ))}
-      </Group>
       {undo && (
-        <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))', background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
+        <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>
           {undo.label}
-          <button className="min-h-11 rounded-full px-3 font-semibold underline" style={{ color: 'var(--accent)' }} onClick={() => { undo.restore(); setUndo(null) }}>Deshacer</button>
+          <button className="min-h-11 rounded-full px-3 font-semibold underline" onClick={() => { undo.restore(); setUndo(null) }}>Deshacer</button>
         </div>
       )}
-      <OverwhelmSheet open={overwhelm} onClose={() => setOverwhelm(false)} priorities={pr.tasks.filter((t) => !t.done).map((t) => t.title)} dump={async (lines) => { for (const l of lines) await inbox.add(l) }} />
-      <EventEditor target={evTarget} onClose={() => setEvTarget(null)}
-        onSave={async (id, v) => { if (id) await evs.update(id, v); else await evs.add(v); setEvTarget(null) }}
-        onDelete={(id) => { evs.remove(id); setEvTarget(null) }}
-        onSkip={(e, d) => { evs.skip(e, d); setEvTarget(null) }} />
+
+      {/* Me abruma: una sola cosa y tres salidas */}
+      <Sheet open={overwhelm} title="Me abruma" onClose={() => setOverwhelm(false)}>
+        <div className="grid gap-4">
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Lo demás puede esperar. Por ahora, una sola cosa:</p>
+          <div className="rounded-3xl p-4" style={{ background: 'var(--marca-suave)' }}>
+            <p className="font-display text-2xl leading-tight">{top?.title ?? pr.tasks.find((t) => !t.done)?.title ?? 'Respirar un momento'}</p>
+            {top && <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>{top.reason}</p>}
+          </div>
+          <div className="grid gap-2">
+            {top && (top.inline ? <button className="btn btn-primary" onClick={() => { setOverwhelm(false); void runInline(top) }}>Hacer esto</button> : <button className="btn btn-primary" onClick={() => { setOverwhelm(false); nav(top.to) }}>Hacer esto</button>)}
+            <button className="btn btn-sec" onClick={() => { setOverwhelm(false); nav('/app/mente/enfoque?min=15&auto=1' + (top ? `&tarea=${encodeURIComponent(top.title)}` : '')) }}>Enfocarme 15 min</button>
+            <button className="btn btn-sec" onClick={() => { setOverwhelm(false); nav('/app/mente/ocio') }}>Tomar un descanso</button>
+            <button className="min-h-11 text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => { setOverwhelm(false); setDump(true) }}><Wind size={14} aria-hidden className="mr-1 inline" />Prefiero soltar todo lo que tengo en la cabeza</button>
+          </div>
+        </div>
+      </Sheet>
+      <OverwhelmSheet open={dump} onClose={() => setDump(false)} priorities={pr.tasks.filter((t) => !t.done).map((t) => t.title)} dump={async (lines) => { for (const l of lines) await inbox.add(l) }} />
     </div>
   )
 }

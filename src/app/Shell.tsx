@@ -42,6 +42,12 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
     return () => window.removeEventListener('keydown', h)
   }, [nav])
 
+  useEffect(() => {
+    const h = () => setNote(true)
+    window.addEventListener('mw-anotar', h)
+    return () => window.removeEventListener('mw-anotar', h)
+  }, [])
+
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
 
   return (

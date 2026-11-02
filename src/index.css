@@ -783,3 +783,25 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .tabbar { align-items: start; }
 .tile { background: var(--superficie); border-radius: 28px; box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.25); padding: 16px; display: flex; flex-direction: column; gap: 10px; color: var(--tinta); text-decoration: none; position: relative; overflow: hidden; min-width: 0; transition: transform .28s var(--resorte); }
 .tile:active { transform: scale(.96); }
+
+/* ───────── Hoy (etapa 2) ───────── */
+.etq { font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--tinta-suave); }
+.btn-sec { background: var(--superficie-2); color: var(--tinta); }
+.btn-chico { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 12px; }
+.chip-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: var(--superficie-2); color: var(--tinta); font-size: 14px; font-weight: 600; cursor: pointer; border: 0; transition: transform .28s var(--resorte), background-color .2s; }
+.chip-btn[aria-pressed="true"], .chip-btn[aria-expanded="true"] { background: var(--marca); color: var(--sobre-marca); }
+.chip-btn:active { transform: scale(.96); }
+.ahora { background: var(--marca-suave); border-radius: 28px; padding: 20px; box-shadow: var(--sombra-1); }
+.bloque { background: var(--superficie); border-radius: 24px; box-shadow: var(--sombra-1); padding: 6px 16px 8px; }
+.bloque-head { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font-size: 13px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--tinta-suave); }
+.bloque-head h3 { margin: 0; font: inherit; }
+.fila-hoy { display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1px solid var(--borde); list-style: none; }
+.fila-hoy:first-child { border-top: 0; }
+.bloque ul { margin: 0; padding: 0; }
+.habitos { display: flex; flex-wrap: wrap; gap: 8px 10px; padding: 4px 0 8px; }
+.habito { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px 0 8px; border-radius: 999px; background: var(--superficie-2); color: var(--tinta); font-size: 14px; font-weight: 600; cursor: pointer; border: 0; text-align: left; }
+.habito[aria-pressed="true"] { background: var(--personal-suave); color: var(--personal-texto); }
+.pie { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.pie-dato { display: flex; flex-direction: column; gap: 4px; background: var(--superficie); border-radius: 24px; padding: 16px; box-shadow: var(--sombra-1); color: var(--tinta); text-decoration: none; }
+.pie-dato .cifra { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 34px; font-variant-numeric: tabular-nums; }
+.hoy .t { font-weight: 600; }

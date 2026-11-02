@@ -139,7 +139,7 @@ export function usePriorities() {
     const { error } = await supabase.from('tasks').delete().eq('id', id)
     if (error) { setError('No se pudo borrar.'); load() }
   }
-  return { tasks, error, add, toggle, remove }
+  return { tasks, error, add, toggle, remove, reload: load }
 }
 
 export type InboxItem = { id: string; text: string }
