@@ -90,7 +90,15 @@ export default function Overview() {
                 <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
                   Tienes {money(money_.available)} en tus cuentas{free.committed > 0 ? <> y en los próximos 30 días vas a pagar {money(free.committed)}</> : null}. {bals.inGoals > 0 ? <>Tu ahorro ({money(bals.inGoals)}) ya está aparte.</> : null}
                 </p>
-                {soon.length > 0 && <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Próximos: {soon.slice(0, 3).map((u) => `${u.name} ${money(u.amount)}`).join(' · ')}{soon.length > 3 ? ` y ${soon.length - 3} más` : ''}</p>}
+                <details className="mt-3">
+                  <summary className="min-h-11 cursor-pointer text-sm font-semibold">Ver la resta, línea por línea</summary>
+                  <ul className="mt-1 grid gap-1 text-sm">
+                    <li className="flex justify-between"><span>En tus cuentas</span><span>{money(money_.available)}</span></li>
+                    {soon.map((u, i) => <li key={`${u.name}-${i}`} className="flex justify-between" style={{ color: 'var(--ink-soft)' }}><span>− {u.name} · {new Date(u.date + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' })}</span><span>{money(u.amount)}</span></li>)}
+                    {soon.length === 0 && <li style={{ color: 'var(--ink-soft)' }}>Nada por pagar en los próximos 30 días.</li>}
+                    <li className="flex justify-between border-t pt-1 font-semibold" style={{ borderColor: 'var(--borde)' }}><span>Libre para gastar</span><span>{money(free.free)}</span></li>
+                  </ul>
+                </details>
               </section>
               <Link to="/app/dinero/cuentas" className="mb-5 block" aria-label="Ver mis cuentas">
                 <div className="stats">

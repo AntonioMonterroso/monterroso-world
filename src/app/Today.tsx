@@ -6,6 +6,7 @@ import Sheet from '../components/Sheet'
 import DayRitual from '../components/DayRitual'
 import OverwhelmSheet from '../components/OverwhelmSheet'
 import { ResumeHint } from '../components/Resume'
+import Cobrado from '../components/Cobrado'
 import { useProgress } from '../lib/progress'
 import { dueRules, type Rule } from '../lib/ifthen'
 import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
@@ -19,7 +20,7 @@ import { freeGaps, peakHour, planDay } from '../lib/dayplan'
 import { duePlans, type Plan } from '../lib/savings'
 import type { Goal } from '../lib/finance'
 import { currentMonth, money, useProjects } from '../lib/projects'
-import { monthlyClients } from '../lib/incoming'
+import { monthlyClients, type ClientRow } from '../lib/incoming'
 import { rankRecipes, type PantryItem, type Recipe } from '../lib/kitchen'
 import { useFreeToSpend } from '../lib/useFree'
 import { supabase } from '../lib/supabase'
@@ -141,6 +142,8 @@ export default function Today() {
   const [energyOpen, setEnergyOpen] = useState(false)
   const [snoozed, setSnoozed] = useState(() => readSnoozed())
   const [moreOpen, setMoreOpen] = useState(false)
+  const [cobro, setCobro] = useState<ClientRow | null>(null)
+  const [cobroMsg, setCobroMsg] = useState('')
   const softOn = soft || manualSoft
   const toggleSoft = () => { const v = !manualSoft; setManualSoft(v); try { localStorage.setItem(softKey(todayISO), v ? '1' : '0') } catch { /* sin almacenamiento */ } }
 
@@ -178,6 +181,7 @@ export default function Today() {
   const runInline = async (it: Item) => {
     if (it.inline === 'event-done' && it.ref) await evs.setState(it.ref, todayISO, { done: true })
     else if (it.inline === 'promise-done' && it.ref) await promisesDb.update(it.ref, { done: true, done_on: todayISO } as never)
+    else if (it.inline === 'cobrado' && it.ref) setCobro(monthlyClients(work.projects, work.payments, currentMonth(now), now).find((r) => r.project.id === it.ref) ?? null)
     else if (it.inline === 'anotar') window.dispatchEvent(new CustomEvent('mw-anotar'))
     else if (it.inline === 'pick') { document.getElementById('mis3')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.getElementById('prio-in')?.focus(), 350) }
   }
@@ -340,6 +344,9 @@ export default function Today() {
           <Link to="/app/mente/logros" className="pie-dato"><span className="etq">Puntos de hoy</span><span className="cifra">{gained > 0 ? `+${gained}` : '0'}</span></Link>
         )}
       </footer>
+
+      {cobroMsg && <p role="status" className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{cobroMsg}</p>}
+      <Cobrado row={cobro} addPayment={work.addPayment} onClose={() => setCobro(null)} onDone={setCobroMsg} />
 
       {undo && (
         <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>

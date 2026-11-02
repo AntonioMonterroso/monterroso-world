@@ -1,4 +1,4 @@
-import { Activity, BookOpen, Briefcase, Calendar, CalendarClock, CalendarDays, ChefHat, Clock, DoorOpen, Dumbbell, FileText, Globe2, Handshake, Home, KeyRound, Lightbulb, ListChecks, ListMusic, MapPin, Music, Palette, Send, ShoppingBag, StickyNote, Sunrise, Sun, Trophy, Wallet, Zap, Bookmark, Link2, type LucideIcon } from 'lucide-react'
+import { Users, Activity, BookOpen, Briefcase, Calendar, CalendarClock, CalendarDays, ChefHat, Clock, DoorOpen, Dumbbell, FileText, Globe2, Handshake, Home, KeyRound, Lightbulb, ListChecks, ListMusic, MapPin, Music, Palette, Send, ShoppingBag, StickyNote, Sunrise, Sun, Trophy, Wallet, Zap, Bookmark, Link2, type LucideIcon } from 'lucide-react'
 
 /** Las seis secciones del sistema (más Privado) y lo que vive en cada una. Las direcciones de siempre se conservan. */
 export type Area = 'web' | 'musica' | 'personal'
@@ -18,7 +18,8 @@ export const sections: Section[] = [
   ] },
   { id: 'dinero', label: 'Dinero', to: `${A}/dinero`, icon: Wallet, area: null, blurb: 'Lo que entra, lo que sale y tu ahorro', views: [] },
   { id: 'trabajo', label: 'Trabajo', to: `${A}/trabajo`, icon: Briefcase, area: 'web', blurb: 'Clientes, propuestas y cobros', views: [
-    { to: `${A}/trabajo`, label: 'Trabajos', icon: Briefcase, match: [`${A}/trabajo`], end: true },
+    { to: `${A}/trabajo`, label: 'Clientes', icon: Users, match: [`${A}/trabajo`], end: true },
+    { to: `${A}/trabajo/mes`, label: 'Trabajos', icon: Briefcase, match: [`${A}/trabajo/mes`] },
     { to: `${A}/trabajo/propuestas`, label: 'Propuestas', icon: FileText, match: [`${A}/trabajo/propuestas`] },
     { to: `${A}/envios`, label: 'Envíos', icon: Send, match: [`${A}/envios`] },
     { to: `${A}/trabajo/precios`, label: 'Precios públicos', icon: Globe2, match: [`${A}/trabajo/precios`] },

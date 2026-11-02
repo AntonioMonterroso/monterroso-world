@@ -7,7 +7,7 @@ import { resolveMode, useMode } from '../lib/context'
 import { blockApplies, useBlocks } from '../lib/data'
 import { localISO } from '../lib/time'
 import { sectionOf, sections } from '../lib/sections'
-import Anotar from '../components/Anotar'
+import Anotar, { type Saved } from '../components/Anotar'
 import { useTone } from '../lib/tone'
 import NotificationActions from './NotificationActions'
 import Palette from './Palette'
@@ -19,6 +19,8 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   useTone()
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState(false)
+  const [saved, setSaved] = useState<Saved | null>(null)
+  useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(null), 5000); return () => clearTimeout(t) }, [saved])
   const nav = useNavigate()
   const { pathname } = useLocation()
   const here = sectionOf(pathname).section.id
@@ -94,7 +96,13 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
         <Link to="/app/areas" className="tab-link" aria-current={['trabajo', 'musica', 'personal', 'privado'].includes(here) || pathname.startsWith('/app/areas') ? 'page' : undefined}><LayoutGrid size={20} aria-hidden /><span>Áreas</span></Link>
       </nav>
 
-      <Anotar open={note} onClose={() => setNote(false)} />
+      <Anotar open={note} onClose={() => setNote(false)} onSaved={setSaved} />
+      {saved && (
+        <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>
+          {saved.label}
+          <button className="min-h-11 rounded-full px-3 font-semibold underline" onClick={() => { const u = saved.undo; setSaved(null); void u() }}>Deshacer</button>
+        </div>
+      )}
 
       <NotificationActions />
       <Palette open={open} onClose={() => setOpen(false)} onLock={onLock} onSignOut={onSignOut} />

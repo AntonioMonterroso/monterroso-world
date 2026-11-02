@@ -2,10 +2,10 @@ import { ChevronRight, Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { STATUSES, activeIn, currentMonth, hasBilling, monthlyStates, money, setupMonth, setupPaid, receivedOf, statusMeta, summarizeMonth, useProjects, type Payment, type Project, type Status } from '../../lib/projects'
-import { syncReminder } from '../../lib/remind'
 import { dayNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
+import { removeProject, saveProject } from './saveProject'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { Empty } from '../money/shared'
 
@@ -106,20 +106,8 @@ export default function Projects() {
       )}
 
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
-        onSave={async (id, patch) => {
-          // Aviso mensual el día de cobro (se reemplaza o se quita según lo guardado)
-          const cur = db.projects.find((x) => x.id === id)
-          const mf = Number(patch.monthly_fee ?? 0)
-          let reminder_event_id = cur?.reminder_event_id ?? null
-          if (mf > 0 && patch.billing_day) {
-            const t = new Date(), day = patch.billing_day
-            const first = new Date(t.getFullYear(), t.getMonth() + (t.getDate() > day ? 1 : 0), day)
-            reminder_event_id = await syncReminder(reminder_event_id, { title: `Cobrar mensualidad: ${patch.title ?? cur?.title}`, action: `${money(mf)} de ${patch.client || patch.title || 'tu cliente'}`, date: localISO(first), monthly: true, minute: 9 * 60 })
-          } else reminder_event_id = await syncReminder(reminder_event_id, null)
-          await db.update(id, { ...patch, reminder_event_id })
-          setEditing(null)
-        }}
-        onDelete={(id) => { void syncReminder(db.projects.find((x) => x.id === id)?.reminder_event_id ?? null, null); db.remove(id); setEditing(null) }}
+        onSave={async (id, patch) => { await saveProject(db, id, patch); setEditing(null) }}
+        onDelete={(id) => { removeProject(db, id); setEditing(null) }}
         onAddPayment={db.addPayment} onUpdatePayment={db.updatePayment} onRemovePayment={db.removePayment} />
     </div>
   )

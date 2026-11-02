@@ -66,6 +66,8 @@ import QuoteSheet from './work/QuoteSheet'
 import Calculator from './money/Calculator'
 import Incoming from './money/Incoming'
 import Areas from './Areas'
+import Clients from './work/Clients'
+import ClientPage from './work/ClientPage'
 import SectionLayout from '../components/SectionLayout'
 import Share from './Share'
 import Overview from './money/Overview'
@@ -157,7 +159,9 @@ function Gate() {
             <Route path="calendario" element={<Calendar />} />
           </Route>
           <Route path="trabajo" element={<WorkLayout />}>
-            <Route index element={<Projects />} />
+            <Route index element={<Clients />} />
+            <Route path="mes" element={<Projects />} />
+            <Route path="cliente/:key" element={<ClientPage />} />
             <Route path="propuestas" element={<Quotes />} />
             <Route path="precios" element={<PricesEditor />} />
           </Route>

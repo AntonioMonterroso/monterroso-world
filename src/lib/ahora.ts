@@ -2,7 +2,7 @@ import { suggest, type Suggestion, type SuggestInput } from './suggest'
 
 /** La tarjeta «Ahora» de Hoy: las reglas de suggest.ts más cobro por hacer, retiro de ahorro y «¿qué cocino?»,
  *  con tipo (nunca dos del mismo), acción principal y posponer 3 horas sin castigo. */
-export type Inline = 'event-done' | 'promise-done' | 'pick' | 'anotar'
+export type Inline = 'event-done' | 'promise-done' | 'pick' | 'anotar' | 'cobrado'
 export type Item = Suggestion & { kind: string; act: string; inline?: Inline; ref?: string }
 
 export type Extra = {
@@ -62,7 +62,7 @@ export function ahora(input: SuggestInput, extra: Extra, o: { soft: boolean; sno
   const m = input.nowMin
   if (extra.collect?.length) {
     const c = extra.collect[0]
-    items.push({ id: `cobro-${c.id}`, kind: 'collect', title: c.late ? `${c.title} tiene un cobro atrasado` : `Hoy toca cobrar a ${c.title}`, reason: extra.collect.length > 1 ? `Y ${extra.collect.length - 1} cobro${extra.collect.length === 2 ? '' : 's'} más` : 'Un toque y queda registrado', to: '/app/dinero/entra', tone: c.late ? 'soon' : 'now', score: 80, act: 'Cobrado' })
+    items.push({ id: `cobro-${c.id}`, kind: 'collect', title: c.late ? `${c.title} tiene un cobro atrasado` : `Hoy toca cobrar a ${c.title}`, reason: extra.collect.length > 1 ? `Y ${extra.collect.length - 1} cobro${extra.collect.length === 2 ? '' : 's'} más` : 'Un toque y queda registrado', to: '/app/dinero/entra', tone: c.late ? 'soon' : 'now', score: 80, act: 'Cobrado', inline: 'cobrado', ref: c.id })
   }
   for (const p of (extra.savings ?? []).slice(0, 1)) items.push({ id: `ahorro-${p.id}`, kind: 'savings', title: `Tenías planeado sacar ${p.amount}`, reason: `De «${p.goal}». Confirma o mueve la fecha`, to: `/app/dinero/metas?plan=${p.id}`, tone: 'now', score: 70, act: 'Confirmar' })
   if ((extra.cookReady ?? 0) > 0 && (inWindow(m, 11 * 60 + 30, 13 * 60) || inWindow(m, 18 * 60, 19 * 60 + 30))) {
