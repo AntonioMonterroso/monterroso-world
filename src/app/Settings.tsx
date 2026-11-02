@@ -1,6 +1,7 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
+import { getSettings, patchSettings } from '../lib/settings'
 import { bioLockEnrolled, bioLockSupported, enrollBioLock, removeBioLock } from '../lib/biolock'
 import { disablePush, enablePush, loadSettings, pushStatus, saveBlockAlerts, saveQuiet, sendTest, type BlockAlerts, type PushStatus, type Quiet } from '../lib/push'
 import { fmtMin, toMin } from '../lib/time'
@@ -97,16 +98,35 @@ function BioLockRow() {
 
 export default function Settings({ onLock, onResetPin }: { onLock: () => void; onResetPin: () => void }) {
   const { session, signOut } = useAuth()
+  const [words, setWords] = useState<Record<string, { category?: string }>>({})
+  useEffect(() => { void getSettings().then((s) => setWords(((s as { anotarWords?: Record<string, { category?: string }> }).anotarWords) ?? {})) }, [])
+  const forget = (w: string) => { const next = { ...words }; delete next[w]; setWords(next); void patchSettings({ anotarWords: next } as never) }
+  const learned = Object.entries(words)
   return (
     <div>
-      <PageHeader title="Ajustes" />
-      <Alerts />
-      <Group title="Cuenta">
-        <Row title={<span className="break-all">{session?.user.email}</span>} chevron={false} />
+      <PageHeader title="Ajustes" sub="De lo que más tocas a lo que menos." />
+      <Group title="Seguridad">
         <Row title="Bloquear ahora" onClick={onLock} />
         <Row title="Cambiar PIN" onClick={onResetPin} />
         <BioLockRow />
-        <Row title={<span style={{ color: 'var(--neg)' }}>Cerrar sesión</span>} onClick={signOut} />
+      </Group>
+      <Alerts />
+      <Group title="Mi día" footer="Los hábitos mínimos son los únicos que se ven en Día suave.">
+        <Row title="Hábitos mínimos de Día suave" sub="Elige cuáles cuentan cuando tu energía está baja" to="/app/mente" />
+        <Row title="Rutinas y sus horarios" to="/app/mente/rutinas" />
+      </Group>
+      <Group title="Áreas y categorías">
+        <Row title="Áreas y categorías" sub="Crear, renombrar, elegir color y ocultar" to="/app/dinero/categorias" />
+      </Group>
+      <Group title="Anotar" footer={learned.length ? 'Lo que Anotar aprendió de ti. Quita una palabra si se equivocó.' : 'Cuando cambies la categoría de un gasto en Anotar, aprenderá la palabra y aparecerá aquí.'}>
+        {learned.length === 0 ? <Row title="Aún no ha aprendido palabras" chevron={false} /> : learned.map(([w, v]) => <Row key={w} title={w} sub={`va a ${v.category ?? '—'}`} chevron={false} trailing={<button className="min-h-11 px-3 text-sm underline" onClick={() => forget(w)}>Olvidar</button>} />)}
+      </Group>
+      <Group title="Apariencia">
+        <Row title="Claro, oscuro y paletas" sub="Elige cómo se ve" to="/app/ajustes/apariencia" />
+      </Group>
+      <Group title="Cuenta">
+        <Row title={<span className="break-all">{session?.user.email}</span>} chevron={false} />
+        <Row title="Cerrar sesión" onClick={signOut} />
       </Group>
     </div>
   )

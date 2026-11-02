@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoryFor, entender, keyWord, takeDate, takeTime, type Ctx } from './anotar'
+import { categoryFor, entender, keyWord, takeDate, takeTime, youtubeId, type Ctx } from './anotar'
 
 const ctx: Ctx = { today: '2026-11-02', clients: [{ id: 'p1', title: 'Barbería Imperio', client: 'Imperio' }, { id: 'p2', title: 'Pastelería Dulce' }], learned: {} }
 
@@ -62,5 +62,14 @@ describe('fechas y horas', () => {
     expect(takeTime('culto 19:00').min).toBe(19 * 60)
     expect(takeTime('12 am').min).toBe(0)
     expect(takeTime('compré 3 cosas').min).toBeNull()
+  })
+})
+
+describe('enlaces', () => {
+  it('YouTube va a Videos y lo demás a Links', () => {
+    expect(entender('https://youtu.be/dQw4w9WgXcQ', ctx)).toMatchObject({ kind: 'video', videoId: 'dQw4w9WgXcQ' })
+    expect(entender('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3', ctx).kind).toBe('video')
+    expect(entender('https://www.ejemplo.com/pagina', ctx)).toMatchObject({ kind: 'enlace', title: 'ejemplo.com' })
+    expect(youtubeId('https://ejemplo.com')).toBeNull()
   })
 })

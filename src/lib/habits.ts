@@ -53,3 +53,13 @@ export function streak(habit: Pick<Habit, 'id' | 'target_per_week'>, logs: Habit
   while (inWeek(ws) >= habit.target_per_week) { c++; ws -= 7 }
   return { count: c, unit: 'semanas' }
 }
+
+/** Avance que no se rompe: días marcados este mes y el mejor mes que has tenido. Un día sin marcar es solo un espacio vacío. */
+export function monthStats(days: string[], today: string): { thisMonth: number; best: number; bestMonth: string | null } {
+  const by = new Map<string, Set<string>>()
+  for (const d of days) { const k = d.slice(0, 7); by.set(k, (by.get(k) ?? new Set()).add(d)) }
+  let best = 0, bestMonth: string | null = null
+  for (const [k, v] of by) if (v.size > best || (v.size === best && bestMonth && k > bestMonth)) { best = v.size; bestMonth = k }
+  return { thisMonth: by.get(today.slice(0, 7))?.size ?? 0, best, bestMonth }
+}
+export const habitMonthStats = (habitId: string, logs: HabitLog[], today: string) => monthStats(logs.filter((l) => l.habit_id === habitId).map((l) => l.day), today)

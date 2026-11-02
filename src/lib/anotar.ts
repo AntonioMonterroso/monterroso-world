@@ -2,7 +2,7 @@ import { DEFAULT_EXPENSE_CATEGORIES } from './finance'
 
 /** ＋ Anotar entiende frases escritas como hablas, con reglas simples de palabras (sin servicios de pago).
  *  Con el uso aprende tus palabras: si «pollo» siempre lo cambias a Comida, la próxima vez ya lo pone ahí. */
-export type Kind = 'gasto' | 'ingreso' | 'cobro' | 'evento' | 'comprar' | 'prestado' | 'promesa' | 'idea' | 'bandeja'
+export type Kind = 'gasto' | 'ingreso' | 'cobro' | 'evento' | 'comprar' | 'prestado' | 'promesa' | 'idea' | 'video' | 'enlace' | 'bandeja'
 export type Entendido = {
   kind: Kind
   label: string
@@ -14,12 +14,14 @@ export type Entendido = {
   startMin?: number
   person?: string
   clientId?: string
+  url?: string
+  videoId?: string
   eventKind?: 'church' | 'meeting' | 'rehearsal' | 'outing' | 'appointment' | 'work' | 'other'
 }
 export type Learned = Record<string, { category?: string }>
 export type Ctx = { today: string; clients: { id: string; title: string; client?: string | null }[]; learned: Learned }
 
-export const KIND_LABEL: Record<Kind, string> = { gasto: 'Gasto', ingreso: 'Ingreso', cobro: 'Cobro', evento: 'Evento', comprar: 'Por comprar', prestado: 'Cosa prestada', promesa: 'Promesa', idea: 'Idea', bandeja: 'Bandeja' }
+export const KIND_LABEL: Record<Kind, string> = { gasto: 'Gasto', ingreso: 'Ingreso', cobro: 'Cobro', evento: 'Evento', comprar: 'Por comprar', prestado: 'Cosa prestada', promesa: 'Promesa', idea: 'Idea', video: 'Video', enlace: 'Enlace', bandeja: 'Bandeja' }
 
 export const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
@@ -89,11 +91,26 @@ const eventKind = (t: string): Entendido['eventKind'] => { const n = norm(t); re
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const money = (n: number) => `Q ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+/** El identificador de un video de YouTube a partir de su enlace. */
+export function youtubeId(url: string): string | null {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{4,20})/)
+  return m ? m[1] : null
+}
+
 export function entender(raw: string, ctx: Ctx): Entendido {
   const text = raw.trim().replace(/\s+/g, ' ')
   const bandeja: Entendido = { kind: 'bandeja', label: 'Bandeja · lo clasificas después', title: text }
   if (!text) return bandeja
   const t = norm(text)
+
+  // Pegar un enlace lo guarda en Privado › Guardado: YouTube a Videos y lo demás a Links
+  if (/^https?:\/\/\S+$/i.test(text)) {
+    const id = youtubeId(text)
+    if (id) return { kind: 'video', url: text, videoId: id, title: 'Video de YouTube', label: 'Video · Guardado › Aprender' }
+    let host = text
+    try { host = new URL(text).hostname.replace(/^www\./, '') } catch { /* deja el texto */ }
+    return { kind: 'enlace', url: text, title: host, label: `Enlace · Guardado › Links` }
+  }
 
   // +Q 300 tocada boda → ingreso; Q 45 almuerzo → gasto
   let m = text.match(/^\+\s*q?\s*(\d+(?:[.,]\d+)?)\s*(.*)$/i)

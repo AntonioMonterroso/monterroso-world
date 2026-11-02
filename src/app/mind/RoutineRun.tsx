@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { chime } from '../../lib/ambient'
 import { mmss, remainingSeconds } from '../../lib/focus'
-import { routineStreak, type Routine, type Run, type Step } from '../../lib/routines'
+import { routineMonthDays, type Routine, type Run, type Step } from '../../lib/routines'
 import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
@@ -83,14 +83,14 @@ export default function RoutineRun() {
   if (!r || steps.length === 0) return <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#07111a' }}><div><p className="font-display text-2xl">{r ? 'Esta rutina no tiene pasos' : 'No encontré esta rutina'}</p><button className="btn btn-primary mt-4" onClick={() => nav('/app/mente/rutinas')}>Volver</button></div></div>
 
   if (finished) {
-    const streak = routineStreak(r, runsDb.rows.filter((x) => x.routine_id === r.id), today)
+    const streak = routineMonthDays(runsDb.rows.filter((x) => x.routine_id === r.id), today)
     return (
       <div className="safe-top fixed inset-0 z-50 grid place-items-center px-6 text-center" style={{ background: '#07111a' }}>
         <div className="max-w-sm">
           <p className="eyebrow">{r.name}</p>
           <h1 className="mt-3 font-display text-5xl">{finished.completed ? 'Lista' : 'Hiciste lo que pudiste'}</h1>
-          <p className="mt-3" style={{ color: 'var(--ink-soft)' }}>{finished.count} de {steps.length} pasos. {finished.completed ? 'Cuenta como completada.' : 'Mañana es otra oportunidad; la racha no se borra por un día.'}</p>
-          {finished.completed && streak > 0 && <p className="mt-4 inline-flex items-center gap-2 text-lg" style={{ color: 'var(--accent)' }}><Flame size={20} aria-hidden /> {streak} {streak === 1 ? 'día seguido' : 'días seguidos'}</p>}
+          <p className="mt-3" style={{ color: 'var(--ink-soft)' }}>{finished.count} de {steps.length} pasos. {finished.completed ? 'Cuenta como completada.' : 'Mañana es otra oportunidad.'}</p>
+          {finished.completed && streak > 0 && <p className="mt-4 inline-flex items-center gap-2 text-lg" style={{ color: 'var(--accent)' }}><Flame size={20} aria-hidden /> {streak} {streak === 1 ? 'día' : 'días'} este mes</p>}
           <div className="mt-8 flex justify-center gap-3"><button className="btn btn-primary" onClick={() => nav('/app/mente/rutinas')}>Listo</button><button className="btn btn-ghost" onClick={() => nav('/app')}>Ir a Hoy</button></div>
         </div>
       </div>

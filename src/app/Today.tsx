@@ -23,6 +23,7 @@ import { currentMonth, money, useProjects } from '../lib/projects'
 import { monthlyClients, type ClientRow } from '../lib/incoming'
 import { rankRecipes, type PantryItem, type Recipe } from '../lib/kitchen'
 import { useFreeToSpend } from '../lib/useFree'
+import { useMinHabits } from '../lib/minHabits'
 import { supabase } from '../lib/supabase'
 import { useAttention } from '../lib/attention'
 import { blockApplies, useBlocks, useInbox, usePriorities } from '../lib/data'
@@ -138,6 +139,7 @@ export default function Today() {
   const recipes = useTable<Recipe>('recipes', { col: 'title', asc: true })
   const pantry = useTable<PantryItem>('pantry_items', { col: 'name', asc: true })
   const free = useFreeToSpend()
+  const minHabits = useMinHabits()
   const [manualSoft, setManualSoft] = useState(() => readSoft(localISO()))
   const [energyOpen, setEnergyOpen] = useState(false)
   const [snoozed, setSnoozed] = useState(() => readSnoozed())
@@ -167,7 +169,7 @@ export default function Today() {
   const doneH = activeHabits.filter((h) => hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)).length
   const gained = prog.byDay.get(todayISO)?.total ?? 0
   const shownTasks = softOn ? pr.tasks.filter((t) => !t.done).slice(0, 1).concat(pr.tasks.filter((t) => t.done)) : pr.tasks
-  const shownHabits = softOn ? activeHabits.slice(0, 2) : activeHabits
+  const shownHabits = softOn ? (minHabits.ids.length ? activeHabits.filter((h) => minHabits.ids.includes(h.id)) : activeHabits.slice(0, 2)) : activeHabits
 
   // Lo que sigue: los próximos 2 bloques o eventos de hoy
   const upcoming = useMemo(() => {

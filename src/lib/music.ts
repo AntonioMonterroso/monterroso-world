@@ -61,3 +61,12 @@ export function streak(logs: { practiced_on: string }[], today: string): number 
   while (days.has(n)) { s++; n-- }
   return s
 }
+
+/** Práctica sin culpa: días practicados este mes y minutos por instrumento. */
+export function practiceMonth(logs: { practiced_on: string; minutes: number; instrument: string }[], today: string): { days: number; minutes: number; byInstrument: Record<string, number> } {
+  const m = today.slice(0, 7)
+  const mine = logs.filter((l) => l.practiced_on.startsWith(m))
+  const byInstrument: Record<string, number> = {}
+  for (const l of mine) byInstrument[l.instrument] = (byInstrument[l.instrument] ?? 0) + l.minutes
+  return { days: new Set(mine.map((l) => l.practiced_on)).size, minutes: mine.reduce((a, l) => a + l.minutes, 0), byInstrument }
+}

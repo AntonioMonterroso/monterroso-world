@@ -68,6 +68,13 @@ export default function Share() {
   const partnerLinks = useTable<ShareLink>('share_links', { col: 'created_at', asc: false })
   const partners = useTable<Partner>('training_partners', { col: 'name', asc: true })
   const sermons = useTable<Sermon>('sermons', { col: 'created_at', asc: false })
+  const quotes = useTable<{ id: string; title: string; client_name: string; shared: boolean; share_token: string; status: string }>('quotes', { col: 'created_at', asc: false })
+  const sharedQuotes = quotes.rows.filter((q) => q.shared && q.share_token)
+  const offQuote = async (id: string) => {
+    if (confirm !== id) { setConfirm(id); setTimeout(() => setConfirm((c) => (c === id ? null : c)), 4000); return }
+    await quotes.update(id, { shared: false } as never)
+    setConfirm(null)
+  }
   const [card, setCard] = useState<FocusKey | null>(null)
   const [confirm, setConfirm] = useState<string | null>(null)
   const [copied, setCopied] = useState('')
@@ -128,6 +135,16 @@ export default function Share() {
             trailing={<button className="min-h-11 rounded-full px-3 text-sm font-semibold" style={{ background: 'var(--surface-2)', color: copied === s.id ? 'var(--pos)' : 'var(--ink-soft)' }} onClick={() => void copyLive(s)}>{copied === s.id ? 'Copiado' : 'Copiar enlace'}</button>} />)}
         </Group>
       )}
+
+      <Group title="Propuestas y seguimiento" footer="El cliente ve su propuesta y el avance de su proyecto con un enlace secreto. Apagarlo lo deja de mostrar al instante.">
+        {sharedQuotes.length === 0 ? <li className="row"><p className="row-hit text-sm" style={{ color: 'var(--ink-faint)' }}>Ninguna propuesta está compartida.</p></li> : sharedQuotes.map((q) => (
+          <Row key={q.id} tone="var(--web)" title={q.client_name || q.title} sub={`${q.title} · compartida`} chevron={false}
+            trailing={<span className="flex">
+              <button className="min-h-11 rounded-full px-3 text-sm font-semibold" style={{ color: copied === q.id ? 'var(--pos)' : 'var(--ink-soft)' }} onClick={async () => { if (await copyText(`${profile.site}cliente?t=${q.share_token}`)) { setCopied(q.id); setTimeout(() => setCopied(''), 1800) } }}>{copied === q.id ? 'Copiado' : 'Copiar'}</button>
+              <button className="min-h-11 rounded-full px-3 text-sm font-semibold" style={{ color: confirm === q.id ? 'var(--peligro-texto)' : 'var(--ink-soft)' }} onClick={() => void offQuote(q.id)}>{confirm === q.id ? '¿Apagar?' : 'Apagar'}</button>
+            </span>} />
+        ))}
+      </Group>
 
       <p className="group-foot mt-6"><Link to="/app/ajustes" className="underline">Ajustes</Link> · Todo lo público es de solo lectura y no incluye tu bóveda, tus finanzas ni tus notas de voz.</p>
       <CardSheet focus={card} onClose={() => setCard(null)} />

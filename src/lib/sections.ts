@@ -10,9 +10,10 @@ const A = '/app'
 export const sections: Section[] = [
   { id: 'hoy', label: 'Hoy', to: A, icon: Sun, area: null, blurb: '¿Qué hago ahora?', views: [], also: [`${A}/avisos`, `${A}/pendientes`, `${A}/ajustes`, `${A}/areas`] },
   { id: 'agenda', label: 'Agenda', to: `${A}/planear`, icon: CalendarDays, area: null, blurb: 'Horario, eventos y vencimientos', views: [
-    { to: `${A}/planear`, label: 'Horario', icon: Clock, match: [`${A}/planear`], end: true },
-    { to: `${A}/planear/agenda`, label: 'Agenda', icon: CalendarDays, match: [`${A}/planear/agenda`] },
-    { to: `${A}/planear/calendario`, label: 'Calendario', icon: Calendar, match: [`${A}/planear/calendario`] },
+    { to: `${A}/planear/dia`, label: 'Día', icon: Sun, match: [`${A}/planear/dia`] },
+    { to: `${A}/planear/semana`, label: 'Semana', icon: Clock, match: [`${A}/planear/semana`, `${A}/planear`] },
+    { to: `${A}/planear/calendario`, label: 'Mes', icon: Calendar, match: [`${A}/planear/calendario`] },
+    { to: `${A}/planear/agenda`, label: 'Próximos 30 días', icon: CalendarDays, match: [`${A}/planear/agenda`] },
     { to: `${A}/mente/vencimientos`, label: 'Vencimientos', icon: CalendarClock, match: [`${A}/mente/vencimientos`] },
     { to: `${A}/mente/salida`, label: 'Antes de salir', icon: DoorOpen, match: [`${A}/mente/salida`] },
   ] },

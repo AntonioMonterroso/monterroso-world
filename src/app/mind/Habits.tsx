@@ -1,8 +1,9 @@
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
-import { Chk, Group, PageHeader } from '../../components/ui'
-import { MOMENTS, SUGGESTIONS, streak, weekDone, weekStart, type Habit, type HabitLog, type Moment } from '../../lib/habits'
+import { Chk, Group, PageHeader, Row } from '../../components/ui'
+import { useMinHabits } from '../../lib/minHabits'
+import { MOMENTS, SUGGESTIONS, habitMonthStats, weekDone, weekStart, type Habit, type HabitLog, type Moment } from '../../lib/habits'
 import { dayNum, isoFromNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { DAYS, localISO } from '../../lib/time'
@@ -11,6 +12,7 @@ import { ErrorBar, chip } from '../money/shared'
 type Draft = { id?: string; name: string; target: number; moment: Moment }
 
 export default function Habits() {
+  const mins = useMinHabits()
   const habits = useTable<Habit>('habits', { col: 'position', asc: true })
   const logs = useTable<HabitLog>('habit_logs', { col: 'day', asc: false })
   const today = localISO()
@@ -57,14 +59,14 @@ export default function Habits() {
           <Group key={g.id} title={g.label} className={gi === 0 ? '!mt-5' : ''}>
             {g.items.map((h) => {
               const wd = weekDone(h.id, logs.rows, today)
-              const st = streak(h, logs.rows, today)
+              const st = habitMonthStats(h.id, logs.rows, today)
               const doneT = logs.rows.some((l) => l.habit_id === h.id && l.day === today)
               return (
                 <li key={h.id} className="row">
                   <div className="flex items-center">
                     <button onClick={() => toggle(h, today)} aria-pressed={doneT} aria-label={`${h.name}: ${doneT ? 'hecho hoy' : 'marcar hecho hoy'}`} className="grid size-14 shrink-0 place-items-center"><Chk on={doneT} tone="var(--pos)" /></button>
                     <button className="row-hit !pl-0" onClick={() => setD({ id: h.id, name: h.name, target: h.target_per_week, moment: h.moment })}>
-                      <span className="row-main"><span className="row-title">{h.name}</span><span className="row-sub">{wd} de {h.target_per_week} esta semana{st.count > 0 && ` · ${st.count} ${st.count === 1 ? st.unit.replace('días', 'día').replace('semanas', 'semana') : st.unit}`}</span></span>
+                      <span className="row-main"><span className="row-title">{h.name}</span><span className="row-sub">{wd} de {h.target_per_week} esta semana{st.thisMonth > 0 && ` · ${st.thisMonth} ${st.thisMonth === 1 ? 'día' : 'días'} este mes`}{st.best > st.thisMonth && ` · mejor mes: ${st.best}`}</span></span>
                     </button>
                   </div>
                   <div className="flex gap-1 px-4 pb-3 pl-14" role="group" aria-label={`Semana de ${h.name}`}>
@@ -104,6 +106,11 @@ export default function Habits() {
           </form>
         )}
       </Sheet>
+      {active.length > 1 && (
+        <Group title="Para Día suave" footer="Cuando tu energía esté baja, Hoy solo te muestra estos hábitos. Si no eliges ninguno, verás los dos primeros.">
+          {active.map((h) => <Row key={h.id} icon={<Chk on={mins.ids.includes(h.id)} tone="var(--accent)" />} title={h.name} chevron={false} onClick={() => mins.toggle(h.id)} />)}
+        </Group>
+      )}
     </div>
   )
 }

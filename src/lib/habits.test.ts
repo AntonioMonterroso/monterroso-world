@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CAPTURE_LABEL, classifyCapture, focusStats, mmss, pickDopamine, remainingSeconds } from './focus'
-import { streak, weekDone, weekStart, type HabitLog } from './habits'
+import { monthStats, streak, weekDone, weekStart, type HabitLog } from './habits'
 
 const log = (habit_id: string, day: string): HabitLog => ({ id: habit_id + day, habit_id, day })
 
@@ -72,5 +72,14 @@ describe('temporizador y pausas', () => {
       { id: '3', task: null, planned_min: 25, actual_min: 25, completed: true, distractions: 0, started_at: at(noon(2026, 9, 1)) },
     ]
     expect(focusStats(s, '2026-10-01')).toEqual({ todayMin: 25, weekMin: 45, weekSessions: 2, avgDistractions: 3 })
+  })
+})
+
+describe('avance que no se rompe', () => {
+  it('cuenta los días del mes y el mejor mes, sin rachas', () => {
+    const days = ['2026-09-01', '2026-09-02', '2026-09-10', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-07']
+    expect(monthStats(days, '2026-10-20')).toEqual({ thisMonth: 3, best: 3, bestMonth: '2026-10' })
+    expect(monthStats(days, '2026-11-02')).toEqual({ thisMonth: 0, best: 3, bestMonth: '2026-10' })
+    expect(monthStats([], '2026-10-20')).toEqual({ thisMonth: 0, best: 0, bestMonth: null })
   })
 })

@@ -1,4 +1,4 @@
-import { ChevronRight, KeyRound, Link2, Settings } from 'lucide-react'
+import { ChevronRight, KeyRound, Palette, Settings } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { currentMonth, money, summarizeMonth, useProjects } from '../lib/projects'
@@ -59,7 +59,7 @@ export default function Areas() {
       <div className="grid grid-cols-3 gap-3">
         <Link to="/app/boveda" className="tile" style={{ background: 'var(--tinta)', color: 'var(--fondo)', minHeight: 112, justifyContent: 'space-between' }}><KeyRound size={24} aria-hidden /><span className="font-semibold">Privado</span></Link>
         <Link to="/app/ajustes" className="tile" style={{ minHeight: 112, justifyContent: 'space-between' }}><Settings size={24} aria-hidden /><span className="font-semibold">Ajustes</span></Link>
-        <Link to="/app/compartir" className="tile" style={{ minHeight: 112, justifyContent: 'space-between' }}><Link2 size={24} aria-hidden /><span className="font-semibold">Enlaces públicos</span></Link>
+        <Link to="/app/ajustes/apariencia" className="tile" style={{ minHeight: 112, justifyContent: 'space-between' }}><Palette size={24} aria-hidden /><span className="font-semibold">Apariencia</span></Link>
       </div>
     </div>
   )

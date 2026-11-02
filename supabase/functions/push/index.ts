@@ -125,7 +125,7 @@ async function processUser(userId: string, now: number) {
         const prev = logMap.get(`${ev.id}|${date}|nag`)
         if (!prev) {
           if (await claim('nag')) count += await sendToUser(userId, build(ev, date, 'Pendiente'))
-        } else if (prev.nag_count < 6 && now - new Date(prev.sent_at).getTime() >= 10 * 60_000) {
+        } else if (prev.nag_count < 3 && now - new Date(prev.sent_at).getTime() >= 10 * 60_000) {
           await admin.from('notification_log').update({ nag_count: prev.nag_count + 1, sent_at: new Date(now).toISOString() }).eq('id', prev.id)
           count += await sendToUser(userId, build(ev, date, 'Pendiente'))
         }

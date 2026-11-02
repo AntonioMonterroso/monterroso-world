@@ -1,7 +1,7 @@
 import { Check, Flame, Loader2, Play, Plus, Sun, Moon, ListChecks } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { KIND_LABEL, TEMPLATES, fmtStart, progressOf, routineStreak, totalMinutes, type Routine, type Run, type Step } from '../../lib/routines'
+import { KIND_LABEL, TEMPLATES, fmtStart, progressOf, routineMonthDays, totalMinutes, type Routine, type Run, type Step } from '../../lib/routines'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { ErrorBar } from '../money/shared'
@@ -50,7 +50,7 @@ export default function Routines() {
             const myRuns = runs.rows.filter((x) => x.routine_id === r.id)
             const todayRun = myRuns.find((x) => x.day === today)
             const p = progressOf(todayRun, mine)
-            const streak = routineStreak(r, myRuns, today)
+            const streak = routineMonthDays(myRuns, today)
             const Icon = kindIcon[r.kind]
             const done = Boolean(todayRun?.completed)
             return (
@@ -61,7 +61,7 @@ export default function Routines() {
                     <span className="block truncate font-semibold">{r.name}</span>
                     <span className="block text-xs" style={{ color: 'var(--ink-faint)' }}>{KIND_LABEL[r.kind]}{r.start_min != null && ` · ${fmtStart(r.start_min)}`} · {mine.length} {mine.length === 1 ? 'paso' : 'pasos'}{totalMinutes(mine) > 0 && ` · ${totalMinutes(mine)} min`}</span>
                   </Link>
-                  {streak > 0 && <span className="flex shrink-0 items-center gap-1 text-sm" style={{ color: 'var(--accent)' }} aria-label={`Racha de ${streak} días`}><Flame size={16} aria-hidden /> {streak}</span>}
+                  {streak > 0 && <span className="flex shrink-0 items-center gap-1 text-sm" style={{ color: 'var(--accent)' }} aria-label={`${streak} días este mes`}><Flame size={16} aria-hidden /> {streak} {streak === 1 ? 'día' : 'días'} este mes</span>}
                 </div>
                 <div className="mt-3 flex items-center gap-3">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="img" aria-label={`Hoy ${p.done} de ${p.total}`}><div className="h-full rounded-full" style={{ width: `${p.pct}%`, background: 'var(--pos)', transition: 'width 400ms var(--ease-out)' }} /></div>

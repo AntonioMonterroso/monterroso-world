@@ -66,3 +66,8 @@ export function routineStreak(routine: Pick<Routine, 'days'>, runs: Pick<Run, 'd
 
 export const fmtStart = (min: number | null) => (min == null ? '' : `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`)
 export const dateOf = (n: number) => isoFromNum(n)
+
+/** Días de este mes en que completaste la rutina (nunca se «rompe»). */
+export function routineMonthDays(runs: Pick<Run, 'day' | 'completed'>[], today: string): number {
+  return new Set(runs.filter((r) => r.completed && r.day.startsWith(today.slice(0, 7))).map((r) => r.day)).size
+}

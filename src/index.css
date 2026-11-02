@@ -805,3 +805,31 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .pie-dato { display: flex; flex-direction: column; gap: 4px; background: var(--superficie); border-radius: 24px; padding: 16px; box-shadow: var(--sombra-1); color: var(--tinta); text-decoration: none; }
 .pie-dato .cifra { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 34px; font-variant-numeric: tabular-nums; }
 .hoy .t { font-weight: 600; }
+
+/* ───────── Apariencia: modo claro y paletas (valores de mw.css) ───────── */
+:root[data-theme="claro"] {
+  --fondo: #f5f5f7; --superficie: #ffffff; --superficie-2: #ececef; --borde: #d9d9de;
+  --tinta: #111113; --tinta-suave: #5f5f68;
+  --marca: #111113; --sobre-marca: #ffffff; --marca-suave: #e6e6ea;
+  --web: #2a5cf0; --sobre-web: #ffffff; --web-suave: #e3ebff; --web-texto: #1d4fd1;
+  --musica: #d42a7f; --sobre-musica: #ffffff; --musica-suave: #fde3ef; --musica-texto: #b3156a;
+  --personal: #1fae6b; --sobre-personal: #1f1a2e; --personal-suave: #dcf5e8; --personal-texto: #0f7a49;
+  --aviso: #ffb020; --aviso-suave: #fff0cc; --aviso-texto: #8a5a00;
+  --peligro: #c0262d; --peligro-texto: #b0222a;
+  --sombra-1: 0 1px 2px rgba(31,26,46,.06), 0 4px 12px rgba(31,26,46,.06); --sombra-2: 0 8px 28px rgba(31,26,46,.16);
+  --surface-3: #e2e2e7; --line-soft: #e6e6ea; --sep: rgba(0,0,0,.07); --ink-faint: #70707a;
+  --pos: #0f7a49; --neg: #c0262d;
+}
+:root.pal[data-theme="oscuro"], :root.pal:not([data-theme]) {
+  --marca: hsl(var(--h) var(--s) 70%); --marca-suave: hsl(var(--h) calc(var(--s) * .4) 18%);
+  --fondo: hsl(var(--h) calc(var(--s) * .25) 8%); --superficie: hsl(var(--h) calc(var(--s) * .2) 13%);
+  --superficie-2: hsl(var(--h) calc(var(--s) * .2) 18%); --borde: hsl(var(--h) calc(var(--s) * .18) 25%);
+}
+:root.pal[data-theme="claro"] {
+  --marca: hsl(var(--h) var(--s) 66%); --sobre-marca: #111113; --marca-suave: hsl(var(--h) calc(var(--s) * .9) 93%);
+  --fondo: hsl(var(--h) calc(var(--s) * .6) 97.5%); --superficie: #ffffff;
+  --superficie-2: hsl(var(--h) calc(var(--s) * .35) 92%); --borde: hsl(var(--h) calc(var(--s) * .25) 84%);
+}
+:root.pal body, :root[data-theme="claro"] body { transition: background-color .4s var(--suave), color .3s; }
+:root[data-theme="claro"] .sheet-max, :root[data-theme="claro"] .side { color: var(--ink); }
+:root[data-theme="claro"] { color-scheme: light; }

@@ -19,6 +19,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   useTone()
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState(false)
+  const [noteText, setNoteText] = useState('')
   const [saved, setSaved] = useState<Saved | null>(null)
   useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(null), 5000); return () => clearTimeout(t) }, [saved])
   const nav = useNavigate()
@@ -45,7 +46,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   }, [nav])
 
   useEffect(() => {
-    const h = () => setNote(true)
+    const h = (e: Event) => { setNoteText((e as CustomEvent<{ text?: string }>).detail?.text ?? ''); setNote(true) }
     window.addEventListener('mw-anotar', h)
     return () => window.removeEventListener('mw-anotar', h)
   }, [])
@@ -70,7 +71,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
           ))}
         </nav>
         <div className="mt-auto grid gap-1">
-          <button className="btn btn-primary mb-1 w-full" onClick={() => setNote(true)}><Plus size={18} aria-hidden /> Anotar <kbd className="ml-auto text-xs opacity-60">N</kbd></button>
+          <button className="btn btn-primary mb-1 w-full" onClick={() => { setNoteText(''); setNote(true) }}><Plus size={18} aria-hidden /> Anotar <kbd className="ml-auto text-xs opacity-60">N</kbd></button>
           <button className="nav-link w-full cursor-pointer" onClick={() => setOpen(true)}><Search size={18} aria-hidden /> Buscar <kbd className="ml-auto text-xs" style={{ color: 'var(--ink-faint)' }}>⌘K</kbd></button>
           <NavLink to="/app/pendientes" className="nav-link"><Bell size={18} aria-hidden /> Pendientes{attention.count > 0 && <span className="nav-badge" aria-label={`${attention.count} pendientes`}>{attention.count}</span>}</NavLink>
           <NavLink to="/app/ajustes" className="nav-link"><Settings size={18} aria-hidden /> Ajustes</NavLink>
@@ -91,12 +92,12 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
       <nav aria-label="Principal" className="tabbar fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 items-start md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <Link to="/app" className="tab-link" aria-current={here === 'hoy' && !pathname.startsWith('/app/areas') ? 'page' : undefined}><Sun size={20} aria-hidden /><span>Hoy</span></Link>
         <Link to="/app/planear" className="tab-link" aria-current={here === 'agenda' ? 'page' : undefined}><CalendarDays size={20} aria-hidden /><span>Agenda</span></Link>
-        <button type="button" className="fab-mw" onClick={() => setNote(true)} aria-label="Anotar"><Plus size={28} aria-hidden /></button>
+        <button type="button" className="fab-mw" onClick={() => { setNoteText(''); setNote(true) }} aria-label="Anotar"><Plus size={28} aria-hidden /></button>
         <Link to="/app/dinero" className="tab-link" aria-current={here === 'dinero' ? 'page' : undefined}><Wallet size={20} aria-hidden /><span>Dinero</span></Link>
         <Link to="/app/areas" className="tab-link" aria-current={['trabajo', 'musica', 'personal', 'privado'].includes(here) || pathname.startsWith('/app/areas') ? 'page' : undefined}><LayoutGrid size={20} aria-hidden /><span>Áreas</span></Link>
       </nav>
 
-      <Anotar open={note} onClose={() => setNote(false)} onSaved={setSaved} />
+      <Anotar open={note} initial={noteText} onClose={() => { setNote(false); setNoteText('') }} onSaved={setSaved} />
       {saved && (
         <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>
           {saved.label}

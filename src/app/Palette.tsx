@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { loadIndex, searchHits, type Hit } from '../lib/searchIndex'
 import { supabase } from '../lib/supabase'
 import { sections } from '../lib/sections'
+import { entender } from '../lib/anotar'
+import { localISO } from '../lib/time'
 import { decryptItem } from '../lib/vault'
 import { useVaultKey } from '../lib/vaultSession'
 
@@ -55,7 +57,17 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
     const t = q.trim()
     if (!t) return statics.filter((s) => s.type === 'Ir a' || s.type === 'Acción').slice(0, 9)
     const dynamic: Item[] = index.map((h) => ({ id: `${h.type}-${h.id}`, title: h.title, sub: h.sub, type: h.type, run: () => nav(h.to) }))
-    return searchHits([...dynamic, ...statics], t, 12)
+    // Órdenes: «gasto 45 almuerzo», «cobrar barbería», «nueva canción»… (las mismas reglas que ＋ Anotar)
+    const orders: Item[] = []
+    const asNote = (text: string) => { const e = entender(text, { today: localISO(), clients: [], learned: {} }); return e }
+    const g = t.match(/^(?:gasto|gast[eé])\s+(\d+(?:[.,]\d+)?)\s+(.+)$/i)
+    const c = t.match(/^cobr(?:ar|é|e)\s+(?:a\s+)?(.+)$/i)
+    const text = g ? `Q ${g[1]} ${g[2]}` : c ? `cobré ${c[1]}` : /^(?:ingreso|\+)/i.test(t) ? t.replace(/^ingreso\s+/i, '+Q ') : t
+    const e = asNote(text)
+    if (g || c || e.kind !== 'bandeja') orders.push({ id: 'o-anotar', title: `Anotar: ${t}`, sub: c ? 'Cobro · se confirma al guardar' : e.label, type: 'Orden', run: () => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text } })) })
+    if (/^nueva canci[oó]n|^canci[oó]n nueva/i.test(t)) orders.push({ id: 'o-cancion', title: 'Nueva canción', sub: 'Música › Canciones', type: 'Orden', run: () => nav('/app/musica') })
+    if (/^nuevo evento|^evento nuevo/i.test(t)) orders.push({ id: 'o-evento', title: 'Nuevo evento', sub: 'Agenda', type: 'Orden', run: () => nav('/app/planear/agenda') })
+    return [...orders, ...searchHits([...dynamic, ...statics], t, 12)]
   }, [q, index, statics, nav])
 
   useEffect(() => setI(0), [q])

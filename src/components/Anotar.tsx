@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Sheet from './Sheet'
+import VoiceNotes from './VoiceNotes'
 import { EXPENSE_CATEGORIES, KIND_LABEL, SWITCHABLE, entender, keyWord, takeDate, takeTime, type Entendido, type Kind, type Learned } from '../lib/anotar'
 import { monthlyClients } from '../lib/incoming'
 import { currentMonth, money, useProjects } from '../lib/projects'
@@ -26,7 +27,7 @@ function coerce(base: Entendido, kind: Kind, text: string, today: string): Enten
 }
 
 /** ＋ Anotar: escribes como hablas, ves lo que entendió y Enter guarda. Si te equivocas, Deshacer. */
-export default function Anotar({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved?: (s: Saved) => void }) {
+export default function Anotar({ open, initial = '', onClose, onSaved }: { open: boolean; initial?: string; onClose: () => void; onSaved?: (s: Saved) => void }) {
   const work = useProjects()
   const [text, setText] = useState('')
   const [forced, setForced] = useState<Kind | null>(null)
@@ -40,10 +41,10 @@ export default function Anotar({ open, onClose, onSaved }: { open: boolean; onCl
 
   useEffect(() => {
     if (!open) return
-    setErr(''); setForced(null); setCat(null); setMenu(false)
+    setErr(''); setForced(null); setCat(null); setMenu(false); setText(initial)
     setTimeout(() => field.current?.focus(), 80)
     void getSettings().then((s) => setLearned(((s as { anotarWords?: Learned }).anotarWords) ?? {}))
-  }, [open])
+  }, [open, initial])
 
   const ctx = useMemo(() => ({ today, clients: work.projects.map((p) => ({ id: p.id, title: p.title, client: p.client })), learned }), [today, work.projects, learned])
   const auto = useMemo(() => entender(text, ctx), [text, ctx])
@@ -100,6 +101,14 @@ export default function Anotar({ open, onClose, onSaved }: { open: boolean; onCl
         const { data, error } = await supabase.from('promises').insert({ text: e.title, person: e.person ?? null, due_date: e.date ?? null }).select('id').single()
         if (error || !data) throw new Error('No pude guardar la promesa.')
         saved = { label: 'Promesa guardada', undo: del('promises', data.id) }
+      } else if (e.kind === 'video' && e.videoId) {
+        const { data, error } = await supabase.from('videos').insert({ provider: 'youtube', video_id: e.videoId, title: e.title, status: 'queue' }).select('id').single()
+        if (error || !data) throw new Error('No pude guardar el video.')
+        saved = { label: 'Video guardado en Aprender', undo: del('videos', data.id) }
+      } else if (e.kind === 'enlace' && e.url) {
+        const { data, error } = await supabase.from('links').insert({ url: e.url, title: e.title, category: 'Otros' }).select('id').single()
+        if (error || !data) throw new Error('No pude guardar el enlace.')
+        saved = { label: 'Enlace guardado en Links', undo: del('links', data.id) }
       } else {
         const body = e.kind === 'idea' ? `Idea: ${e.title}` : t
         const { data, error } = await supabase.from('inbox_items').insert({ text: body }).select('id').single()
@@ -130,6 +139,7 @@ export default function Anotar({ open, onClose, onSaved }: { open: boolean; onCl
         <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Enter guarda. Si no reconoce nada, queda en Pendientes para después.</p>
         <button className="btn btn-primary" disabled={!text.trim() || busy || needsAmount}>{busy ? 'Guardando…' : 'Guardar'}</button>
       </form>
+      <details className="mt-4"><summary className="min-h-11 cursor-pointer text-sm font-semibold">Prefiero grabar una nota de voz</summary><div className="mt-2"><VoiceNotes /></div></details>
     </Sheet>
   )
 }

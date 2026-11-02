@@ -66,6 +66,10 @@ import QuoteSheet from './work/QuoteSheet'
 import Calculator from './money/Calculator'
 import Incoming from './money/Incoming'
 import Areas from './Areas'
+import AppearancePage from './Appearance'
+import { bootAppearance } from '../lib/appearance'
+import { localISO } from '../lib/time'
+import AgendaDia from './plan/AgendaDia'
 import Clients from './work/Clients'
 import ClientPage from './work/ClientPage'
 import SectionLayout from '../components/SectionLayout'
@@ -93,6 +97,7 @@ function Gate() {
   const [pin, setPinState] = useState(hasPin())
   const [locked, setLocked] = useState(hasPin())
   const hiddenAt = useRef(0)
+  useEffect(() => { void bootAppearance(localISO()) }, [])
 
   const lock = useCallback(() => { if (hasPin()) setLocked(true) }, [])
 
@@ -132,6 +137,7 @@ function Gate() {
       <Route element={<Shell onLock={lock} onSignOut={signOutAll} />}>
         <Route index element={<Today />} />
         <Route path="ajustes" element={<Settings onLock={lock} onResetPin={resetPin} />} />
+        <Route path="ajustes/apariencia" element={<AppearancePage />} />
         <Route path="avisos" element={<Notices />} />
         <Route path="mente/rutinas/:id/hacer" element={<RoutineRun />} />
         <Route path="ejercicio/entrenar/:id" element={<Session />} />
@@ -154,7 +160,9 @@ function Gate() {
         <Route path="pendientes" element={<Notices />} />
         <Route element={<SectionLayout />}>
           <Route path="planear" element={<PlanLayout />}>
-            <Route index element={<Schedule />} />
+            <Route index element={<AgendaHome />} />
+            <Route path="dia" element={<AgendaDia />} />
+            <Route path="semana" element={<Schedule />} />
             <Route path="agenda" element={<Agenda />} />
             <Route path="calendario" element={<Calendar />} />
           </Route>
@@ -221,6 +229,13 @@ function Gate() {
       </Route>
     </Routes>
   )
+}
+
+/** Agenda abre en Día en el celular y en Semana en la computadora. */
+function AgendaHome() {
+  const { search } = useLocation()
+  const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  return <Navigate to={`/app/planear/${wide ? 'semana' : 'dia'}${search}`} replace />
 }
 
 /** Lugares y Por comprar ahora son secciones propias; los enlaces viejos siguen funcionando. */

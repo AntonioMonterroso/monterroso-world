@@ -1,7 +1,7 @@
 import { Flame, Loader2, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTable } from '../../lib/table'
-import { INSTRUMENTS, instrumentLabel, streak, type PracticeLog, type Song } from '../../lib/music'
+import { INSTRUMENTS, instrumentLabel, practiceMonth, type PracticeLog, type Song } from '../../lib/music'
 import { dayNum, isoFromNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
 import { PageHeader } from '../../components/ui'
@@ -23,7 +23,7 @@ export default function Practice() {
   }), [logs.rows, today])
   const max = Math.max(30, ...days.map((d) => d.min))
   const week = days.reduce((a, d) => a + d.min, 0)
-  const s = streak(logs.rows, today)
+  const pm = practiceMonth(logs.rows, today)
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,10 +42,10 @@ export default function Practice() {
       <PageHeader eyebrow="Música" title="Práctica" />
 
       <div className="mt-6 flex items-center gap-4 rounded-2xl border p-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
-        <Flame size={32} aria-hidden style={{ color: s > 0 ? 'var(--accent)' : 'var(--ink-faint)' }} />
+        <Flame size={32} aria-hidden style={{ color: pm.days > 0 ? 'var(--accent)' : 'var(--ink-faint)' }} />
         <div>
-          <p className="font-display text-3xl">{s} {s === 1 ? 'día' : 'días'}</p>
-          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{s > 0 ? 'de práctica seguida' : 'Hoy es un buen día para empezar. Con 10 minutos cuenta.'} · {week} min esta semana</p>
+          <p className="font-display text-3xl">{pm.days} {pm.days === 1 ? 'día' : 'días'}</p>
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{pm.days > 0 ? 'de práctica este mes' : 'Hoy es un buen día para empezar. Con 10 minutos cuenta.'} · {week} min esta semana{Object.keys(pm.byInstrument).length > 0 && ` · ${Object.entries(pm.byInstrument).map(([k, v]) => `${instrumentLabel(k)} ${v} min`).join(' · ')}`}</p>
         </div>
       </div>
 
