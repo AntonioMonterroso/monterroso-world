@@ -7,50 +7,52 @@
    Roles por enfoque: dev (latón), music (celeste), personal (arcilla)
    Tono del día (--glow): cambia según la hora, ver useTone()            */
 :root {
-  --bg: #0a131a;
-  --surface: #101c25;
-  --surface-2: #172732;
-  --surface-3: #20343f;
-  --line-soft: #15232c;
-  --line: #263a46;
+  /* Sistema de diseño «DISEÑO WORLD»: grafito monocromo. El color aparece solo en las tres áreas. */
+  --fondo: #0d0d0f; --superficie: #1a1a1d; --superficie-2: #242428; --borde: #333338;
+  --tinta: #f5f5f7; --tinta-suave: #a1a1aa;
+  --marca: #f5f5f7; --sobre-marca: #0d0d0f; --marca-suave: #26262a;
+  --web: #5e9eff; --sobre-web: #0d0d0f; --web-suave: #14233d; --web-texto: #8fbcff;
+  --musica: #ff5c8a; --sobre-musica: #0d0d0f; --musica-suave: #3a1523; --musica-texto: #ff8fb0;
+  --personal: #34d399; --sobre-personal: #0d0d0f; --personal-suave: #10301f; --personal-texto: #6ee7b7;
+  --aviso: #fbbf24; --aviso-suave: #33280c; --aviso-texto: #fcd34d;
+  --peligro: #f87171; --peligro-texto: #fca5a5;
+  --sombra-1: 0 1px 2px rgba(0,0,0,.4); --sombra-2: 0 8px 28px rgba(0,0,0,.55);
+  --resorte: cubic-bezier(.3,1.35,.5,1); --suave: cubic-bezier(.2,.8,.2,1);
+
+  /* Nombres que ya usa toda la app, apuntando al sistema nuevo */
+  --bg: var(--fondo);
+  --surface: var(--superficie);
+  --surface-2: var(--superficie-2);
+  --surface-3: #2e2e33;
+  --line-soft: #26262a;
+  --line: var(--borde);
   --sep: rgba(255, 255, 255, .06);
 
-  --ink: #e8eeee;
-  --ink-soft: #a2b3ba;
-  --ink-faint: #7c8f98;
+  --ink: var(--tinta);
+  --ink-soft: var(--tinta-suave);
+  --ink-faint: #8e8e98;
 
-  --teal: #5ec4b6;
-  --sky: #8db6e6;
-  --clay: #dcae9b;
-  --brass: #d9c493;
+  --teal: var(--web);
+  --sky: var(--web-texto);
+  --clay: var(--personal);
+  --brass: var(--aviso);
 
-  --dev: var(--teal);
-  --music: var(--sky);
-  --personal: var(--clay);
+  --dev: var(--web);
+  --music: var(--musica);
 
-  /* El acento cambia con lo que estás haciendo (ver lib/context.ts) y se desliza entre tonos */
-  --accent: #5ec4b6;
-  --accent-soft: var(--sky);
-  --glow: #7fcfc2;
+  --accent: var(--marca);
+  --accent-soft: var(--tinta-suave);
+  --glow: #f5f5f7;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --r-card: 18px;
+  --r-card: 24px;
 }
-@property --accent { syntax: '<color>'; inherits: true; initial-value: #5ec4b6; }
-:root { transition: --accent 700ms var(--ease-out); }
-:root[data-mode="dev"] { --accent: #5ec4b6; }
-:root[data-mode="music"] { --accent: #93aeea; }
-:root[data-mode="faith"] { --accent: #e0b48e; }
-:root[data-mode="body"] { --accent: #8fd1a0; }
-:root[data-mode="calm"] { --accent: #aaa0e2; }
-:root[data-tone="dawn"] { --glow: #e8b58a; }
-:root[data-tone="day"] { --glow: #7fcfc2; }
-:root[data-tone="dusk"] { --glow: #8fb3e0; }
-:root[data-tone="night"] { --glow: #6f86d6; }
+/* El acento es siempre blanco (marca): ya no cambia por modo ni por hora del día */
+@property --accent { syntax: '<color>'; inherits: true; initial-value: #f5f5f7; }
 @media (prefers-reduced-motion: reduce) { :root { transition: none; } }
 
 @theme {
-  --font-display: "Fraunces", Georgia, serif;
+  --font-display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
   --font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -74,7 +76,7 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
   transition: transform 140ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
 }
 .btn:active { transform: scale(0.97); }
-.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary { background: var(--marca); color: var(--sobre-marca); }
 .btn-ghost { background: var(--surface-2); color: var(--ink); }
 @media (hover: hover) and (pointer: fine) {
   .btn-primary:hover { background: color-mix(in oklab, var(--accent) 85%, white); }
@@ -235,7 +237,7 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 .app main { --pad: clamp(1rem, 4vw, 2.5rem); }
 
 /* Tipografía: la serif queda para la portada; dentro de la app todo es sans con tracking por tamaño */
-.app .font-display { font-family: var(--font-body); font-weight: 650; letter-spacing: -0.02em; font-feature-settings: "tnum" 1; }
+.app .font-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; font-feature-settings: "tnum" 1; }
 .app h1.font-display { font-size: clamp(1.9rem, 1.45rem + 1.8vw, 2.5rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.08; }
 .app h2.font-display, .app .font-display.text-2xl { font-size: 1.25rem; line-height: 1.25; letter-spacing: -0.02em; }
 .app .font-display.text-3xl { font-size: 1.5rem; letter-spacing: -0.025em; }
@@ -313,7 +315,7 @@ section[id], #tarjeta { scroll-margin-top: 80px; }
 
 /* ═════════ Calma v2: componentes compartidos ═════════ */
 :root {
-  --pos: #98d6a3; --neg: #eba596;
+  --pos: #34d399; --neg: #f87171;
   --sep: rgba(255, 255, 255, .06);
   --shadow-pop: 0 18px 50px -18px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .06);
 }

@@ -16,7 +16,7 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'autoUpdate',
       injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'], globIgnores: ['splash/**'] },
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'badge-96.png'],
+      includeAssets: ['favicon-32.png', 'apple-touch-icon.png', 'badge-96.png'],
       manifest: {
         name: 'Monterroso World',
         short_name: 'Monterroso',
@@ -26,8 +26,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#f7f1e3',
-        theme_color: '#0a131a',
+        background_color: '#1e050e',
+        theme_color: '#0d0d0f',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
