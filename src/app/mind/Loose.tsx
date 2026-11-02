@@ -62,7 +62,7 @@ export default function Loose() {
   }
 
   const loading = stuff.loading || promises.loading
-  const stateColor = (p: Promise_) => { const s = promiseState(p, today); return s === 'overdue' ? 'var(--neg)' : s === 'today' ? 'var(--accent)' : s === 'soon' ? 'var(--sky)' : 'var(--ink-faint)' }
+  const stateColor = (p: Promise_) => { const s = promiseState(p, today); return s === 'overdue' ? 'var(--aviso)' : s === 'today' ? 'var(--accent)' : s === 'soon' ? 'var(--sky)' : 'var(--ink-faint)' }
 
   return (
     <div>
@@ -115,7 +115,7 @@ export default function Loose() {
                 <label className="grid gap-2 text-sm">Pedirlo de vuelta el (opcional)<input type="date" className="field" value={sd.remind} onChange={(e) => setSd({ ...sd, remind: e.target.value })} /></label>
               </>
             )}
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {sd.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => { const i = stuff.rows.find((x) => x.id === sd.id)!; if (confirm) void removeStuff(i); else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Quitar'}</button>}
@@ -132,7 +132,7 @@ export default function Loose() {
             <label className="grid gap-2 text-sm">Para cuándo (opcional)
               <div className="flex gap-2"><input type="date" className="field" value={pd.due} onChange={(e) => setPd({ ...pd, due: e.target.value })} />{pd.due && <button type="button" className="btn btn-ghost shrink-0" onClick={() => setPd({ ...pd, due: '' })}>Quitar</button>}</div>
             </label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {pd.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { const p = promises.rows.find((x) => x.id === pd.id)!; if (confirm) { await syncReminder(p.event_id, null); await promises.remove(p.id); setPd(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Quitar'}</button>}

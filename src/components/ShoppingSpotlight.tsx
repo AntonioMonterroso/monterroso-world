@@ -30,7 +30,7 @@ export default function ShoppingSpotlight() {
           const pr = PRIORITIES.find((p) => p.id === i.priority)!
           return (
             <Row key={i.id} tone={pr.color} icon={<ShoppingBag size={16} aria-hidden />} title={i.name} chevron={false} to="/app/compras"
-              sub={<><span style={{ color: i.priority === 1 ? 'var(--neg)' : undefined }}>{pr.label}</span>{i.store ? ` · ${i.store}` : ` · ${i.category}`}</>}
+              sub={<><span style={{ color: i.priority === 1 ? 'var(--aviso)' : undefined }}>{pr.label}</span>{i.store ? ` · ${i.store}` : ` · ${i.category}`}</>}
               value={i.price ? money(Number(i.price)) : undefined} valueTone="soft"
               trailing={<button className="buy-check" aria-label={`Ya compré ${i.name}`} onClick={() => nav(`/app/compras?comprar=${i.id}`)}><span /></button>} />
           )

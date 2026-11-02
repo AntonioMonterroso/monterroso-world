@@ -171,7 +171,7 @@ export default function PricesEditor() {
             <label className="flex items-center justify-between gap-3 text-sm"><span>Recomendado (se destaca)</span><Switch checked={p.recommended} onChange={(v) => setP({ ...p, recommended: v })} label="Recomendado" /></label>
             <label className="flex items-center justify-between gap-3 text-sm"><span>Visible en la página pública</span><Switch checked={p.published} onChange={(v) => setP({ ...p, published: v })} label="Visible" /></label>
             <label className="flex items-center justify-between gap-3 text-sm"><span>Mostrar el precio (si lo apagas, solo «Pedir propuesta»)</span><Switch checked={p.showPrice} onChange={(v) => setP({ ...p, showPrice: v })} label="Mostrar el precio" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className="btn btn-primary" onClick={() => void savePkg()}>Guardar</button>
               {p.id && <>
@@ -197,7 +197,7 @@ export default function PricesEditor() {
             </div>
             <label className="flex items-center justify-between gap-3 text-sm"><span>Es un monto aproximado (≈)</span><Switch checked={e.approx} onChange={(v) => setE({ ...e, approx: v })} label="Aproximado" /></label>
             <label className="flex items-center justify-between gap-3 text-sm"><span>Visible en la página pública</span><Switch checked={e.published} onChange={(v) => setE({ ...e, published: v })} label="Visible" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button type="button" className="btn btn-primary" onClick={() => void saveExtra()}>Guardar</button>
               {e.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: 'var(--neg)' }} onClick={async () => { await c.extras.remove(e.id!); setE(null) }}><Trash2 size={16} aria-hidden /> Eliminar</button>}

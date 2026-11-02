@@ -9,7 +9,7 @@ import { currentMonth, money, monthLabel } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { Empty, ErrorBar, defaultCurrency, toNum } from './shared'
 
-const color = { ok: 'var(--pos)', warn: 'var(--personal)', over: 'var(--neg)' }
+const color = { ok: 'var(--pos)', warn: 'var(--personal)', over: 'var(--aviso)' }
 
 export default function Budget() {
   const tax = useTaxonomy()
@@ -56,7 +56,7 @@ export default function Budget() {
           <div className="grid gap-3">
             <label className="grid gap-2 text-sm">Límite al mes<input className="field" inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="0.00" /></label>
           </div>
-          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Guardar</button>
         </form>
       </Sheet>

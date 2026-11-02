@@ -85,7 +85,7 @@ export default function Setlists() {
   return (
     <div>
       <PageHeader eyebrow="Música" title="Setlists" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Setlist</button>} />
-      {sets.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{sets.error}</p>}
+      {sets.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{sets.error}</p>}
       {sets.rows.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
           <p className="font-display text-2xl">Sin setlists todavía</p>

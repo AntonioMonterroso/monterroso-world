@@ -115,7 +115,7 @@ export default function VaultSettings({ open, onClose, dk, meta, onMeta, userNam
     <Sheet open={open} title="Ajustes de la bóveda" onClose={onClose}>
       <div className="grid gap-4">
         {msg && <p role="status" className="text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
-        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
 
         <section className={section} style={style}>
           <h3 className="font-semibold">Bloqueo automático</h3>
@@ -159,7 +159,7 @@ export default function VaultSettings({ open, onClose, dk, meta, onMeta, userNam
           {test && <ul className="grid gap-1 text-sm" aria-live="polite">{test.map((t) => <li key={t}>{t}</li>)}</ul>}
         </section>
 
-        <section className={section} style={{ ...style, borderColor: 'color-mix(in oklab, var(--neg) 40%, transparent)' }}>
+        <section className={section} style={{ ...style, borderColor: 'color-mix(in oklab, var(--aviso) 40%, transparent)' }}>
           <h3 className="font-semibold" style={{ color: 'var(--neg)' }}>Borrar la bóveda</h3>
           <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Elimina todo, sin vuelta atrás. Escribe BORRAR para confirmar.</p>
           <input className="field" value={word} onChange={(e) => setWord(e.target.value)} aria-label="Escribe BORRAR" autoComplete="off" />

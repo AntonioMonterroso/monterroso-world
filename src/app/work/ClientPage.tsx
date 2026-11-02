@@ -1,4 +1,4 @@
-import { ChevronLeft, ExternalLink, KeyRound, Loader2 } from 'lucide-react'
+import { ChevronLeft, ExternalLink, KeyRound, Loader2, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Cobrado from '../../components/Cobrado'
@@ -9,6 +9,8 @@ import type { Delivery } from '../../lib/deliveries'
 import { monthlyClients, type ClientRow } from '../../lib/incoming'
 import { currentMonth, monthLabel, money, statusMeta, useProjects, workKindLabel, type WorkTx } from '../../lib/projects'
 import { useTable } from '../../lib/table'
+import { useClientExtra, waNumber } from '../../lib/clientNotes'
+import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
 import { removeProject, saveProject } from './saveProject'
 
@@ -28,6 +30,9 @@ export default function ClientPage() {
   const [row, setRow] = useState<ClientRow | null>(null)
   const [msg, setMsg] = useState('')
   const k = decodeURIComponent(key)
+  const extra = useClientExtra(k)
+  const [phoneDraft, setPhoneDraft] = useState<string | null>(null)
+  const [note, setNote] = useState('')
   const mine = useMemo(() => db.projects.filter((p) => clientKey(clientName(p)) === k), [db.projects, k])
   const name = mine[0] ? clientName(mine[0]) : ''
   const month = currentMonth()
@@ -47,7 +52,7 @@ export default function ClientPage() {
   return (
     <div>
       <Link to="/app/trabajo" className="mb-3 inline-flex min-h-11 items-center gap-1 text-sm" style={{ color: 'var(--ink-soft)' }}><ChevronLeft size={16} aria-hidden /> Clientes</Link>
-      <PageHeader eyebrow="Cliente" title={name} />
+      <PageHeader eyebrow="Cliente" title={name} action={extra.phone ? <a className="btn btn-primary" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a> : undefined} />
       {msg && <p role="status" className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{msg}</p>}
 
       <Group title={`Este mes · ${cap(monthLabel(month))}`}>
@@ -81,6 +86,21 @@ export default function ClientPage() {
             {myDeliv.map((d) => <Row key={d.id} to="/app/envios" title={d.title} sub="Envío" />)}
           </>
         )}
+      </Group>
+
+      <Group title="Contacto" footer="El número es solo para ti: no aparece en ninguna página pública.">
+        {phoneDraft === null ? <Row title={extra.phone || 'Agregar WhatsApp'} sub={extra.phone ? 'Toca para cambiarlo' : 'Para escribirle con un toque'} onClick={() => setPhoneDraft(extra.phone)} /> : (
+          <li className="row"><form className="row-hit" onSubmit={(e) => { e.preventDefault(); extra.setPhone(phoneDraft); setPhoneDraft(null) }}>
+            <input className="row-input" inputMode="tel" value={phoneDraft} onChange={(e) => setPhoneDraft(e.target.value)} placeholder="3764 5139" aria-label="WhatsApp del cliente" autoFocus />
+            <button className="btn btn-sec btn-chico">Guardar</button></form></li>
+        )}
+      </Group>
+
+      <Group title="Bitácora" footer="Notas con fecha de lo que hiciste o acordaste con este cliente.">
+        <li className="row"><form className="row-hit" onSubmit={(e) => { e.preventDefault(); if (note.trim()) { extra.addLog(note, localISO()); setNote('') } }}>
+          <input className="row-input" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder="Qué hiciste hoy…" aria-label="Nueva nota de bitácora" />
+          {note.trim() && <button className="btn btn-sec btn-chico">Anotar</button>}</form></li>
+        {extra.log.map((l) => <Row key={l.id} title={<span className="whitespace-normal break-words">{l.text}</span>} sub={new Date(l.date + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })} chevron={false} trailing={<button className="min-h-11 px-3 text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => extra.removeLog(l.id)}>Quitar</button>} />)}
       </Group>
 
       <Group title="Accesos" footer="Las contraseñas viven en la Bóveda; aquí nunca se muestran.">

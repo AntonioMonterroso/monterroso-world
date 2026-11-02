@@ -134,7 +134,7 @@ export default function BlockEditor({ block, day, date, onClose, onSave, onDelet
               <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Avisarme cuando empiece</label>
             </div>
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>

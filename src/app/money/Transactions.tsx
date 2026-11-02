@@ -38,7 +38,7 @@ function Form({ d, setD, onSave, onDelete, err, tax, accounts }: { d: Draft; set
       <AreaField value={d.area} onChange={(v) => setD({ ...d, area: v })} tax={tax} />
       <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={d.date} onChange={(e) => setD({ ...d, date: e.target.value })} /></label>
       <label className="grid gap-2 text-sm">Nota<input className="field" value={d.note} onChange={(e) => setD({ ...d, note: e.target.value })} maxLength={300} /></label>
-      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex items-center gap-3">
         <button className="btn btn-primary">Guardar</button>
         {onDelete && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

@@ -139,6 +139,8 @@ export default function Today() {
   const recipes = useTable<Recipe>('recipes', { col: 'title', asc: true })
   const pantry = useTable<PantryItem>('pantry_items', { col: 'name', asc: true })
   const free = useFreeToSpend()
+  const setlists = useTable<{ id: string; title: string; event_date: string | null; song_ids: string[] }>('setlists', { col: 'created_at', asc: false })
+  const setlistToday = setlists.rows.find((x) => x.event_date === localISO(now))
   const minHabits = useMinHabits()
   const [manualSoft, setManualSoft] = useState(() => readSoft(localISO()))
   const [energyOpen, setEnergyOpen] = useState(false)
@@ -300,10 +302,11 @@ export default function Today() {
       </section>
 
       {/* 4. Lo que sigue */}
-      {mode === 'dia' && upcoming.length > 0 && (
+      {mode === 'dia' && (upcoming.length > 0 || setlistToday) && (
         <section aria-labelledby="sigue-t" className="bloque">
           <div className="bloque-head"><h3 id="sigue-t">Lo que sigue</h3><Link to="/app/planear/agenda" className="underline">Agenda</Link></div>
           <ul>
+            {setlistToday && <li className="fila-hoy"><span className="w-14 shrink-0 text-sm font-semibold" style={{ color: 'var(--musica-texto)' }}>Hoy</span><span className="min-w-0 flex-1"><span className="block truncate">Setlist: {setlistToday.title}</span><span className="block text-xs" style={{ color: 'var(--ink-soft)' }}>{setlistToday.song_ids.length} canciones</span></span><Link to="/app/musica/setlists" className="btn btn-sec btn-chico">Tocar</Link></li>}
             {upcoming.map((u) => (
               <li key={u.key} className="fila-hoy">
                 <span className="w-14 shrink-0 text-sm font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtMin(u.start)}</span>

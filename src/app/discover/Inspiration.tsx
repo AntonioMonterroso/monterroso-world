@@ -156,7 +156,7 @@ export default function Inspiration() {
               <label className="grid gap-2 text-sm">Tablero<select className="field" value={draft.board} onChange={(e) => setDraft({ ...draft, board: e.target.value })}><option value="">Sin tablero</option>{boards.rows.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
               <label className="grid gap-2 text-sm">O uno nuevo<input className="field" value={draft.newBoard} onChange={(e) => setDraft({ ...draft, newBoard: e.target.value })} maxLength={80} placeholder="Logos, Sonidos…" /></label>
             </div>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Guardar</button>
               {editing && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? remove(editing) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

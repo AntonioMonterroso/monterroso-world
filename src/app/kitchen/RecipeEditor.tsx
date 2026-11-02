@@ -52,7 +52,7 @@ export default function RecipeEditor({ open, recipe, pantry, onClose, onSave, on
         <p className="-mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Escribe «(opcional)» al final si no hace falta tenerlo.</p>
         <label className="grid gap-2 text-sm">Pasos, uno por línea<textarea className="field py-3" rows={7} value={f.steps} onChange={(e) => setF({ ...f, steps: e.target.value })} /></label>
         <label className="grid gap-2 text-sm">Truco o nota<textarea className="field py-3" rows={2} value={f.tips} onChange={(e) => setF({ ...f, tips: e.target.value })} maxLength={1000} /></label>
-        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
         <div className="flex items-center gap-3">
           <button className="btn btn-primary">Guardar</button>
           {onDelete && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) await onDelete(); else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

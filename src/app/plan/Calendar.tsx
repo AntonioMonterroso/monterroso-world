@@ -75,7 +75,7 @@ export default function Calendar() {
     <div>
       <PageHeader eyebrow="Agenda" title="Mes" action={<button type="button" className="chip-btn" aria-pressed={marksOn} onClick={() => setMarksOn((v) => !v)}>Cobros y pagos</button>} />
       <MonthStepper month={month} onChange={pick} />
-      {ev.error && <p role="alert" className="mb-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{ev.error}</p>}
+      {ev.error && <p role="alert" className="mb-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{ev.error}</p>}
 
       {ev.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : (
         <div role="grid" aria-label={`Calendario de ${monthLabel(month)}`} className="cal">

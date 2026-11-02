@@ -6,7 +6,7 @@
    Líneas: line-soft → line
    Roles por enfoque: dev (latón), music (celeste), personal (arcilla)
    Tono del día (--glow): cambia según la hora, ver useTone()            */
-:root {
+:root, .force-dark {
   /* Sistema de diseño «DISEÑO WORLD»: grafito monocromo. El color aparece solo en las tres áreas. */
   --fondo: #0d0d0f; --superficie: #1a1a1d; --superficie-2: #242428; --borde: #333338;
   --tinta: #f5f5f7; --tinta-suave: #a1a1aa;
@@ -699,7 +699,7 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .qd-head { display: flex; justify-content: space-between; gap: 1.5rem; align-items: flex-start; padding-bottom: 1.2rem; border-bottom: 2px solid #161616; }
 .qd-brand { display: flex; align-items: center; gap: .8rem; } .qd-brand strong { display: block; font-family: var(--font-display); font-size: 1.15rem; } .qd-brand span, .qd-meta span { display: block; color: #555; font-size: .8rem; }
 .qd-meta { text-align: right; } .qd-meta strong { font-size: 1rem; }
-.qd-kicker { margin-top: 1.8rem; color: #7a5a1f; font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.qd-kicker { margin-top: 1.8rem; color: #1d4fd1; font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .qd-title { margin: .2rem 0 .4rem; font-family: var(--font-display); font-weight: 500; font-size: 2rem; line-height: 1.1; }
 .qd-for { color: #333; margin-bottom: 1rem; } .qd-p { margin: .4rem 0; color: #222; white-space: pre-wrap; }
 .qd-sec { margin-top: 1.4rem; break-inside: avoid; } .qd-sec h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; margin-bottom: .35rem; padding-bottom: .25rem; border-bottom: 1px solid #ddd; }
@@ -707,14 +707,14 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 .qd-table { width: 100%; border-collapse: collapse; margin-top: .5rem; } .qd-table th { text-align: left; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #666; padding: .4rem .4rem; border-bottom: 1px solid #bbb; }
 .qd-table td { padding: .55rem .4rem; border-bottom: 1px solid #e4e4e4; vertical-align: top; } .qd-table .r { text-align: right; white-space: nowrap; }
 .qd-sm { display: block; color: #666; font-size: .78rem; } .qd-total { margin-top: .8rem; } .qd-total td { border-bottom: 0; padding: .3rem .4rem; font-size: 1.02rem; } .qd-total tr:first-child td { border-top: 2px solid #161616; padding-top: .6rem; }
-.qd-opt, .qd-plan { margin-top: .7rem; padding: .6rem .8rem; background: #f5f2ea; border-left: 3px solid #b08a3c; font-size: .85rem; }
+.qd-opt, .qd-plan { margin-top: .7rem; padding: .6rem .8rem; background: #eef3ff; border-left: 3px solid #2a5cf0; font-size: .85rem; }
 .qd-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 3.2rem; break-inside: avoid; } .qd-sign .line { display: block; height: 1px; background: #161616; margin-bottom: .4rem; margin-top: 2.6rem; } .qd-sign p { font-weight: 600; } .qd-sign small { color: #666; }
 @media (max-width: 640px) { .qd { padding: 1.3rem 1.1rem 1.6rem; } .qd-head { flex-direction: column; } .qd-meta { text-align: left; } .qd-sign { grid-template-columns: 1fr; gap: 1.5rem; } }
 @media print {
   body { background: #fff !important; }
   .no-print { display: none !important; }
   .qd { box-shadow: none; border-radius: 0; max-width: none; padding: 0; }
-  .qd-opt, .qd-plan { background: #f5f2ea !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .qd-opt, .qd-plan { background: #eef3ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .qd strong, .qd b { color: inherit; font-weight: 650; }
 .qd .qd-for strong { color: #161616; }
@@ -833,3 +833,6 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 :root.pal body, :root[data-theme="claro"] body { transition: background-color .4s var(--suave), color .3s; }
 :root[data-theme="claro"] .sheet-max, :root[data-theme="claro"] .side { color: var(--ink); }
 :root[data-theme="claro"] { color-scheme: light; }
+
+/* Pantallas de escenario (canción, presentador, rutina guiada, enfoque, sesión): siempre oscuras, también si eliges el modo claro */
+.force-dark { color: var(--tinta); color-scheme: dark; }

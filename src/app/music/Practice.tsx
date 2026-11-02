@@ -67,7 +67,7 @@ export default function Practice() {
           <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={date} max={today} onChange={(e) => setDate(e.target.value)} /></label>
         </div>
         <label className="grid gap-2 text-sm">Nota<input className="field" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="Qué trabajé o qué me costó" /></label>
-        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
         <button className="btn btn-primary w-fit">Guardar</button>
       </form>
 

@@ -86,7 +86,7 @@ export default function Overview() {
             <>
               <section className="mb-5 rounded-[var(--r-card)] p-5" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }} aria-label="Libre para gastar">
                 <p className="stat-label">Libre para gastar</p>
-                <p className="mt-1 font-display text-4xl" style={{ color: free.free < 0 ? 'var(--neg)' : 'var(--pos)', fontVariantNumeric: 'tabular-nums' }}>{money(free.free)}</p>
+                <p className="mt-1 font-display text-4xl" style={{ color: free.free < 0 ? 'var(--aviso)' : 'var(--pos)', fontVariantNumeric: 'tabular-nums' }}>{money(free.free)}</p>
                 <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>
                   Tienes {money(money_.available)} en tus cuentas{free.committed > 0 ? <> y en los próximos 30 días vas a pagar {money(free.committed)}</> : null}. {bals.inGoals > 0 ? <>Tu ahorro ({money(bals.inGoals)}) ya está aparte.</> : null}
                 </p>
@@ -146,7 +146,7 @@ export default function Overview() {
 
           {alerts.length > 0 && (
             <Group title="Presupuesto">
-              {alerts.map((a) => <Row key={a.budget.id} tone={a.state === 'over' ? 'var(--neg)' : 'var(--personal)'} title={a.budget.category} sub={`${a.pct}% del límite`} value={`${money(a.spent, a.budget.currency)} / ${money(a.budget.limit_amount, a.budget.currency)}`} valueTone={a.state === 'over' ? 'neg' : 'soft'} to="/app/dinero/presupuesto" />)}
+              {alerts.map((a) => <Row key={a.budget.id} tone={a.state === 'over' ? 'var(--aviso)' : 'var(--personal)'} title={a.budget.category} sub={`${a.pct}% del límite`} value={`${money(a.spent, a.budget.currency)} / ${money(a.budget.limit_amount, a.budget.currency)}`} valueTone={a.state === 'over' ? 'neg' : 'soft'} to="/app/dinero/presupuesto" />)}
             </Group>
           )}
 

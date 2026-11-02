@@ -101,7 +101,7 @@ export default function Wins() {
             <label className="grid gap-2 text-sm">Premio<input autoFocus className="field" value={d.name} maxLength={120} onChange={(e) => setD({ ...d, name: e.target.value })} placeholder="Una tarde libre sin culpa" /></label>
             <label className="grid gap-2 text-sm">Cuesta (puntos)<input className="field" inputMode="numeric" value={d.cost} onChange={(e) => setD({ ...d, cost: e.target.value.replace(/\D/g, '') })} /></label>
             <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Referencia: un día normal suma entre 30 y 80 puntos. 100 puntos son un par de días buenos.</p>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await p.rewards.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Quitar'}</button>}

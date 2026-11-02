@@ -49,7 +49,7 @@ export default function RecipePage() {
       <div className="flex items-start gap-2">
         <h1 className="min-w-0 flex-1 font-display text-3xl">{r.title}</h1>
         <button className="grid size-11 shrink-0 place-items-center" onClick={() => db.update(r.id, { favorite: !r.favorite })} aria-pressed={r.favorite} aria-label={r.favorite ? 'Quitar de favoritas' : 'Marcar como favorita'}>
-          <Heart size={20} aria-hidden style={{ color: r.favorite ? 'var(--neg)' : 'var(--ink-soft)', fill: r.favorite ? 'var(--neg)' : 'none' }} />
+          <Heart size={20} aria-hidden style={{ color: r.favorite ? 'var(--aviso)' : 'var(--ink-soft)', fill: r.favorite ? 'var(--aviso)' : 'none' }} />
         </button>
         <button className="grid size-11 shrink-0 place-items-center" onClick={() => setEditing(true)} aria-label="Editar receta"><Pencil size={18} aria-hidden /></button>
       </div>
@@ -76,7 +76,7 @@ export default function RecipePage() {
         {r.ingredients.map((ing, idx) => {
           const p = ing.k ? inPantry(ing.k) : undefined
           const have = Boolean(p?.have)
-          const body = <><span className="min-w-0 flex-1">{ing.n}{ing.opt && <span className="text-xs" style={{ color: 'var(--ink-faint)' }}> · opcional</span>}</span>{ing.k && !have && !ing.opt && <span className="text-xs" style={{ color: 'var(--neg)' }}>falta</span>}</>
+          const body = <><span className="min-w-0 flex-1">{ing.n}{ing.opt && <span className="text-xs" style={{ color: 'var(--ink-faint)' }}> · opcional</span>}</span>{ing.k && !have && !ing.opt && <span className="text-xs" style={{ color: 'var(--aviso-texto)' }}>falta</span>}</>
           return (
             <li key={idx}>
               {ing.k ? (

@@ -132,7 +132,7 @@ export default function Loans() {
               </section>
             )}
             {msg && <p role="status" className="text-sm" style={{ color: 'var(--sky)' }}>{msg}</p>}
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           </div>
         )}
       </Sheet>

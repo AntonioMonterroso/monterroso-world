@@ -44,7 +44,7 @@ export function LinkSheet({ draft, setDraft, db }: { draft: Draft | null; setDra
           <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.favorite} onChange={(e) => setDraft({ ...draft, favorite: e.target.checked })} /> Favorito</label>
           <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.portfolio} onChange={(e) => setDraft({ ...draft, portfolio: e.target.checked })} /> Es parte de mi portafolio</label>
           {draft.portfolio && <label className="grid gap-2 text-sm">Imagen o captura (enlace https, opcional)<input className="field" inputMode="url" value={draft.image_url} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} maxLength={1000} placeholder="https://" /></label>}
-          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           <div className="flex items-center gap-3">
             <button className="btn btn-primary">Guardar</button>
             {draft.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(draft.id!); setDraft(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

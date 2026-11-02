@@ -50,8 +50,8 @@ export default function Renewals() {
   const later = list.filter((r) => stateOf(r, today) === 'later')
   const row = (r: Renewal) => {
     const s = stateOf(r, today), dd = daysUntil(r, today)
-    return <Row key={r.id} icon={<CalendarClock size={16} aria-hidden />} tone={s === 'overdue' ? 'var(--neg)' : s === 'soon' ? 'var(--accent)' : 'var(--ink-faint)'} title={r.name} chevron={false}
-      sub={<><span style={{ color: s === 'overdue' ? 'var(--neg)' : s === 'soon' ? 'var(--accent)' : undefined }}>{whenLabel(dd)}</span> · {every(r)}</>}
+    return <Row key={r.id} icon={<CalendarClock size={16} aria-hidden />} tone={s === 'overdue' ? 'var(--aviso)' : s === 'soon' ? 'var(--accent)' : 'var(--ink-faint)'} title={r.name} chevron={false}
+      sub={<><span style={{ color: s === 'overdue' ? 'var(--aviso)' : s === 'soon' ? 'var(--accent)' : undefined }}>{whenLabel(dd)}</span> · {every(r)}</>}
       onClick={() => { setErr(''); setConfirm(false); setD({ id: r.id, name: r.name, every_n: String(r.every_n), unit: r.unit, next_due: r.next_due, lead: String(r.lead_days), note: r.note ?? '' }) }}
       trailing={s !== 'later' ? <button className="btn btn-tint !min-h-10" onClick={() => void renew(r)} aria-label={`${r.name} ya renovado`}><Check size={15} aria-hidden /> Hecho</button> : undefined} />
   }
@@ -87,7 +87,7 @@ export default function Renewals() {
               <div className="flex flex-wrap gap-2">{LEADS.map((l) => <button key={l.d} type="button" aria-pressed={d.lead === String(l.d)} onClick={() => setD({ ...d, lead: String(l.d) })} className="min-h-11 rounded-full px-4 text-sm" style={{ background: d.lead === String(l.d) ? 'color-mix(in oklab, var(--accent) 20%, transparent)' : 'var(--surface-2)', color: d.lead === String(l.d) ? 'var(--accent)' : 'var(--ink-soft)' }}>{l.l}</button>)}</div>
             </fieldset>
             <label className="grid gap-2 text-sm">Nota (opcional)<input className="field" value={d.note} maxLength={300} onChange={(e) => setD({ ...d, note: e.target.value })} placeholder="Póliza 12345, llamar a Seguros X" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => { const r = db.rows.find((x) => x.id === d.id)!; if (confirm) void remove(r); else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Quitar'}</button>}

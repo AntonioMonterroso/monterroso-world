@@ -51,7 +51,7 @@ function NewLink({ partner, workouts, onCreated }: { partner: Partner; workouts:
         <input className="field" inputMode="numeric" maxLength={8} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} placeholder="4 a 8 dígitos" autoComplete="off" />
         <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>Se lo das aparte. Tras 5 intentos fallidos el enlace se bloquea 15 minutos.</span>
       </label>
-      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <button className="btn btn-primary w-fit" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Crear enlace</button>
     </form>
   )

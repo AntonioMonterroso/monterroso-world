@@ -25,6 +25,9 @@ export default function Notices() {
   const blocks = useTable<Ev>('schedule_blocks', { col: 'created_at', asc: false })
   const inbox = useTable<{ id: string; text: string; processed?: boolean }>('inbox_items', { col: 'created_at', asc: false })
   const unsorted = inbox.rows.filter((x) => !x.processed)
+  const promisesDb = useTable<{ id: string; text: string; person: string | null; due_date: string | null; done: boolean }>('promises', { col: 'created_at', asc: false })
+  const renewalsDb = useTable<{ id: string; name: string; next_due: string }>('renewals', { col: 'next_due', asc: true })
+  const subsDb = useTable<{ id: string; name: string; next_due: string; amount: number; active: boolean }>('subscriptions', { col: 'next_due', asc: true })
   const [tab, setTab] = useState<'pending' | 'history'>('pending')
   const [err, setErr] = useState('')
 
@@ -38,6 +41,17 @@ export default function Notices() {
   const follow = deliveries.rows.filter((d) => followUpDue(d, today))
   const waitingNoDate = deliveries.rows.filter((d) => isOpen(d) && d.status !== 'to_send' && !followUpDue(d, today)).length
   const pendingCount = overdue.length + toSend.length + follow.length + unsorted.length
+
+  // Todo lo demás, por fecha: lo próximo de otras secciones (nada de esto suena; aquí espera tranquilo)
+  const later = useMemo(() => {
+    const lim = isoFromNum(dayNum(today) + 30)
+    const rows: { key: string; date: string; title: string; sub: string; to: string; color: string }[] = []
+    for (const o of ev.between(today, isoFromNum(dayNum(today) + 14))) if (!o.state.done) rows.push({ key: `e${o.event.id}${o.date}`, date: o.date, title: o.event.title, sub: 'Evento', to: '/app/planear/agenda', color: 'var(--ink-faint)' })
+    for (const p of promisesDb.rows) if (!p.done && p.due_date && p.due_date <= lim) rows.push({ key: `p${p.id}`, date: p.due_date, title: p.person ? `Promesa a ${p.person}` : p.text, sub: 'Promesa', to: '/app/mente/cosas', color: 'var(--personal)' })
+    for (const r of renewalsDb.rows) if (r.next_due <= lim) rows.push({ key: `r${r.id}`, date: r.next_due, title: r.name, sub: 'Vencimiento', to: '/app/mente/vencimientos', color: 'var(--aviso)' })
+    for (const s of subsDb.rows) if (s.active && s.next_due >= today && s.next_due <= lim) rows.push({ key: `s${s.id}`, date: s.next_due, title: s.name, sub: 'Pago fijo', to: '/app/dinero/suscripciones', color: 'var(--aviso)' })
+    return rows.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 14)
+  }, [ev, promisesDb.rows, renewalsDb.rows, subsDb.rows, today])
 
   const grouped = useMemo(() => {
     const items: Item[] = [
@@ -66,7 +80,7 @@ export default function Notices() {
       {loading ? <div className="grid h-40 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : tab === 'pending' ? (
         pendingCount === 0 ? <Empty title="Todo al día" text={waitingNoDate > 0 ? `No hay nada urgente. Tienes ${waitingNoDate} ${waitingNoDate === 1 ? 'envío esperando' : 'envíos esperando'} respuesta.` : 'No tienes recordatorios sin confirmar ni envíos por dar seguimiento.'} /> : (
           <>
-            {unsorted.length > 0 && <Group title={`Sin clasificar · ${unsorted.length}`} footer="Lo que anotaste con ＋. Cuando sepas dónde va, lo pasas a su lugar y lo borras de aquí.">{unsorted.map((x) => <Row key={x.id} title={<span className="whitespace-normal break-words">{x.text}</span>} chevron={false} trailing={<button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar: ${x.text}`} onClick={async () => { await supabase.from('inbox_items').delete().eq('id', x.id); void inbox.reload() }}><Trash2 size={16} aria-hidden /></button>} />)}</Group>}
+            {unsorted.length > 0 && <Group title={`Sin clasificar · ${unsorted.length}`} footer="Lo que anotaste con ＋. Cuando sepas dónde va, lo pasas a su lugar y lo borras de aquí.">{unsorted.map((x) => <Row key={x.id} title={<span className="whitespace-normal break-words">{x.text}</span>} chevron={false} trailing={<span className="flex items-center"><button className="btn btn-sec btn-chico" onClick={() => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text: x.text, inboxId: x.id } }))}>Clasificar</button><button className="grid size-11 place-items-center rounded-full" aria-label={`Borrar: ${x.text}`} onClick={async () => { await supabase.from('inbox_items').delete().eq('id', x.id); void inbox.reload() }}><Trash2 size={16} aria-hidden /></button></span>} />)}</Group>}
             {follow.length > 0 && <Group title="Dar seguimiento">{follow.map((d) => <Row key={d.id} icon={<Send size={16} aria-hidden />} tone="var(--accent)" title={d.title} sub={d.recipient ? `Para ${d.recipient} · sin respuesta` : 'Sin respuesta'} to="/app/envios" />)}</Group>}
             {toSend.length > 0 && <Group title="Por enviar">{toSend.map((d) => <Row key={d.id} icon={<Send size={16} aria-hidden />} title={d.title} sub={d.recipient ? `Para ${d.recipient}` : undefined} to="/app/envios" />)}</Group>}
             {overdue.length > 0 && <Group title="Recordatorios sin confirmar">{overdue.map((o) => <Row key={o.event.id + o.date} icon={<CalendarCheck size={16} aria-hidden />} tone="var(--brass)" title={o.event.title} sub={`${o.date === today ? 'Hoy' : dayLabel(o.date)} · ${fmtMin(o.event.start_min)}`} to={`/app/planear/agenda?e=${o.event.id}`} />)}</Group>}
@@ -85,6 +99,12 @@ export default function Notices() {
             <button className="btn btn-ghost mt-6" onClick={clear}>Limpiar historial</button>
           </>
         )
+      )}
+
+      {!loading && tab === 'pending' && later.length > 0 && (
+        <Group title="Todo lo demás · por fecha" footer="Nada de esto suena: espera tranquilo y aparece en Hoy cuando toca.">
+          {later.map((r) => <Row key={r.key} to={r.to} tone={r.color} title={r.title} sub={r.sub} value={new Date(r.date + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' })} valueTone="soft" />)}
+        </Group>
       )}
     </div>
   )

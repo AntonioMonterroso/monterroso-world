@@ -27,7 +27,7 @@ function coerce(base: Entendido, kind: Kind, text: string, today: string): Enten
 }
 
 /** ＋ Anotar: escribes como hablas, ves lo que entendió y Enter guarda. Si te equivocas, Deshacer. */
-export default function Anotar({ open, initial = '', onClose, onSaved }: { open: boolean; initial?: string; onClose: () => void; onSaved?: (s: Saved) => void }) {
+export default function Anotar({ open, initial = '', inboxId = null, onClose, onSaved }: { open: boolean; initial?: string; inboxId?: string | null; onClose: () => void; onSaved?: (s: Saved) => void }) {
   const work = useProjects()
   const [text, setText] = useState('')
   const [forced, setForced] = useState<Kind | null>(null)
@@ -115,6 +115,8 @@ export default function Anotar({ open, initial = '', onClose, onSaved }: { open:
         if (error || !data) throw new Error('No pude guardarlo.')
         saved = { label: e.kind === 'idea' ? 'Idea guardada en Pendientes' : 'Anotado en Pendientes', undo: del('inbox_items', data.id) }
       }
+      // Si venía de Pendientes («Clasificar»), el original ya no hace falta
+      if (inboxId && e.kind !== 'bandeja') await supabase.from('inbox_items').delete().eq('id', inboxId)
       setText(''); onClose()
       if (saved) onSaved?.(saved)
     } catch (x) { setErr(x instanceof Error ? x.message : 'No se pudo guardar.') } finally { setBusy(false) }

@@ -64,7 +64,7 @@ export default function Rules() {
             {d.trigger_kind.startsWith('block') && <label className="grid gap-2 text-sm">Tipo de bloque<select className="field" value={d.block_kind} onChange={(e) => setD({ ...d, block_kind: e.target.value })}>{Object.entries(BLOCK_KINDS).map(([k, l]) => <option key={k} value={k}>{k === 'other' ? 'Cualquiera' : l.replace('de ', '').replace(/^./, (c) => c.toUpperCase())}</option>)}</select></label>}
             <label className="grid gap-2 text-sm">Entonces…<input autoFocus className="field" value={d.action} maxLength={200} onChange={(e) => setD({ ...d, action: e.target.value })} placeholder="Tomo agua y estiro 2 minutos" /></label>
             <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>{describe({ trigger_kind: d.trigger_kind, time_min: toMin(d.time), block_kind: d.block_kind })}, entonces {d.action || '…'}</p>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => { const r = db.rows.find((x) => x.id === d.id)!; if (confirm) void remove(r); else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Quitar'}</button>}

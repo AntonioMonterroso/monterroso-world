@@ -8,14 +8,14 @@ export type FinCategory = { id: string; kind: Kind; name: string; position: numb
 
 /** Colores que se pueden elegir para un área. Son tonos del sistema, así que siempre combinan. */
 export const AREA_COLORS: { id: string; label: string }[] = [
-  { id: 'var(--dev)', label: 'Latón' },
-  { id: 'var(--music)', label: 'Celeste' },
-  { id: 'var(--personal)', label: 'Arcilla' },
-  { id: '#93c9a6', label: 'Verde' },
-  { id: '#b9a6d9', label: 'Lila' },
-  { id: '#e0a59a', label: 'Coral' },
-  { id: '#e3c07a', label: 'Ámbar' },
-  { id: '#7fc4c4', label: 'Turquesa' },
+  { id: 'var(--web)', label: 'Azul' },
+  { id: 'var(--musica)', label: 'Rosa' },
+  { id: 'var(--personal)', label: 'Verde' },
+  { id: '#fbbf24', label: 'Ámbar' },
+  { id: '#2dd4bf', label: 'Turquesa' },
+  { id: '#a78bfa', label: 'Violeta' },
+  { id: '#fb923c', label: 'Naranja' },
+  { id: '#a3e635', label: 'Lima' },
 ]
 
 let seeding: Promise<void> | null = null

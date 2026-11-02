@@ -196,7 +196,7 @@ export default function Accounts() {
             <fieldset><legend className="mb-2 text-sm">Color</legend>
               <div className="flex flex-wrap gap-3">{AREA_COLORS.map((c) => <button key={c.id} type="button" aria-pressed={form.color === c.id} aria-label={c.label} onClick={() => setForm({ ...form, color: c.id })} className="swatch" style={{ ['--sw' as string]: c.id }} />)}</div>
             </fieldset>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {form.id && <button type="button" className="btn btn-ghost" onClick={() => { const a = accounts.rows.find((x) => x.id === form.id)!; setForm(null); setRec({ acc: a, real: '' }); setErr('') }}><Scale size={16} aria-hidden /> Cuadrar con el banco</button>}
@@ -220,7 +220,7 @@ export default function Accounts() {
             </div>
             <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={moving.date} onChange={(e) => setMoving({ ...moving, date: e.target.value })} /></label>
             <label className="grid gap-2 text-sm">Nota<input className="field" value={moving.note} maxLength={300} onChange={(e) => setMoving({ ...moving, note: e.target.value })} placeholder="Retiro para gastos de la semana" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Transferir</button>
           </form>
         )}
@@ -231,8 +231,8 @@ export default function Accounts() {
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); void doReconcile() }}>
             <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>La app calcula <strong style={{ color: 'var(--ink)' }}>{money(bal[rec.acc.id] ?? 0)}</strong>. Escribe lo que muestra tu banco (o cuenta lo que hay en la cartera) y registro la diferencia como un ajuste.</p>
             <label className="grid gap-2 text-sm">Saldo real<input autoFocus className="field" inputMode="decimal" value={rec.real} onChange={(e) => setRec({ ...rec, real: e.target.value })} placeholder="0.00" /></label>
-            {Number.isFinite(toNum(rec.real)) && rec.real.trim() && (() => { const r = reconcile(bal[rec.acc.id] ?? 0, toNum(rec.real)); return <p className="text-sm" style={{ color: r.kind === 'expense' ? 'var(--neg)' : r.kind ? 'var(--pos)' : 'var(--ink-soft)' }}>{r.kind ? `Diferencia: ${r.kind === 'income' ? '+' : '−'}${money(r.diff)}` : 'Coincide: no hay nada que ajustar.'}</p> })()}
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {Number.isFinite(toNum(rec.real)) && rec.real.trim() && (() => { const r = reconcile(bal[rec.acc.id] ?? 0, toNum(rec.real)); return <p className="text-sm" style={{ color: r.kind === 'expense' ? 'var(--aviso)' : r.kind ? 'var(--pos)' : 'var(--ink-soft)' }}>{r.kind ? `Diferencia: ${r.kind === 'income' ? '+' : '−'}${money(r.diff)}` : 'Coincide: no hay nada que ajustar.'}</p> })()}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Ajustar saldo</button>
           </form>
         )}

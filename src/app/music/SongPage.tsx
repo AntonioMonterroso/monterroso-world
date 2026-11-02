@@ -71,7 +71,7 @@ function Editor({ song, onSave, onCancel, onDelete }: { song: Song; onSave: (p: 
       </fieldset>
       <label className="grid gap-2 text-sm">Notas generales<textarea className="field py-3" rows={3} value={f.notes} onChange={(e) => set('notes', e.target.value)} maxLength={4000} /></label>
 
-      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary">Guardar</button>
         <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancelar</button>

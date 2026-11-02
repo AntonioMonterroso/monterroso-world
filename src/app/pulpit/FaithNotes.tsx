@@ -70,7 +70,7 @@ export default function FaithNotes() {
         {([{ id: 'all', label: 'Todas' }, ...NOTE_KINDS] as { id: NoteKind | 'all'; label: string }[]).map((k) => <button key={k.id} aria-pressed={filter === k.id} onClick={() => setFilter(k.id)} className="min-h-11 shrink-0 rounded-full border px-4 text-sm" style={{ borderColor: filter === k.id ? 'var(--accent)' : 'var(--line)', background: filter === k.id ? 'var(--accent)' : 'transparent', color: filter === k.id ? 'var(--bg)' : 'var(--ink-soft)' }}>{k.label}</button>)}
       </div>
 
-      {db.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{db.error}</p>}
+      {db.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error}</p>}
 
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : list.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>

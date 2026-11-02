@@ -95,7 +95,7 @@ export default function Subscriptions() {
               </fieldset>
             )}
             <label className="grid gap-2 text-sm">Enlace (opcional)<input className="field" inputMode="url" value={d.url} onChange={(e) => setD({ ...d, url: e.target.value })} maxLength={500} placeholder="https://" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

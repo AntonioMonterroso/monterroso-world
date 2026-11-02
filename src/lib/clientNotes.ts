@@ -1,0 +1,31 @@
+import { useCallback, useEffect, useState } from 'react'
+import { getSettings, patchSettings } from './settings'
+
+/** Lo extra de cada cliente: su WhatsApp (solo para ti, nunca en páginas públicas) y una bitácora con fecha. Vive en tus ajustes. */
+export type LogEntry = { id: string; date: string; text: string }
+export type ClientExtra = { phone?: string; log?: LogEntry[] }
+type All = Record<string, ClientExtra>
+
+export const digits = (s: string) => s.replace(/\D/g, '')
+/** Un número de Guatemala de 8 dígitos lleva el 502 por delante. */
+export const waNumber = (phone: string) => { const d = digits(phone); return d.length === 8 ? `502${d}` : d }
+export const cleanAll = (raw: unknown): All => {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: All = {}
+  for (const [k, v] of Object.entries(raw as Record<string, ClientExtra>)) out[k] = { phone: typeof v?.phone === 'string' ? v.phone.slice(0, 30) : undefined, log: Array.isArray(v?.log) ? v.log.filter((e) => e && typeof e.text === 'string').slice(0, 200) : [] }
+  return out
+}
+
+export function useClientExtra(key: string) {
+  const [all, setAll] = useState<All>({})
+  useEffect(() => { void getSettings().then((s) => setAll(cleanAll((s as { clientExtra?: unknown }).clientExtra))) }, [])
+  const save = useCallback((next: All) => { setAll(next); void patchSettings({ clientExtra: next } as never) }, [])
+  const cur = all[key] ?? {}
+  return {
+    phone: cur.phone ?? '',
+    log: [...(cur.log ?? [])].sort((a, b) => b.date.localeCompare(a.date)),
+    setPhone: (phone: string) => save({ ...all, [key]: { ...cur, phone: phone.trim() || undefined } }),
+    addLog: (text: string, date: string) => save({ ...all, [key]: { ...cur, log: [...(cur.log ?? []), { id: Math.random().toString(36).slice(2, 10), date, text: text.trim() }] } }),
+    removeLog: (id: string) => save({ ...all, [key]: { ...cur, log: (cur.log ?? []).filter((e) => e.id !== id) } }),
+  }
+}

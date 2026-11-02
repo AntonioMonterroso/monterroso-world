@@ -100,7 +100,7 @@ export default function Learn() {
           <datalist id="topics">{topics.map((t) => <option key={t} value={t} />)}</datalist>
           {needTitle && <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" aria-label="Título" maxLength={300} />}
         </div>
-        {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+        {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
         <button className="btn btn-primary w-fit" disabled={adding || !url.trim()}>{adding ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Plus size={16} aria-hidden />} Agregar</button>
       </form>
 

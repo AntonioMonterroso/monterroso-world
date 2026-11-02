@@ -62,7 +62,7 @@ export default function Calculator() {
         <Stat label="Fijo en suscripciones" value={money(fixed)} note={income > 0 ? `${shareOf(fixed, income)}% del ingreso` : undefined} />
       </div>
 
-      <Group title="Tu plan" aside={left === 0 ? '100%' : <span style={{ color: left < 0 ? 'var(--neg)' : 'var(--accent)' }}>{left > 0 ? `Falta asignar ${left}%` : `Te pasaste ${-left}%`}</span>}>
+      <Group title="Tu plan" aside={left === 0 ? '100%' : <span style={{ color: left < 0 ? 'var(--aviso)' : 'var(--accent)' }}>{left > 0 ? `Falta asignar ${left}%` : `Te pasaste ${-left}%`}</span>}>
         {buckets.map((x) => {
           const a = amountOf(x.id)
           const r = real[x.kind]
@@ -78,8 +78,8 @@ export default function Calculator() {
                 <button type="button" className="grid size-11 place-items-center rounded-full" style={{ background: 'var(--surface-2)' }} onClick={() => step(x.id, 5)} aria-label={`Subir ${x.name}`}><Plus size={14} aria-hidden /></button>
                 {pr && a > 0 && (
                   <div className="min-w-0 flex-1">
-                    <div className="meter" style={{ ['--meter' as string]: pr.over && x.kind !== 'save' ? 'var(--neg)' : TONE[x.kind] }} role="img" aria-label={`${Math.min(pr.pct, 100)}% de lo planeado`}><i style={{ width: `${Math.min(100, pr.pct)}%` }} /></div>
-                    <p className="mt-1 truncate text-xs" style={{ color: pr.over && x.kind !== 'save' ? 'var(--neg)' : 'var(--ink-faint)' }}>
+                    <div className="meter" style={{ ['--meter' as string]: pr.over && x.kind !== 'save' ? 'var(--aviso)' : TONE[x.kind] }} role="img" aria-label={`${Math.min(pr.pct, 100)}% de lo planeado`}><i style={{ width: `${Math.min(100, pr.pct)}%` }} /></div>
+                    <p className="mt-1 truncate text-xs" style={{ color: pr.over && x.kind !== 'save' ? 'var(--aviso)' : 'var(--ink-faint)' }}>
                       {x.kind === 'save' ? (pr.over ? '¡Ya apartaste de más!' : `Faltan ${money(pr.left)}`) : pr.over ? `Te pasaste ${money((r ?? 0) - a)}` : `Quedan ${money(pr.left)}`}
                     </p>
                   </div>

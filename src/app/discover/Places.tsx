@@ -105,7 +105,7 @@ export default function Places() {
               </div>
             )}
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={p.notes} onChange={(e) => setP({ ...p, notes: e.target.value })} maxLength={1000} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {p.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await places.remove(p.id!); setP(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
@@ -123,7 +123,7 @@ export default function Places() {
               <label className="grid gap-2 text-sm">Hasta<input type="date" className="field" value={t.end_date} onChange={(e) => setT({ ...t, end_date: e.target.value })} /></label>
             </div>
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={t.notes} onChange={(e) => setT({ ...t, notes: e.target.value })} maxLength={1000} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {t.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await trips.remove(t.id!); setT(null); setTrip(''); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Los lugares se quedan' : 'Eliminar'}</button>}

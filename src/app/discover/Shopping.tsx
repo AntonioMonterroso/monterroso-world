@@ -129,7 +129,7 @@ export default function Shopping() {
             <label className="grid gap-2 text-sm">Dónde<input className="field" value={d.store} onChange={(e) => setD({ ...d, store: e.target.value })} maxLength={200} placeholder="Tienda o sitio" /></label>
             <label className="grid gap-2 text-sm">Enlace (opcional)<input className="field" inputMode="url" value={d.url} onChange={(e) => setD({ ...d, url: e.target.value })} maxLength={1000} placeholder="https://" /></label>
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} maxLength={500} /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(d.id!); setD(null); setConfirm(false) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
@@ -145,7 +145,7 @@ export default function Shopping() {
             <label className="grid gap-2 text-sm">¿Cuánto costó realmente? ({buy.currency})<input className="field" inputMode="decimal" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} placeholder="0.00" autoFocus /></label>
             <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-0.5 size-5 shrink-0" checked={record} onChange={(e) => setRecord(e.target.checked)} /> Registrarlo como gasto en Finanzas ({expenseCategoryFor(buy.category)})</label>
             {record && <AccountPick accounts={accounts} value={buyAcct} onChange={setBuyAcct} label="Pagado con" />}
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Listo, lo compré</button>
           </form>
         )}

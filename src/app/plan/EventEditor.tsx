@@ -196,7 +196,7 @@ export default function EventEditor({ target, onClose, onSave, onDelete, onSkip 
               <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></label>
             </div>
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>

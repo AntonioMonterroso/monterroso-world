@@ -15,7 +15,7 @@ const base = import.meta.env.BASE_URL
 const link = (t: string) => `${location.origin}${base}cotizacion/${t}`
 /** La página del cliente vive en tu página del estudio: propuesta y seguimiento en un solo lugar. */
 const clientLink = (t: string) => `${profile.site}cliente?t=${t}`
-const STATUS_TONE: Record<Status, string> = { draft: 'var(--ink-faint)', sent: 'var(--sky)', accepted: 'var(--pos)', rejected: 'var(--neg)' }
+const STATUS_TONE: Record<Status, string> = { draft: 'var(--ink-faint)', sent: 'var(--sky)', accepted: 'var(--pos)', rejected: 'var(--aviso)' }
 const TEMPLATES: { id: Template; hint: string }[] = [
   { id: 'citas', hint: 'Citas en línea, panel y recordatorios, como el de la barbería.' },
   { id: 'web', hint: 'Una página profesional con tus servicios y contacto.' },
@@ -116,7 +116,7 @@ export default function Quotes() {
           <Group key={s} title={STATUS_LABEL[s]} aside={db.rows.filter((q) => q.status === s).length}>
             {db.rows.filter((q) => q.status === s).map((q) => (
               <Row key={q.id} tone={STATUS_TONE[q.status]} title={`${q.client_name || 'Sin cliente'} · ${q.title}`}
-                sub={<>{q.number}{q.valid_until ? (isExpired(q.valid_until, today) && q.status !== 'accepted' ? <span style={{ color: 'var(--neg)' }}> · venció el {q.valid_until}</span> : ` · vence el ${q.valid_until}`) : ''}{q.shared ? ' · compartida' : ''}</>}
+                sub={<>{q.number}{q.valid_until ? (isExpired(q.valid_until, today) && q.status !== 'accepted' ? <span style={{ color: 'var(--aviso-texto)' }}> · venció el {q.valid_until}</span> : ` · vence el ${q.valid_until}`) : ''}{q.shared ? ' · compartida' : ''}</>}
                 value={totalLabel(q)} valueTone="soft" onClick={() => open(q)} />
             ))}
           </Group>
@@ -290,7 +290,7 @@ export default function Quotes() {
               </div>
             )}
 
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             {msg && <p role="status" className="text-sm" style={{ color: 'var(--pos)' }}>{msg}</p>}
             <div className="flex flex-wrap items-center gap-3 no-print">
               <button type="button" className="btn btn-primary" onClick={() => void save()}>Guardar</button>

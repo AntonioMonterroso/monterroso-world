@@ -32,7 +32,7 @@ export default function Songs() {
       </div>
       <div className="mt-3"><Segmented label="Estado" value={status} onChange={setStatus} options={[{ id: 'all', label: 'Todas' }, ...SONG_STATUS.map((x) => ({ id: x.id, label: x.label }))] as { id: SongStatus | 'all'; label: string }[]} /></div>
 
-      {db.error && <p role="alert" className="mt-3 flex justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
+      {db.error && <p role="alert" className="mt-3 flex justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
 
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : list.length === 0 ? (
         <Empty title={db.rows.length ? 'Nada coincide' : 'Tu repertorio empieza aquí'} text="Escribe la letra con los acordes entre corchetes, como [Am]así, y la app los pone sobre la letra y los transpone." action={db.rows.length ? undefined : 'Agregar la primera'} onAction={create} />

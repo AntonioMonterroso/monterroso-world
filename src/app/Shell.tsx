@@ -20,6 +20,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState(false)
   const [noteText, setNoteText] = useState('')
+  const [noteInbox, setNoteInbox] = useState<string | null>(null)
   const [saved, setSaved] = useState<Saved | null>(null)
   useEffect(() => { if (!saved) return; const t = setTimeout(() => setSaved(null), 5000); return () => clearTimeout(t) }, [saved])
   const nav = useNavigate()
@@ -46,7 +47,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   }, [nav])
 
   useEffect(() => {
-    const h = (e: Event) => { setNoteText((e as CustomEvent<{ text?: string }>).detail?.text ?? ''); setNote(true) }
+    const h = (e: Event) => { const d = (e as CustomEvent<{ text?: string; inboxId?: string }>).detail; setNoteText(d?.text ?? ''); setNoteInbox(d?.inboxId ?? null); setNote(true) }
     window.addEventListener('mw-anotar', h)
     return () => window.removeEventListener('mw-anotar', h)
   }, [])
@@ -97,7 +98,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
         <Link to="/app/areas" className="tab-link" aria-current={['trabajo', 'musica', 'personal', 'privado'].includes(here) || pathname.startsWith('/app/areas') ? 'page' : undefined}><LayoutGrid size={20} aria-hidden /><span>Áreas</span></Link>
       </nav>
 
-      <Anotar open={note} initial={noteText} onClose={() => { setNote(false); setNoteText('') }} onSaved={setSaved} />
+      <Anotar open={note} initial={noteText} inboxId={noteInbox} onClose={() => { setNote(false); setNoteText(''); setNoteInbox(null) }} onSaved={setSaved} />
       {saved && (
         <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>
           {saved.label}

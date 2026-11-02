@@ -265,7 +265,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                           )}
                           {states.filter((x) => !x.paid).slice(0, 12).map((x) => (
                             <li key={x.period} className="flex items-center gap-2 rounded-xl px-3" style={{ background: 'var(--bg)' }}>
-                              <span className="flex-1 py-2 text-sm"><span className="font-semibold">{cap(monthLabel(x.period))}</span> <span style={{ color: x.late ? 'var(--neg)' : 'var(--ink-faint)' }}>{x.late ? 'atrasada' : 'próxima'} · {money(Number(project.monthly_fee), project.currency)}</span></span>
+                              <span className="flex-1 py-2 text-sm"><span className="font-semibold">{cap(monthLabel(x.period))}</span> <span style={{ color: x.late ? 'var(--aviso)' : 'var(--ink-faint)' }}>{x.late ? 'atrasada' : 'próxima'} · {money(Number(project.monthly_fee), project.currency)}</span></span>
                               <button type="button" className="btn btn-tint min-h-11" onClick={() => collect('monthly', Number(project.monthly_fee), x.period)}>Ya la cobré</button>
                             </li>
                           ))}
@@ -331,7 +331,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
               </fieldset>
             )}
 
-            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete(project.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borran sus cobros' : 'Eliminar'}</button>

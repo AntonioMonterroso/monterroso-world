@@ -128,7 +128,7 @@ export default function Items({ dk, meta, onMeta, userName }: { dk: DataKey; met
         {([{ id: 'all', label: 'Todo' }, ...CATEGORIES] as { id: Category | 'all'; label: string }[]).map((c) => <button key={c.id} aria-pressed={cat === c.id} onClick={() => setCat(c.id)} className="min-h-11 shrink-0 rounded-full border px-4 text-sm" style={chip(cat === c.id)}>{c.label}</button>)}
       </div>
 
-      {(rows.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{rows.error}</p>}
+      {(rows.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{rows.error}</p>}
 
       {rows.loading || !ready ? <div className="grid h-40 place-items-center"><Loader2 className="animate-spin" aria-label="Descifrando" /></div> : list.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
@@ -145,7 +145,7 @@ export default function Items({ dk, meta, onMeta, userName }: { dk: DataKey; met
                 <button onClick={() => { setOpenId(i.id); setConfirm(false) }} className="flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
                   <Icon size={18} aria-hidden style={{ color: 'var(--ink-faint)' }} />
                   <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{i.payload?.title ?? 'No se pudo descifrar'}</span><span className="block truncate text-xs" style={{ color: 'var(--ink-faint)' }}>{[sub, projectName(i.project_id)].filter(Boolean).join(' · ')}</span></span>
-                  {i.critical && <span className="rounded-full px-2 py-0.5 text-xs" style={{ background: 'color-mix(in oklab, var(--neg) 18%, transparent)', color: 'var(--neg)' }}>Crítica</span>}
+                  {i.critical && <span className="rounded-full px-2 py-0.5 text-xs" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>Crítica</span>}
                 </button>
               </li>
             )
@@ -170,7 +170,7 @@ export default function Items({ dk, meta, onMeta, userName }: { dk: DataKey; met
               <button className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? remove(open.id) : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>
             </div>
           </div>
-        ) : <p className="text-sm" style={{ color: 'var(--neg)' }}>Este elemento no se pudo descifrar con la llave actual.</p>)}
+        ) : <p className="text-sm" style={{ color: 'var(--aviso-texto)' }}>Este elemento no se pudo descifrar con la llave actual.</p>)}
       </Sheet>
 
       {/* Crear / editar */}
@@ -201,7 +201,7 @@ export default function Items({ dk, meta, onMeta, userName }: { dk: DataKey; met
             <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={3} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} maxLength={4000} /></label>
             {projects.rows.length > 0 && <label className="grid gap-2 text-sm">Ligar a un trabajo (opcional)<select className="field" value={draft.project_id} onChange={(e) => setDraft({ ...draft, project_id: e.target.value })}><option value="">—</option>{projects.rows.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>}
             <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5" checked={draft.critical} onChange={(e) => setDraft({ ...draft, critical: e.target.checked })} /> Marcar como crítica (por ejemplo, service_role)</label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <button className="btn btn-primary w-fit" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden />} Guardar cifrado</button>
           </form>
         )}

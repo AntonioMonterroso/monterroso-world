@@ -36,7 +36,7 @@ export default function Recipes() {
 
   const row = ({ r, miss }: { r: Recipe; miss: string[] }) => (
     <Row key={r.id} to={`/app/cocina/receta/${r.id}`} tone={miss.length ? 'var(--ink-faint)' : 'var(--pos)'}
-      title={<>{r.title}{r.favorite && <Heart size={13} aria-label="Favorita" className="ml-1.5 inline -translate-y-px" style={{ color: 'var(--neg)', fill: 'var(--neg)' }} />}</>}
+      title={<>{r.title}{r.favorite && <Heart size={13} aria-label="Favorita" className="ml-1.5 inline -translate-y-px" style={{ color: 'var(--aviso-texto)', fill: 'var(--aviso)' }} />}</>}
       sub={[mealLabel(r.meal), r.minutes ? `${r.minutes} min` : '', miss.length ? `falta: ${miss.join(', ')}` : 'tienes todo'].filter(Boolean).join(' · ')} />
   )
 

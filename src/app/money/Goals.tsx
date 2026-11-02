@@ -212,13 +212,13 @@ export default function Goals() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold">{g.title}</p>
-                        <button className="inline-flex min-h-9 items-center gap-1 text-xs underline" style={{ color: g.due_date && g.due_date < today && pct < 100 ? 'var(--neg)' : 'var(--ink-faint)' }} onClick={() => startEdit(g)}>{g.due_date ? `Para el ${g.due_date}` : 'Poner fecha'}</button>
+                        <button className="inline-flex min-h-9 items-center gap-1 text-xs underline" style={{ color: g.due_date && g.due_date < today && pct < 100 ? 'var(--aviso)' : 'var(--ink-faint)' }} onClick={() => startEdit(g)}>{g.due_date ? `Para el ${g.due_date}` : 'Poner fecha'}</button>
                       </div>
                       <button className="grid size-11 shrink-0 place-items-center rounded-full" style={{ color: 'var(--ink-faint)' }} onClick={() => startEdit(g)} aria-label={`Editar ${g.title}`}><Pencil size={16} aria-hidden /></button>
                     </div>
                     <p className="mt-1 text-sm"><strong style={{ fontSize: '1.25rem', color: pct >= 100 ? 'var(--pos)' : 'var(--ink)' }}>{money(g.saved, g.currency)}</strong> <span style={{ color: 'var(--ink-faint)' }}>de {money(g.target, g.currency)} · {pct}%</span></p>
                     <div className="meter mt-2" style={{ ['--meter' as string]: pct >= 100 ? 'var(--pos)' : 'var(--accent)' }} role="img" aria-label={`${pct}% ahorrado`}><i style={{ width: `${pct}%` }} /></div>
-                    <p className="mt-2 text-xs" style={{ color: pace.onTrack === false ? 'var(--neg)' : 'var(--ink-faint)' }}>
+                    <p className="mt-2 text-xs" style={{ color: pace.onTrack === false ? 'var(--aviso)' : 'var(--ink-faint)' }}>
                       {pct >= 100 ? '¡Meta lograda!' : pace.perMonth > 0 ? `Llevas ${money(pace.perMonth)} al mes${pace.onTrack === false ? ' · así llegas después de tu fecha' : pace.onTrack ? ' · vas a tiempo' : ''}` : 'Aún sin aportes recientes. Con un poco cada mes se llega.'}
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -242,8 +242,8 @@ export default function Goals() {
             <Group key={date} title={cap(new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }))}>
               {items.map((m) => {
                 const out = Number(m.amount) < 0
-                return <Row key={m.id} chevron={false} tone={out ? 'var(--neg)' : 'var(--pos)'} title={goalName(m.goal_id)}
-                  sub={<>{out ? <strong style={{ color: 'var(--neg)' }}>Sacaste</strong> : 'Apartaste'}{out && m.reason_kind ? ` · ${reasonLabel(m.reason_kind)}` : ''}{m.plan_id ? ' · planeado' : ''}{m.source_payment_id && projectName(m.source_payment_id) ? ` · viene de Trabajo: ${projectName(m.source_payment_id)}` : ''}{accName(m.account_id) ? ` · ${out ? 'hacia' : 'desde'} ${accName(m.account_id)}` : ''}{m.reason ? ` · “${m.reason}”` : ''}</>}
+                return <Row key={m.id} chevron={false} tone={out ? 'var(--aviso)' : 'var(--pos)'} title={goalName(m.goal_id)}
+                  sub={<>{out ? <strong style={{ color: 'var(--aviso-texto)' }}>Sacaste</strong> : 'Apartaste'}{out && m.reason_kind ? ` · ${reasonLabel(m.reason_kind)}` : ''}{m.plan_id ? ' · planeado' : ''}{m.source_payment_id && projectName(m.source_payment_id) ? ` · viene de Trabajo: ${projectName(m.source_payment_id)}` : ''}{accName(m.account_id) ? ` · ${out ? 'hacia' : 'desde'} ${accName(m.account_id)}` : ''}{m.reason ? ` · “${m.reason}”` : ''}</>}
                   value={`${out ? '−' : '+'}${money(Math.abs(Number(m.amount)))}`} valueTone={out ? undefined : 'pos'} />
               })}
             </Group>
@@ -259,7 +259,7 @@ export default function Goals() {
             <label className="grid gap-2 text-sm">¿Cuánto vas a apartar?<input className="field" inputMode="decimal" value={d.amount} onChange={(e) => setD({ ...d, amount: e.target.value })} placeholder="0.00" autoFocus /></label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Montos rápidos">{[50, 100, 200, 500].map((n) => <button key={n} type="button" className="min-h-11 rounded-full px-4 text-sm" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }} onClick={() => setD({ ...d, amount: String(n) })}>Q {n}</button>)}</div>
             <AccountPick accounts={accounts} value={d.acct} onChange={(v) => setD({ ...d, acct: v })} label="¿De qué cuenta sale?" none="No lo sé / sin cuenta" />
-            {dErr && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{dErr}</p>}
+            {dErr && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{dErr}</p>}
             <button type="button" className="btn btn-primary w-fit" onClick={() => void deposit()}>Apartar {money(toNum(d.amount) || 0)}</button>
           </div>
         )}
@@ -269,7 +269,7 @@ export default function Goals() {
       <Sheet open={Boolean(w)} title="Sacar de tu ahorro" onClose={() => setW(null)}>
         {w && impact && (
           <div className="grid gap-4">
-            <p className="rounded-xl px-4 py-3 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 10%, var(--surface-2))', color: 'var(--ink-soft)' }}>
+            <p className="rounded-xl px-4 py-3 text-sm" style={{ background: 'color-mix(in oklab, var(--aviso) 10%, var(--surface-2))', color: 'var(--ink-soft)' }}>
               Es tu ahorro de <strong style={{ color: 'var(--ink)' }}>{w.goal.title}</strong>: tienes <strong style={{ color: 'var(--ink)' }}>{money(Number(w.goal.saved))}</strong>. Piénsalo un momento antes de sacarlo.
             </p>
             {!w.plan && <Segmented label="Cuándo" value={w.when} onChange={(v) => setW({ ...w, when: v })} options={[{ id: 'now', label: 'Lo necesito ya' }, { id: 'later', label: 'Lo planeo para un día' }]} />}
@@ -288,16 +288,16 @@ export default function Goals() {
 
             {w.when === 'now' && (toNum(w.amount) || 0) > 0 && (
               <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--surface-2)' }}>
-                {impact.tooMuch ? <p style={{ color: 'var(--neg)' }}>Esa meta solo tiene {money(Number(w.goal.saved))}.</p> : (
+                {impact.tooMuch ? <p style={{ color: 'var(--aviso-texto)' }}>Esa meta solo tiene {money(Number(w.goal.saved))}.</p> : (
                   <>
                     <p>La meta quedaría en <strong>{money(impact.newSaved)}</strong> ({impact.newPct}%){impact.lostPct > 0 ? `: retrocede ${impact.lostPct} puntos` : ''}.</p>
-                    {impact.big && <p className="mt-1" style={{ color: 'var(--neg)' }}>Es más de la mitad de lo que tienes ahorrado.</p>}
+                    {impact.big && <p className="mt-1" style={{ color: 'var(--aviso-texto)' }}>Es más de la mitad de lo que tienes ahorrado.</p>}
                   </>
                 )}
               </div>
             )}
             {w.when === 'later' && <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Ese día te aviso. El dinero no se mueve hasta que tú lo confirmes.</p>}
-            {wErr && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{wErr}</p>}
+            {wErr && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{wErr}</p>}
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="btn btn-primary" onClick={() => setW(null)}>Mejor no</button>
               <button type="button" className="btn btn-ghost" style={{ color: w.when === 'now' ? 'var(--neg)' : undefined }} onClick={() => void confirmWithdraw()}>{w.when === 'now' ? `Sí, sacar ${money(toNum(w.amount) || 0)}` : 'Guardar el plan'}</button>
@@ -343,7 +343,7 @@ export default function Goals() {
                 {edit.due && <button type="button" className="btn btn-ghost shrink-0" onClick={() => setEdit({ ...edit, due: '' })}>Quitar</button>}
               </div>
             </label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <button className="btn btn-primary w-fit">Guardar</button>
           </form>
         )}
@@ -359,7 +359,7 @@ export default function Goals() {
           <label className="grid gap-2 text-sm">¿Qué quieres lograr?<input className="field" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} placeholder="Pedal de guitarra" /></label>
           <label className="grid gap-2 text-sm">¿Cuánto necesitas juntar?<input className="field" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="0.00" /></label>
           <label className="grid gap-2 text-sm">Fecha límite (opcional)<input type="date" className="field" value={due} onChange={(e) => setDue(e.target.value)} /></label>
-          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Crear meta</button>
         </form>
       </Sheet>

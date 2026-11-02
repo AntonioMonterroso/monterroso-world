@@ -69,8 +69,8 @@ export default function SermonPage() {
         <span className="text-sm" style={{ color: 'var(--ink-soft)' }}>{totalMin > 0 ? `${totalMin} min planeados` : 'Agrega fases con tiempo para ver cuánto durará.'}</span>
       </div>
 
-      {(sermons.error || phasesDb.error || slidesDb.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{sermons.error || phasesDb.error || slidesDb.error}</p>}
-      {msg && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{msg}</p>}
+      {(sermons.error || phasesDb.error || slidesDb.error) && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{sermons.error || phasesDb.error || slidesDb.error}</p>}
+      {msg && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{msg}</p>}
 
       {/* Guion */}
       <section className="mt-10" aria-labelledby="guion">

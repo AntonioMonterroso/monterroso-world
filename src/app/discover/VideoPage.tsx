@@ -88,7 +88,7 @@ export default function VideoPage() {
             <button type="button" className="btn btn-ghost shrink-0" onClick={stamp} disabled={v.provider !== 'youtube'} title={v.provider === 'youtube' ? undefined : 'Con Vimeo escribe el minuto a mano'}><Clock size={16} aria-hidden /> Minuto actual</button>
           </div>
           <textarea className="field py-3" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder="Lo que quieres recordar de este momento" maxLength={2000} aria-label="Nota" />
-          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           <button className="btn btn-primary w-fit">Guardar nota</button>
         </form>
         {mine.length > 0 && (

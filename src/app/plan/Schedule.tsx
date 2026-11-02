@@ -192,7 +192,7 @@ export default function Schedule() {
       </details>
 
       {error && (
-        <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>
+        <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>
           {error} <button className="underline" onClick={clearError}>Cerrar</button>
         </p>
       )}
@@ -266,8 +266,8 @@ export default function Schedule() {
 
               {isToday && (
                 <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: now * PX }} aria-hidden>
-                  <span className="-ml-1 size-2.5 rounded-full" style={{ background: 'var(--neg)' }} />
-                  <span className="h-px flex-1" style={{ background: 'var(--neg)' }} />
+                  <span className="-ml-1 size-2.5 rounded-full" style={{ background: 'var(--aviso)' }} />
+                  <span className="h-px flex-1" style={{ background: 'var(--aviso)' }} />
                 </div>
               )}
             </div>

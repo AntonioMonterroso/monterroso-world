@@ -81,7 +81,7 @@ export function PinSetup({ onDone }: { onDone: () => void }) {
           </div>
         )}
         <div className="mt-8"><Dots n={len} filled={value.length} shake={shake} /></div>
-        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--neg)' }}>{msg}</p>
+        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--aviso-texto)' }}>{msg}</p>
         <Keypad onDigit={digit} onDelete={del} />
       </div>
     </main>
@@ -139,7 +139,7 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
           <Fingerprint size={44} className="mx-auto" style={{ color: 'var(--accent)' }} aria-hidden />
           <h1 className="mt-4 font-display text-3xl">¿Abrir con tu huella?</h1>
           <p className="mx-auto mt-2 max-w-xs text-sm" style={{ color: 'var(--ink-soft)' }}>La próxima vez entras con huella o Face ID, sin escribir el PIN. El PIN sigue disponible si algo falla.</p>
-          {offerMsg && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--neg)' }}>{offerMsg}</p>}
+          {offerMsg && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{offerMsg}</p>}
           <div className="mt-8 grid gap-3">
             <button className="btn btn-primary min-h-12" onClick={() => void accept()}>Activar huella</button>
             <button className="min-h-11 text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => { declineBioLock(); onUnlock() }}>Ahora no</button>
@@ -156,7 +156,7 @@ export function PinUnlock({ onUnlock, onForgot }: { onUnlock: () => void; onForg
         <h1 className="mt-4 font-display text-3xl">Monterroso World</h1>
         <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>Escribe tu PIN</p>
         <div className="mt-8"><Dots n={len} filled={value.length} shake={shake} /></div>
-        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--neg)' }}>
+        <p role="alert" className="mt-3 h-5 text-sm" style={{ color: 'var(--aviso-texto)' }}>
           {wait > 0 ? `Demasiados intentos. Espera ${wait} s.` : msg}
         </p>
         <Keypad onDigit={digit} onDelete={del} onBio={bio ? () => void tryBio() : undefined} />

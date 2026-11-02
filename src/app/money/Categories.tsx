@@ -116,7 +116,7 @@ function AreaForm({ area, tax, uses, onDone }: { area?: FinArea; tax: ReturnType
           <select className="field" value={moveTo} onChange={(e) => setMoveTo(e.target.value)}><option value="">Elige un área…</option>{others.map((a) => <option key={a.id} value={a.key}>{a.name}</option>)}</select>
         </label>
       )}
-      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex items-center gap-3">
         <button className="btn btn-primary">Guardar</button>
         {area && others.length > 0 && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm || uses === 0 ? void remove() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? 'Eliminar' : 'Eliminar área'}</button>}
@@ -142,7 +142,7 @@ function CatForm({ kind, cat, tax, uses, onDone }: { kind: Kind; cat?: FinCatego
     <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); void save() }}>
       <label className="grid gap-2 text-sm">Nombre<input autoFocus className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder={kind === 'expense' ? 'Gasolina, Cursos, Regalos…' : 'Regalías, Eventos, Consultoría…'} /></label>
       {cat && uses > 0 && <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Si le cambias el nombre, se actualizan sus {uses} {uses === 1 ? 'movimiento' : 'movimientos'}.</p>}
-      {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+      {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex items-center gap-3">
         <button className="btn btn-primary">Guardar</button>
         {cat && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await tax.catsDb.remove(cat.id); onDone() } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? (uses > 0 ? 'Eliminar (los movimientos conservan el nombre)' : 'Eliminar') : 'Eliminar'}</button>}

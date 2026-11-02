@@ -21,7 +21,7 @@ function ProjectCard({ p, payments, onOpen, onAdvance }: { p: Project; payments:
   const sub = [p.client, Number(p.monthly_fee ?? 0) > 0 && `${money(Number(p.monthly_fee), p.currency)} al mes`, Number(p.setup_fee ?? 0) > 0 && `instalación ${money(Number(p.setup_fee), p.currency)}`, p.due_date && `entrega ${p.due_date}`, p.checklist.length > 0 && `${done}/${p.checklist.length} pendientes`].filter(Boolean).join(' · ') || 'Sin cliente'
   return (
     <Row tone={s.color} title={p.title} onClick={onOpen}
-      sub={<>{sub}{lateDays > 0 && <span style={{ color: 'var(--neg)' }}> · pasó hace {lateDays} {lateDays === 1 ? 'día' : 'días'}</span>}{setupLate && <span style={{ color: 'var(--neg)' }}> · instalación sin cobrar</span>}{late > 0 && <span style={{ color: 'var(--neg)' }}> · {late} {late === 1 ? 'mensualidad atrasada' : 'mensualidades atrasadas'}</span>}</>}
+      sub={<>{sub}{lateDays > 0 && <span style={{ color: 'var(--aviso-texto)' }}> · pasó hace {lateDays} {lateDays === 1 ? 'día' : 'días'}</span>}{setupLate && <span style={{ color: 'var(--aviso-texto)' }}> · instalación sin cobrar</span>}{late > 0 && <span style={{ color: 'var(--aviso-texto)' }}> · {late} {late === 1 ? 'mensualidad atrasada' : 'mensualidades atrasadas'}</span>}</>}
       value={p.amount > 0 ? money(p.amount, p.currency) : undefined}>
       {p.amount > 0 && !hasBilling(p) && (
         <div className="px-4 pb-3 pl-[3.75rem]">
@@ -80,7 +80,7 @@ export default function Projects() {
         </div>
       ))}
 
-      {db.error && <p role="alert" className="mb-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'color-mix(in oklab, var(--neg) 15%, transparent)', color: 'var(--neg)' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
+      {db.error && <p role="alert" className="mb-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error} <button className="underline" onClick={db.clearError}>Cerrar</button></p>}
 
       <Segmented label="Etapa" value={filter} onChange={setFilter} options={([{ id: 'all', label: 'Todos' }, ...STATUSES] as { id: Status | 'all'; label: string }[]).map((s) => ({ id: s.id, label: s.id === 'all' ? `Todos ${inMonth.length}` : s.label }))} />
 

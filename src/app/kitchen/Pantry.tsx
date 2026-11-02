@@ -63,7 +63,7 @@ export default function Pantry() {
       </form>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')} className="min-h-11 rounded-full border px-4 text-sm" style={chip(view === 'all')}>Todo</button>
-        <button type="button" aria-pressed={view === 'out'} onClick={() => setView('out')} className="min-h-11 rounded-full border px-4 text-sm" style={chip(view === 'out', 'var(--neg)')}>Se acabó ({out.length})</button>
+        <button type="button" aria-pressed={view === 'out'} onClick={() => setView('out')} className="min-h-11 rounded-full border px-4 text-sm" style={chip(view === 'out', 'var(--aviso)')}>Se acabó ({out.length})</button>
         {out.length > 0 && <button className="btn btn-ghost ml-auto" onClick={shopOut}><ShoppingBag size={16} aria-hidden /> Pasar a Por comprar</button>}
       </div>
       <p className="mt-2 text-xs" style={{ color: 'var(--ink-faint)' }}>Toca un ingrediente cuando se acabe. Al comprarlo en Por comprar vuelve solo a «en casa».</p>
@@ -93,7 +93,7 @@ export default function Pantry() {
             <label className="grid gap-2 text-sm">Nombre<input className="field" value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} maxLength={120} autoFocus /></label>
             <label className="grid gap-2 text-sm">Categoría<input className="field" list="pcat" value={d.category} onChange={(e) => setD({ ...d, category: e.target.value })} maxLength={60} /><datalist id="pcat">{PANTRY_CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist></label>
             <label className="grid gap-2 text-sm">Nota<input className="field" value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} maxLength={300} placeholder="Marca, dónde está guardado…" /></label>
-            {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+            {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
             <div className="flex items-center gap-3">
               <button className="btn btn-primary">Guardar</button>
               {d.id && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={async () => { if (confirm) { await db.remove(d.id!); setD(null) } else setConfirm(true) }}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}

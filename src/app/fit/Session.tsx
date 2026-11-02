@@ -98,7 +98,7 @@ export default function Session() {
   const total = rows.flat().length
 
   return (
-    <div className="safe-top fixed inset-0 z-50 flex flex-col" style={{ background: '#07111a' }}>
+    <div className="safe-top fixed inset-0 z-50 flex flex-col force-dark" style={{ background: '#0d0d0f' }}>
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav(`/app/ejercicio/rutina/${w.id}`)} aria-label="Salir sin guardar"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1"><p className="truncate font-semibold">{w.title}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{mmss(Math.floor((now - start) / 1000))} · {doneCount}/{total} series</p></div>
@@ -130,7 +130,7 @@ export default function Session() {
             </section>
           ))}
           <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Cómo te sentiste" /></label>
-          {err && <p role="alert" className="text-sm" style={{ color: 'var(--neg)' }}>{err}</p>}
+          {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
           <button className="btn btn-primary min-h-14 justify-center text-lg" onClick={finish} disabled={saving || items.length === 0}>{saving && <Loader2 size={18} className="animate-spin" aria-hidden />} Terminar y guardar</button>
         </div>
       </div>
