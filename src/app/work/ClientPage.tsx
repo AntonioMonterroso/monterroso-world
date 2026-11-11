@@ -1,7 +1,8 @@
-import { ChevronLeft, ExternalLink, KeyRound, Loader2, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ExternalLink, KeyRound, Loader2, MessageCircle, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Cobrado from '../../components/Cobrado'
+import RegistrarPago from '../../components/RegistrarPago'
 import { Group, PageHeader, Row } from '../../components/ui'
 import type { Account } from '../../lib/accounts'
 import { clientKey, clientName } from '../../lib/clients'
@@ -29,6 +30,7 @@ export default function ClientPage() {
   const [editing, setEditing] = useState<string | null>(null)
   const [row, setRow] = useState<ClientRow | null>(null)
   const [msg, setMsg] = useState('')
+  const [paying, setPaying] = useState(false)
   const k = decodeURIComponent(key)
   const extra = useClientExtra(k)
   const [phoneDraft, setPhoneDraft] = useState<string | null>(null)
@@ -52,7 +54,7 @@ export default function ClientPage() {
   return (
     <div>
       <Link to="/app/trabajo" className="mb-3 inline-flex min-h-11 items-center gap-1 text-sm" style={{ color: 'var(--ink-soft)' }}><ChevronLeft size={16} aria-hidden /> Clientes</Link>
-      <PageHeader eyebrow="Cliente" title={name} action={extra.phone ? <a className="btn btn-primary" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a> : undefined} />
+      <PageHeader eyebrow="Cliente" title={name} action={<span className="flex flex-wrap gap-2">{extra.phone && <a className="btn btn-sec" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a>}<button className="btn btn-primary" onClick={() => { setMsg(''); setPaying(true) }}><Plus size={16} aria-hidden /> Registrar pago</button></span>} />
       {msg && <p role="status" className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{msg}</p>}
 
       <Group title={`Este mes · ${cap(monthLabel(month))}`}>
@@ -72,10 +74,10 @@ export default function ClientPage() {
         {mine.some((p) => p.site_url) && mine.filter((p) => p.site_url).map((p) => <Row key={`s-${p.id}`} icon={<ExternalLink size={16} aria-hidden />} title="Ver sitio" sub={p.site_url ?? ''} chevron={false} onClick={() => window.open(p.site_url!, '_blank', 'noopener')} />)}
       </Group>
 
-      <Group title="Historial de pagos" footer="Se lee de Dinero; para cambiar un pago, ábrelo en Movimientos.">
-        {history.length === 0 ? <Row title="Aún no hay pagos" chevron={false} /> : history.slice(0, 12).map((h) => {
+      <Group title="Pagos recibidos" aside={<button className="underline" onClick={() => { setMsg(''); setPaying(true) }}>Registrar</button>} footer="Cada pago queda también en Dinero › Movimientos. Toca uno para corregirlo o borrarlo desde su trabajo.">
+        {history.length === 0 ? <Row title="Aún no hay pagos" sub="Toca Registrar para anotar uno" chevron={false} /> : history.slice(0, 12).map((h) => {
           const w = { project_id: h.project_id, title: mine.find((p) => p.id === h.project_id)?.title ?? '', kind: h.kind ?? 'other', period: h.period ?? null } as WorkTx['work']
-          return <Row key={h.id} to="/app/dinero/movimientos" tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} />
+          return <Row key={h.id} onClick={() => setEditing(h.project_id)} tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} />
         })}
       </Group>
 
@@ -107,6 +109,7 @@ export default function ClientPage() {
         <Row to="/app/boveda" icon={<KeyRound size={16} aria-hidden />} title="Abrir la Bóveda" sub="Busca los accesos de este cliente" />
       </Group>
 
+      <RegistrarPago open={paying} projects={mine} payments={db.payments} addPayment={db.addPayment} onClose={() => setPaying(false)} onDone={setMsg} />
       <Cobrado row={row} addPayment={db.addPayment} onClose={() => setRow(null)} onDone={setMsg} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
         onSave={async (id, patch) => { await saveProject(db, id, patch); setEditing(null) }}
