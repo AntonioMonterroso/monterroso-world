@@ -149,13 +149,13 @@ export function summarizeMonth(projects: Project[], payments: Payment[], month: 
   return out
 }
 
-export type WorkTx = Tx & { work: { project_id: string; title: string; kind: PayKind; period: string | null } }
+export type WorkTx = Tx & { work: { project_id: string; title: string; client?: string | null; kind: PayKind; period: string | null } }
 /** Los cobros recibidos de Trabajos, como movimientos de ingreso que dicen de dónde vienen. */
 export function workIncomeRows(projects: Project[], payments: Payment[]): WorkTx[] {
   const name = new Map(projects.map((p) => [p.id, p]))
   return payments.filter((x) => x.paid_at && name.has(x.project_id)).map((x) => {
     const p = name.get(x.project_id)!
-    return { id: `work-${x.id}`, kind: 'income' as const, amount: Number(x.amount), currency: p.currency, category: `Trabajo: ${p.title}`, area: 'web', tx_date: x.paid_at!, note: null, account_id: x.account_id ?? null, work: { project_id: p.id, title: p.title, kind: x.kind ?? 'other', period: x.period ?? null } }
+    return { id: `work-${x.id}`, kind: 'income' as const, amount: Number(x.amount), currency: p.currency, category: `Trabajo: ${p.title}`, area: 'web', tx_date: x.paid_at!, note: null, account_id: x.account_id ?? null, work: { project_id: p.id, title: p.title, client: p.client ?? null, kind: x.kind ?? 'other', period: x.period ?? null } }
   })
 }
 export const workKindLabel = (w: WorkTx['work']) => (w.kind === 'setup' ? 'Instalación' : w.kind === 'monthly' && w.period ? `Mensualidad de ${monthLabel(w.period)}` : 'Cobro')

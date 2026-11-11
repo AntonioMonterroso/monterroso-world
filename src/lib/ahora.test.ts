@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { ahora, readSnoozed, snooze, SNOOZE_MS } from './ahora'
+import { ahora, readSnoozed, snooze, SNOOZE_MS, tomorrowMorning } from './ahora'
 import type { SuggestInput } from './suggest'
 
 const base: SuggestInput = { nowMin: 10 * 60, current: null, next: null, priorities: { open: 3, total: 3 }, overdue: [], followUps: [], toSend: [], habitsPending: [], routine: null, inbox: 0, exitList: null, promises: [], chase: [], renewals: [] }
@@ -37,5 +37,11 @@ describe('Ahora', () => {
     const r = ahora({ ...base, habitsPending: [{ id: 'h', name: 'Estirar' }], inbox: 3, promises: [{ id: 'p', text: 'Libro', overdue: false }] }, {}, { soft: true, snoozed: {} })
     expect(r).toHaveLength(1)
     expect(r[0].kind).toBe('promise')
+  })
+  it('«Mañana» esconde la sugerencia hasta las 6 de la mañana siguiente', () => {
+    const now = new Date(2026, 10, 11, 15, 0).getTime()
+    expect(new Date(tomorrowMorning(now)).getDate()).toBe(12)
+    expect(new Date(tomorrowMorning(now)).getHours()).toBe(6)
+    expect(snooze('x', now, tomorrowMorning(now))['x']).toBe(tomorrowMorning(now))
   })
 })

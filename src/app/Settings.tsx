@@ -2,6 +2,7 @@ import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { getSettings, patchSettings } from '../lib/settings'
+import { downloadBackup, lastBackup, totalRows } from '../lib/backup'
 import { bioLockEnrolled, bioLockSupported, enrollBioLock, removeBioLock } from '../lib/biolock'
 import { disablePush, enablePush, loadSettings, pushStatus, saveBlockAlerts, saveQuiet, sendTest, type BlockAlerts, type PushStatus, type Quiet } from '../lib/push'
 import { fmtMin, toMin } from '../lib/time'
@@ -102,6 +103,11 @@ export default function Settings({ onLock, onResetPin }: { onLock: () => void; o
   useEffect(() => { void getSettings().then((s) => setWords(((s as { anotarWords?: Record<string, { category?: string }> }).anotarWords) ?? {})) }, [])
   const forget = (w: string) => { const next = { ...words }; delete next[w]; setWords(next); void patchSettings({ anotarWords: next } as never) }
   const learned = Object.entries(words)
+  const [last, setLast] = useState<string | null>(null)
+  const [bk, setBk] = useState<'idle' | 'busy' | 'done' | 'fail'>('idle')
+  const [bkMsg, setBkMsg] = useState('')
+  useEffect(() => { void lastBackup().then(setLast) }, [])
+  const backup = async () => { setBk('busy'); try { const b = await downloadBackup(); setLast(b.at); setBkMsg(`${totalRows(b).toLocaleString('es')} registros guardados${b.skipped.length ? ` (${b.skipped.length} tablas no se pudieron leer)` : ''}.`); setBk('done') } catch { setBk('fail') } }
   return (
     <div>
       <PageHeader title="Ajustes" sub="De lo que más tocas a lo que menos." />
@@ -120,6 +126,9 @@ export default function Settings({ onLock, onResetPin }: { onLock: () => void; o
       </Group>
       <Group title="Anotar" footer={learned.length ? 'Lo que Anotar aprendió de ti. Quita una palabra si se equivocó.' : 'Cuando cambies la categoría de un gasto en Anotar, aprenderá la palabra y aparecerá aquí.'}>
         {learned.length === 0 ? <Row title="Aún no ha aprendido palabras" chevron={false} /> : learned.map(([w, v]) => <Row key={w} title={w} sub={`va a ${v.category ?? '—'}`} chevron={false} trailing={<button className="min-h-11 px-3 text-sm underline" onClick={() => forget(w)}>Olvidar</button>} />)}
+      </Group>
+      <Group title="Respaldo" footer={bk === 'done' ? bkMsg : bk === 'fail' ? 'No pude armar el respaldo. Revisa tu internet e inténtalo otra vez.' : 'Un archivo con todos tus datos, guardado en tu equipo. No incluye la bóveda ni las notas de voz. Hazlo una vez al mes.'}>
+        <Row title={bk === 'busy' ? 'Armando el respaldo…' : 'Descargar mis datos'} sub={last ? `Último respaldo: ${new Date(last).toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}` : 'Aún no has hecho un respaldo'} chevron={false} onClick={bk === 'busy' ? undefined : () => void backup()} />
       </Group>
       <Group title="Apariencia">
         <Row title="Claro, oscuro y paletas" sub="Elige cómo se ve" to="/app/ajustes/apariencia" />

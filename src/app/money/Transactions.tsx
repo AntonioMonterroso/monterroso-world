@@ -8,6 +8,7 @@ import { AreaField, CategoryField } from './fields'
 import { currentMonth, money, useProjects, workIncomeRows, workKindLabel, type WorkTx } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
+import { clientKey, clientName } from '../../lib/clients'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { Empty, ErrorBar, defaultCurrency, rememberCurrency, toNum } from './shared'
 
@@ -112,8 +113,8 @@ export default function Transactions() {
           {groups.map(([date, items]) => (
             <Group key={date} title={new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}>
               {items.map((t) => 'work' in t ? (
-                <Row key={t.id} to={`/app/trabajo?abrir=${t.work.project_id}`} tone={tax.areaMeta(t.area).color} title={t.work.title}
-                  sub={<><span style={{ color: 'var(--accent)' }}>Viene de Trabajo</span> · {workKindLabel(t.work)}{accounts.find((a) => a.id === t.account_id) ? ` · ${accounts.find((a) => a.id === t.account_id)!.name}` : ''}</>}
+                <Row key={t.id} to={`/app/trabajo/cliente/${encodeURIComponent(clientKey(clientName({ client: t.work.client ?? null, title: t.work.title })))}`} tone={tax.areaMeta(t.area).color} title={t.work.client?.trim() || t.work.title}
+                  sub={<><span style={{ color: 'var(--accent)' }}>Viene de Trabajo</span> · {workKindLabel(t.work)}{t.work.client?.trim() && t.work.client.trim() !== t.work.title ? ` · ${t.work.title}` : ''}{accounts.find((a) => a.id === t.account_id) ? ` · ${accounts.find((a) => a.id === t.account_id)!.name}` : ''}</>}
                   value={`+${money(Number(t.amount), t.currency)}`} valueTone="pos" />
               ) : (
                 <Row key={t.id} tone={tax.areaMeta(t.area).color} title={t.category} sub={<>{accounts.find((a) => a.id === t.account_id)?.name ? `${accounts.find((a) => a.id === t.account_id)!.name} · ` : ''}{tax.areaMeta(t.area).name}{t.note ? ` · ${t.note}` : ''}</>}

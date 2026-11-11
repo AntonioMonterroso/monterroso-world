@@ -24,8 +24,10 @@ const store = (v: Snoozed) => { mem = v; try { localStorage.setItem(KEY, JSON.st
 export function readSnoozed(now = Date.now()): Snoozed {
   return Object.fromEntries(Object.entries(load()).filter(([, t]) => typeof t === 'number' && t > now))
 }
-export function snooze(id: string, now = Date.now()): Snoozed {
-  const next = { ...readSnoozed(now), [id]: now + SNOOZE_MS }
+/** Mañana a las 6 de la mañana (hora local). */
+export function tomorrowMorning(now = Date.now()): number { const d = new Date(now); d.setDate(d.getDate() + 1); d.setHours(6, 0, 0, 0); return d.getTime() }
+export function snooze(id: string, now = Date.now(), until?: number): Snoozed {
+  const next = { ...readSnoozed(now), [id]: until ?? now + SNOOZE_MS }
   store(next)
   return next
 }

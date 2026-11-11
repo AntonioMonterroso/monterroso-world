@@ -15,7 +15,7 @@ import { useCheckins } from '../lib/checkin'
 import { ENERGY, isSoftDay } from '../lib/rhythm'
 import { exitKindFor, type ExitList } from '../lib/exitlist'
 import type { SuggestInput } from '../lib/suggest'
-import { ahora, readSnoozed, snooze, type Item } from '../lib/ahora'
+import { ahora, readSnoozed, snooze, tomorrowMorning, type Item } from '../lib/ahora'
 import { freeGaps, peakHour, planDay } from '../lib/dayplan'
 import { duePlans, type Plan } from '../lib/savings'
 import type { Goal } from '../lib/finance'
@@ -190,6 +190,7 @@ export default function Today() {
     else if (it.inline === 'pick') { document.getElementById('mis3')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.getElementById('prio-in')?.focus(), 350) }
   }
   const later = (it: Item) => setSnoozed(snooze(it.id))
+  const tomorrow = (it: Item) => setSnoozed(snooze(it.id, Date.now(), tomorrowMorning()))
   const carryOver = async () => {
     const t = new Date(now); t.setDate(t.getDate() + 1)
     await supabase.from('tasks').update({ priority_date: localISO(t) }).eq('priority_date', todayISO).eq('done', false)
@@ -253,7 +254,7 @@ export default function Today() {
             <>
               <h2 className="mt-2 font-display text-3xl leading-tight">{top.title}</h2>
               <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>{top.reason}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2"><Action it={top} big /><button className="btn btn-ghost" onClick={() => later(top)}>Más tarde</button></div>
+              <div className="mt-4 flex flex-wrap items-center gap-2"><Action it={top} big /><button className="btn btn-ghost" onClick={() => later(top)}>Más tarde</button><button className="btn btn-ghost" onClick={() => tomorrow(top)}>Mañana</button></div>
               {rest.length > 0 && (
                 <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--borde)' }}>
                   <button type="button" className="flex min-h-11 w-full items-center justify-between text-sm font-semibold" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}>{rest.length} {rest.length === 1 ? 'más' : 'más'} <ChevronDown size={16} aria-hidden style={{ transform: moreOpen ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }} /></button>
