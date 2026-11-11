@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTable } from '../../lib/table'
+import NewItem from '../../components/NewItem'
 import type { Phase, Sermon, Slide } from '../../lib/pulpit'
 import { Group, PageHeader, Row } from '../../components/ui'
 
@@ -12,14 +14,16 @@ export default function Sermons() {
   const slides = useTable<Slide>('sermon_slides', { col: 'position', asc: true })
   const nav = useNavigate()
 
-  const create = async () => {
-    const s = await db.add({ title: 'Nueva prédica', scripture: null, preach_date: null, status: 'draft', notes: null, live_token: undefined as never })
-    if (s) nav(`/app/pulpito/predica/${s.id}`)
+  const [creating, setCreating] = useState(false)
+  const create = async (title: string) => {
+    const s = await db.add({ title, scripture: null, preach_date: null, status: 'draft', notes: null, live_token: undefined as never })
+    if (!s) throw new Error('no creada')
+    setCreating(false); nav(`/app/pulpito/predica/${s.id}`)
   }
 
   return (
     <div>
-      <PageHeader eyebrow="Púlpito" title="Prédicas" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Prédica</button>} />
+      <PageHeader eyebrow="Púlpito" title="Prédicas" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Prédica</button>} />
 
       {db.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error}</p>}
 
@@ -27,7 +31,7 @@ export default function Sermons() {
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
           <p className="font-display text-2xl">Tu primera prédica</p>
           <p className="mx-auto mt-2 max-w-sm text-sm" style={{ color: 'var(--ink-soft)' }}>Arma el guion por fases, con tiempos, y las diapositivas para la pantalla de la iglesia.</p>
-          <button className="btn btn-primary mt-5" onClick={create}>Empezar</button>
+          <button className="btn btn-primary mt-5" onClick={() => setCreating(true)}>Empezar</button>
         </div>
       ) : (
         <Group>
@@ -41,6 +45,7 @@ export default function Sermons() {
           })}
         </Group>
       )}
+      <NewItem open={creating} title="Nueva prédica" label="¿Cómo se llama la prédica?" placeholder="Título o tema" onClose={() => setCreating(false)} onCreate={create} />
     </div>
   )
 }

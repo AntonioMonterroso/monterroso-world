@@ -142,13 +142,16 @@ export default function Schedule() {
     window.addEventListener('touchmove', stopScroll, { passive: false })
   }, [update])
 
+  // Un bloque nuevo solo se queda si lo guardas: si cierras el editor sin guardar, se descarta
+  const draft = useRef<string | null>(null)
   const newBlock = async () => {
     const start = isToday ? clamp(Math.ceil(now / 30) * 30, 0, 1380) : 9 * 60
     const b = await add({ title: 'Nuevo bloque', kind: 'other', days: [day], start_min: start, end_min: Math.min(start + 60, 1440), notes: null, on_date: null })
-    if (b) setEditing(b)
+    if (b) { draft.current = b.id; setEditing(b) }
   }
 
-  const save = (id: string | null, v: Parameters<typeof add>[0]) => { if (id) update(id, v); setEditing(null) }
+  const save = (id: string | null, v: Parameters<typeof add>[0]) => { if (id) update(id, v); if (draft.current === id) draft.current = null; setEditing(null) }
+  const closeEditor = () => { if (draft.current) { remove(draft.current); draft.current = null }; setEditing(null) }
   const split = async (b: Block, v: Parameters<typeof add>[0]) => {
     // Solo esta fecha: el bloque original se queda en los demás días y este queda atado a la fecha exacta
     if (b.on_date) await update(b.id, { ...v, days: [day] })
@@ -279,7 +282,7 @@ export default function Schedule() {
         onSave={async (id, v) => { if (id) await ev.update(id, v); else await ev.add(v); setEvTarget(null) }}
         onDelete={(id) => { ev.remove(id); setEvTarget(null) }}
         onSkip={(e, d) => { ev.skip(e, d); setEvTarget(null) }} />
-      <BlockEditor block={editing} day={day} date={date} onClose={() => setEditing(null)} onSave={save} onSplit={split} onDelete={(id) => { remove(id); setEditing(null) }} />
+      <BlockEditor block={editing} day={day} date={date} onClose={closeEditor} onSave={save} onSplit={split} onDelete={(id) => { remove(id); setEditing(null) }} />
     </div>
   )
 }

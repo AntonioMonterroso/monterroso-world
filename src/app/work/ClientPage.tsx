@@ -1,8 +1,9 @@
 import { ChevronLeft, ExternalLink, KeyRound, Loader2, MessageCircle, Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Cobrado from '../../components/Cobrado'
 import RegistrarPago from '../../components/RegistrarPago'
+import NewWork from './NewWork'
 import { Group, PageHeader, Row } from '../../components/ui'
 import type { Account } from '../../lib/accounts'
 import { clientKey, clientName } from '../../lib/clients'
@@ -31,6 +32,8 @@ export default function ClientPage() {
   const [row, setRow] = useState<ClientRow | null>(null)
   const [msg, setMsg] = useState('')
   const [paying, setPaying] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [sp, setSp] = useSearchParams()
   const k = decodeURIComponent(key)
   const extra = useClientExtra(k)
   const [phoneDraft, setPhoneDraft] = useState<string | null>(null)
@@ -45,10 +48,7 @@ export default function ClientPage() {
   const myDeliv = deliveries.rows.filter((d) => d.recipient && clientKey(d.recipient) === k)
   const acct = (id?: string | null) => accounts.rows.find((a) => a.id === id)?.name
   const editingProject = db.projects.find((x) => x.id === editing) ?? null
-  const addWork = async () => {
-    const p = await db.add({ title: 'Nuevo trabajo', client: name, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [], setup_fee: 0, monthly_fee: 0, billing_day: null, monthly_start: null, monthly_end: null, account_id: mine[0]?.account_id ?? null } as never)
-    if (p) setEditing(p.id)
-  }
+  useEffect(() => { const id = sp.get('abrir'); if (id && db.projects.some((x) => x.id === id)) { setEditing(id); setSp({}, { replace: true }) } }, [sp, db.projects, setSp])
   const remind = (r: ClientRow) => {
     const when = r.lateMonths[0] ?? month
     const concept = r.setupDue && !r.fee ? 'la instalación' : `la mensualidad de ${monthLabel(when)}`
@@ -74,7 +74,7 @@ export default function ClientPage() {
         ))}
       </Group>
 
-      <Group title="Trabajos" aside={<button className="underline" onClick={() => void addWork()}>Agregar trabajo</button>} footer="Abre uno para cambiar su estado, entrega, monto, sitio, checklist, notas y su acuerdo de cobro.">
+      <Group title="Trabajos" aside={<button className="btn btn-sec btn-chico" onClick={() => setCreating(true)}><Plus size={15} aria-hidden /> Agregar trabajo</button>} footer="Abre uno para cambiar su estado, entrega, monto, sitio, checklist, notas y su acuerdo de cobro.">
         {mine.map((p) => (
           <Row key={p.id} tone={statusMeta(p.status).color} title={p.title} onClick={() => setEditing(p.id)}
             sub={[statusMeta(p.status).label, p.due_date && `entrega ${p.due_date}`, Number(p.monthly_fee ?? 0) > 0 && `${money(Number(p.monthly_fee))} al mes · día ${p.billing_day ?? '—'}`, Number(p.setup_fee ?? 0) > 0 && `instalación ${money(Number(p.setup_fee))}`].filter(Boolean).join(' · ')}
@@ -83,7 +83,7 @@ export default function ClientPage() {
         {mine.some((p) => p.site_url) && mine.filter((p) => p.site_url).map((p) => <Row key={`s-${p.id}`} icon={<ExternalLink size={16} aria-hidden />} title="Ver sitio" sub={p.site_url ?? ''} chevron={false} onClick={() => window.open(p.site_url!, '_blank', 'noopener')} />)}
       </Group>
 
-      <Group title="Pagos recibidos" aside={<button className="underline" onClick={() => { setMsg(''); setPaying(true) }}>Registrar</button>} footer="Cada pago queda también en Dinero › Movimientos. Toca uno para corregirlo o borrarlo desde su trabajo.">
+      <Group title="Pagos recibidos" aside={<button className="btn btn-sec btn-chico" onClick={() => { setMsg(''); setPaying(true) }}><Plus size={15} aria-hidden /> Registrar pago</button>} footer="Cada pago queda también en Dinero › Movimientos. Toca uno para corregirlo o borrarlo desde su trabajo.">
         {history.length === 0 ? <Row title="Aún no hay pagos" sub="Toca Registrar para anotar uno" chevron={false} /> : history.slice(0, 12).map((h) => {
           const w = { project_id: h.project_id, title: mine.find((p) => p.id === h.project_id)?.title ?? '', kind: h.kind ?? 'other', period: h.period ?? null } as WorkTx['work']
           return <Row key={h.id} onClick={() => setEditing(h.project_id)} tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} trailing={<Link to={`/app/trabajo/recibo/${h.id}`} className="btn btn-sec btn-chico">Recibo</Link>} />
@@ -118,6 +118,7 @@ export default function ClientPage() {
         <Row to="/app/boveda" icon={<KeyRound size={16} aria-hidden />} title="Abrir la Bóveda" sub="Busca los accesos de este cliente" />
       </Group>
 
+      <NewWork open={creating} month={month} client={name} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); setEditing(p.id) }} />
       <RegistrarPago open={paying} projects={mine} payments={db.payments} addPayment={db.addPayment} onClose={() => setPaying(false)} onDone={setMsg} />
       <Cobrado row={row} addPayment={db.addPayment} onClose={() => setRow(null)} onDone={setMsg} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}

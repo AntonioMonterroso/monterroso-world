@@ -5,6 +5,7 @@ import { STATUSES, activeIn, currentMonth, hasBilling, monthlyStates, money, set
 import { dayNum } from '../../lib/recur'
 import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
+import NewWork from './NewWork'
 import { removeProject, saveProject } from './saveProject'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { Empty } from '../money/shared'
@@ -58,10 +59,7 @@ export default function Projects() {
   const totals = useMemo(() => summarizeMonth(inMonth, db.payments, month), [inMonth, db.payments])
   const editingProject = db.projects.find((p) => p.id === editing) ?? null
 
-  const create = async () => {
-    const p = await db.add({ title: 'Nuevo trabajo', client: null, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [], setup_fee: 0, monthly_fee: 0, billing_day: null, monthly_start: null, monthly_end: null, account_id: null })
-    if (p) setEditing(p.id)
-  }
+  const [creating, setCreating] = useState(false)
   const advance = (p: Project) => {
     const next = STATUSES[STATUSES.findIndex((x) => x.id === p.status) + 1]
     if (next) db.update(p.id, { status: next.id })
@@ -69,7 +67,7 @@ export default function Projects() {
 
   return (
     <div>
-      <PageHeader eyebrow="Trabajo" title="Trabajos" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Nuevo</button>} />
+      <PageHeader eyebrow="Trabajo" title="Trabajos" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Trabajo</button>} />
       <MonthStepper month={month} onChange={setMonth} />
 
       {Object.entries(totals).map(([cur, t]) => (
@@ -87,7 +85,7 @@ export default function Projects() {
       {db.loading ? (
         <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
       ) : shown.length === 0 ? (
-        <Empty title={inMonth.length ? 'Nada en esta etapa' : 'Sin trabajos este mes'} text="Agrega un trabajo con su monto y fecha de entrega, y registra cada cobro cuando llegue." action={inMonth.length ? undefined : 'Agregar trabajo'} onAction={create} />
+        <Empty title={inMonth.length ? 'Nada en esta etapa' : 'Sin trabajos este mes'} text="Agrega un trabajo con su monto y fecha de entrega, y registra cada cobro cuando llegue." action={inMonth.length ? undefined : 'Agregar trabajo'} onAction={() => setCreating(true)} />
       ) : (
         STATUSES.filter((s) => shown.some((p) => p.status === s.id)).map((s) => (
           <Group key={s.id} title={s.label} aside={shown.filter((p) => p.status === s.id).length}>
@@ -105,6 +103,7 @@ export default function Projects() {
         </>
       )}
 
+      <NewWork open={creating} month={month} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); setEditing(p.id) }} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
         onSave={async (id, patch) => { await saveProject(db, id, patch); setEditing(null) }}
         onDelete={(id) => { removeProject(db, id); setEditing(null) }}

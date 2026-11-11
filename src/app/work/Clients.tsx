@@ -1,6 +1,8 @@
 import { Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import NewWork from './NewWork'
+import { clientName } from '../../lib/clients'
 import { Group, MonthStepper, PageHeader, Row } from '../../components/ui'
 import { clientKey, groupClients } from '../../lib/clients'
 import { currentMonth, money, statusMeta, useProjects } from '../../lib/projects'
@@ -21,19 +23,16 @@ export default function Clients() {
 
   const list = useMemo(() => groupClients(db.projects, db.payments, month), [db.projects, db.payments, month])
   const shown = list.filter((c) => !q.trim() || clientKey(c.name).includes(clientKey(q)))
-  const create = async () => {
-    const p = await db.add({ title: 'Nuevo trabajo', client: null, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [], setup_fee: 0, monthly_fee: 0, billing_day: null, monthly_start: null, monthly_end: null, account_id: null } as never)
-    if (p) nav(`/app/trabajo/mes?abrir=${p.id}`)
-  }
+  const [creating, setCreating] = useState(false)
 
   return (
     <div>
-      <PageHeader eyebrow="Trabajo" title="Clientes" sub="Cada cliente con lo que te debe este mes y su trabajo activo." action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Nuevo</button>} />
+      <PageHeader eyebrow="Trabajo" title="Clientes" sub="Cada cliente con lo que te debe este mes y su trabajo activo." action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Trabajo</button>} />
       <MonthStepper month={month} onChange={setMonth} />
       {list.length > 6 && <label className="mb-4 grid gap-1 text-sm">Buscar cliente<input className="field" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre…" /></label>}
       {db.error && <p role="alert" className="mb-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error}</p>}
       {db.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : shown.length === 0 ? (
-        <Empty title="Aún no hay clientes" text="Agrega un trabajo con el nombre de tu cliente y aquí verás todo lo suyo junto: trabajos, cobros y propuestas." action="Agregar trabajo" onAction={create} />
+        <Empty title="Aún no hay clientes" text="Agrega un trabajo con el nombre de tu cliente y aquí verás todo lo suyo junto: trabajos, cobros y propuestas." action="Agregar trabajo" onAction={() => setCreating(true)} />
       ) : (
         <Group>
           {shown.map((c) => {
@@ -47,6 +46,7 @@ export default function Clients() {
           })}
         </Group>
       )}
+      <NewWork open={creating} month={month} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); nav(`/app/trabajo/cliente/${encodeURIComponent(clientKey(clientName(p)))}?abrir=${p.id}`) }} />
     </div>
   )
 }

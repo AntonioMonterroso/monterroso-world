@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Loader2, Play, Plus, Printer, Share2, Trash2, X } f
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTable } from '../../lib/table'
+import NewItem from '../../components/NewItem'
 import { fmtDuration, type Setlist, type Song } from '../../lib/music'
 import ShareSheet from './ShareSheet'
 import { PageHeader } from '../../components/ui'
@@ -74,9 +75,11 @@ export default function Setlists() {
   const [sp, setSp] = useSearchParams()
   const sel = sets.rows.find((s) => s.id === sp.get('s'))
 
-  const create = async () => {
-    const s = await sets.add({ title: 'Nuevo setlist', event_date: null, notes: null, song_ids: [] })
-    if (s) setSp({ s: s.id })
+  const [creating, setCreating] = useState(false)
+  const create = async (title: string) => {
+    const s = await sets.add({ title, event_date: null, notes: null, song_ids: [] })
+    if (!s) throw new Error('no creado')
+    setCreating(false); setSp({ s: s.id })
   }
 
   if (sets.loading || songs.loading) return <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
@@ -84,13 +87,13 @@ export default function Setlists() {
 
   return (
     <div>
-      <PageHeader eyebrow="Música" title="Setlists" action={<button className="btn btn-primary" onClick={create}><Plus size={18} aria-hidden /> Setlist</button>} />
+      <PageHeader eyebrow="Música" title="Setlists" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Setlist</button>} />
       {sets.error && <p role="alert" className="mt-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{sets.error}</p>}
       {sets.rows.length === 0 ? (
         <div className="mt-8 rounded-2xl border px-6 py-10 text-center" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }}>
           <p className="font-display text-2xl">Sin setlists todavía</p>
           <p className="mx-auto mt-2 max-w-sm text-sm" style={{ color: 'var(--ink-soft)' }}>Arma el orden de una tocada o un servicio y mira cuánto dura en total.</p>
-          <button className="btn btn-primary mt-5" onClick={create}>Crear el primero</button>
+          <button className="btn btn-primary mt-5" onClick={() => setCreating(true)}>Crear el primero</button>
         </div>
       ) : (
         <Group>
@@ -100,6 +103,7 @@ export default function Setlists() {
           })}
         </Group>
       )}
+      <NewItem open={creating} title="Nuevo setlist" label="¿Cómo se llama el setlist?" placeholder="Servicio del domingo, tocada del sábado…" onClose={() => setCreating(false)} onCreate={create} />
     </div>
   )
 }
