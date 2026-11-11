@@ -9,7 +9,7 @@ const SECTIONS: { id: string; label: string; icon: NavTab['icon']; hint: string;
   { id: 'entra', label: 'Lo que entra', icon: CalendarCheck, hint: '¿Quién me falta pagar?', views: [{ to: `${B}/entra`, label: 'Mensualidades' }] },
   { id: 'mov', label: 'Movimientos', icon: ArrowLeftRight, hint: '¿En qué se fue?', views: [{ to: `${B}/movimientos`, label: 'Movimientos' }] },
   { id: 'fijos', label: 'Pagos fijos y deudas', icon: Repeat, hint: '¿Qué tengo que pagar?', views: [{ to: `${B}/suscripciones`, label: 'Pagos fijos' }, { to: `${B}/prestamos`, label: 'Deudas y préstamos' }] },
-  { id: 'plan', label: 'Plan y ahorro', icon: PiggyBank, hint: '¿Voy bien?', views: [{ to: `${B}/metas`, label: 'Ahorro' }, { to: `${B}/reparto`, label: 'Reparto' }, { to: `${B}/presupuesto`, label: 'Límites' }] },
+  { id: 'plan', label: 'Plan y ahorro', icon: PiggyBank, hint: '¿Voy bien?', views: [{ to: `${B}/metas`, label: 'Ahorro y reparto' }, { to: `${B}/presupuesto`, label: 'Límites' }] },
   { id: 'cuentas', label: 'Cuentas', icon: Landmark, hint: '¿Dónde está mi dinero?', views: [{ to: `${B}/cuentas`, label: 'Mis cuentas' }, { to: `${B}/categorias`, label: 'Categorías' }] },
 ]
 

@@ -1,4 +1,9 @@
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { Camera, Loader2, Paperclip, Plus, Trash2 } from 'lucide-react'
+import { useAuth } from '../../lib/auth'
+import { removeImage, signedUrls, uploadImage } from '../../lib/storage'
+import { useTxPhotos } from '../../lib/txPhotos'
+import BankImport from './BankImport'
+import { FileUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { type Area, type Kind, type Tx } from '../../lib/finance'
@@ -12,12 +17,19 @@ import { clientKey, clientName } from '../../lib/clients'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { Empty, ErrorBar, defaultCurrency, rememberCurrency, toNum } from './shared'
 
-type Draft = { id?: string; account: string; kind: Kind; amount: string; currency: string; category: string; area: Area; date: string; note: string }
+type Draft = { id?: string; account: string; kind: Kind; amount: string; currency: string; category: string; area: Area; date: string; note: string; file?: File | null; photo?: string | null; dropPhoto?: boolean }
 const lastAcct = () => { try { return localStorage.getItem('mw_acct') ?? '' } catch { return '' } }
 const blank = (kind: Kind = 'expense'): Draft => ({ account: lastAcct(), kind, amount: '', currency: defaultCurrency(), category: kind === 'income' ? 'Proyecto web' : 'Comida', area: kind === 'income' ? 'web' : 'personal', date: localISO(), note: '' })
 
-function Form({ d, setD, onSave, onDelete, err, tax, accounts }: { d: Draft; setD: (d: Draft) => void; onSave: () => void; onDelete?: () => void; err: string; tax: ReturnType<typeof useTaxonomy>; accounts: Account[] }) {
+function Form({ d, setD, onSave, onDelete, err, tax, accounts, busy }: { d: Draft; setD: (d: Draft) => void; onSave: () => void; onDelete?: () => void; err: string; tax: ReturnType<typeof useTaxonomy>; accounts: Account[]; busy?: boolean }) {
   const [confirm, setConfirm] = useState(false)
+  // Vista previa: la foto nueva (en el teléfono) o la ya guardada (enlace temporal)
+  const [preview, setPreview] = useState<string | null>(null)
+  useEffect(() => {
+    if (d.file) { const u = URL.createObjectURL(d.file); setPreview(u); return () => URL.revokeObjectURL(u) }
+    if (d.photo && !d.dropPhoto) { let alive = true; void signedUrls([d.photo]).then((m) => { if (alive) setPreview(m[d.photo!] ?? null) }); return () => { alive = false } }
+    setPreview(null)
+  }, [d.file, d.photo, d.dropPhoto])
   return (
     <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); onSave() }}>
       <div className="inline-flex w-fit rounded-full p-1" style={{ background: 'var(--bg)' }} role="group" aria-label="Tipo">
@@ -39,9 +51,22 @@ function Form({ d, setD, onSave, onDelete, err, tax, accounts }: { d: Draft; set
       <AreaField value={d.area} onChange={(v) => setD({ ...d, area: v })} tax={tax} />
       <label className="grid gap-2 text-sm">Fecha<input type="date" className="field" value={d.date} onChange={(e) => setD({ ...d, date: e.target.value })} /></label>
       <label className="grid gap-2 text-sm">Nota<input className="field" value={d.note} onChange={(e) => setD({ ...d, note: e.target.value })} maxLength={300} /></label>
+      <div className="grid gap-2">
+        <span className="text-sm">Foto del recibo (opcional)</span>
+        {preview ? (
+          <div className="flex items-center gap-3">
+            <a href={preview} target="_blank" rel="noreferrer"><img src={preview} alt="Foto del recibo" className="h-24 w-24 rounded-xl object-cover" /></a>
+            <button type="button" className="btn btn-ghost btn-chico" onClick={() => setD({ ...d, file: null, dropPhoto: Boolean(d.photo) })}>Quitar foto</button>
+          </div>
+        ) : (
+          <label className="btn btn-sec btn-chico w-fit cursor-pointer"><Camera size={15} aria-hidden /> Tomar o elegir foto
+            <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) setD({ ...d, file: f, dropPhoto: false }) }} />
+          </label>
+        )}
+      </div>
       {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex items-center gap-3">
-        <button className="btn btn-primary">Guardar</button>
+        <button className="btn btn-primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar'}</button>
         {onDelete && <button type="button" className="btn btn-ghost ml-auto" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? onDelete() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro?' : 'Eliminar'}</button>}
       </div>
     </form>
@@ -60,6 +85,11 @@ export default function Transactions() {
   const [area, setArea] = useState<Area | 'all'>('all')
   const [draft, setDraft] = useState<Draft | null>(null)
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const { session } = useAuth()
+  const photos = useTxPhotos()
+  const [importing, setImporting] = useState(false)
+  const [imported, setImported] = useState('')
 
   useEffect(() => { if (!draft) setErr('') }, [draft])
 
@@ -77,8 +107,18 @@ export default function Transactions() {
     const v = { kind: draft.kind, amount, currency: draft.currency, category: draft.category.trim(), area: draft.area, tx_date: draft.date, note: draft.note.trim() || null, account_id: draft.account || null }
     rememberCurrency(draft.currency)
     try { if (draft.account) localStorage.setItem('mw_acct', draft.account) } catch { /* sin almacenamiento */ }
-    if (draft.id) await db.update(draft.id, v); else await db.add(v)
-    setDraft(null)
+    setBusy(true)
+    try {
+      let id = draft.id ?? null
+      if (draft.id) await db.update(draft.id, v); else id = (await db.add(v))?.id ?? null
+      // La foto del recibo: se sube reducida; si la cambias o la quitas, la anterior se borra
+      if (id && draft.file) {
+        const path = await uploadImage(session?.user.id, draft.file)
+        if (draft.photo) void removeImage(draft.photo)
+        photos.set(id, path)
+      } else if (id && draft.dropPhoto && draft.photo) { void removeImage(draft.photo); photos.set(id, null) }
+      setDraft(null)
+    } catch { setErr('Se guardó el movimiento, pero no la foto. Intenta otra vez.') } finally { setBusy(false) }
   }
 
   const totals = useMemo(() => {
@@ -91,7 +131,8 @@ export default function Transactions() {
 
   return (
     <div>
-      <PageHeader eyebrow="Dinero" title="Movimientos" action={<button className="btn btn-primary" onClick={() => setDraft(blank())}><Plus size={18} aria-hidden /> Nuevo</button>} />
+      <PageHeader eyebrow="Dinero" title="Movimientos" action={<span className="flex flex-wrap gap-2"><button className="btn btn-sec" onClick={() => setImporting(true)}><FileUp size={16} aria-hidden /> Banco</button><button className="btn btn-primary" onClick={() => setDraft(blank())}><Plus size={18} aria-hidden /> Nuevo</button></span>} />
+      {imported && <p role="status" className="mb-3 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{imported}</p>}
       <MonthStepper month={month} onChange={setMonth} />
       <div className="flex flex-wrap items-center gap-3">
         <Segmented label="Tipo" value={kind} onChange={setKind} options={[{ id: 'all', label: 'Todo' }, { id: 'income', label: 'Ingresos' }, { id: 'expense', label: 'Gastos' }]} />
@@ -117,17 +158,18 @@ export default function Transactions() {
                   sub={<><span style={{ color: 'var(--accent)' }}>Viene de Trabajo</span> · {workKindLabel(t.work)}{t.work.client?.trim() && t.work.client.trim() !== t.work.title ? ` · ${t.work.title}` : ''}{accounts.find((a) => a.id === t.account_id) ? ` · ${accounts.find((a) => a.id === t.account_id)!.name}` : ''}</>}
                   value={`+${money(Number(t.amount), t.currency)}`} valueTone="pos" />
               ) : (
-                <Row key={t.id} tone={tax.areaMeta(t.area).color} title={t.category} sub={<>{accounts.find((a) => a.id === t.account_id)?.name ? `${accounts.find((a) => a.id === t.account_id)!.name} · ` : ''}{tax.areaMeta(t.area).name}{t.note ? ` · ${t.note}` : ''}</>}
+                <Row key={t.id} tone={tax.areaMeta(t.area).color} title={<>{t.category}{photos.all[t.id] && <Paperclip size={13} aria-label="Tiene foto del recibo" className="ml-1 inline" />}</>} sub={<>{accounts.find((a) => a.id === t.account_id)?.name ? `${accounts.find((a) => a.id === t.account_id)!.name} · ` : ''}{tax.areaMeta(t.area).name}{t.note ? ` · ${t.note}` : ''}</>}
                   value={`${t.kind === 'income' ? '+' : '−'}${money(Number(t.amount), t.currency)}`} valueTone={t.kind === 'income' ? 'pos' : undefined}
-                  onClick={() => setDraft({ id: t.id, account: t.account_id ?? '', kind: t.kind, amount: String(t.amount), currency: t.currency, category: t.category, area: t.area, date: t.tx_date, note: t.note ?? '' })} />
+                  onClick={() => setDraft({ id: t.id, account: t.account_id ?? '', kind: t.kind, amount: String(t.amount), currency: t.currency, category: t.category, area: t.area, date: t.tx_date, note: t.note ?? '', photo: photos.all[t.id] ?? null })} />
               ))}
             </Group>
           ))}
         </>
       )}
 
+      <BankImport open={importing} onClose={() => setImporting(false)} accounts={accounts} existing={db.rows} onDone={(m) => { setImported(m); void db.reload() }} />
       <Sheet open={Boolean(draft)} title={draft?.id ? 'Editar movimiento' : 'Nuevo movimiento'} onClose={() => setDraft(null)}>
-        {draft && <Form d={draft} setD={setDraft} tax={tax} accounts={accounts} onSave={save} err={err} onDelete={draft.id ? async () => { await db.remove(draft.id!); setDraft(null) } : undefined} />}
+        {draft && <Form d={draft} setD={setDraft} tax={tax} accounts={accounts} onSave={save} err={err} busy={busy} onDelete={draft.id ? async () => { await db.remove(draft.id!); if (draft.photo) { void removeImage(draft.photo); photos.set(draft.id!, null) } setDraft(null) } : undefined} />}
       </Sheet>
     </div>
   )

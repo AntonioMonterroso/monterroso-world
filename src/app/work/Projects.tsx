@@ -7,6 +7,7 @@ import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
 import NewWork from './NewWork'
 import { removeProject, saveProject } from './saveProject'
+import ViewToggle from './ViewToggle'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { Empty } from '../money/shared'
 
@@ -67,7 +68,8 @@ export default function Projects() {
 
   return (
     <div>
-      <PageHeader eyebrow="Trabajo" title="Trabajos" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Trabajo</button>} />
+      <PageHeader eyebrow="Trabajo" title="Trabajos del mes" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Trabajo</button>} />
+      <ViewToggle now="mes" />
       <MonthStepper month={month} onChange={setMonth} />
 
       {Object.entries(totals).map(([cur, t]) => (

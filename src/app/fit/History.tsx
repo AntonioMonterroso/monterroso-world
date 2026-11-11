@@ -6,17 +6,28 @@ import { localISO } from '../../lib/time'
 import { Empty, ErrorBar, chip } from '../money/shared'
 import { PageHeader } from '../../components/ui'
 
+const fmtD = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('es', { day: 'numeric', month: 'short' })
+
+/** Mejor peso de cada sesión: línea con el mínimo y el máximo a la izquierda y las fechas abajo. */
 function Spark({ points }: { points: { date: string; best: number }[] }) {
   if (points.length < 2) return <p className="text-sm" style={{ color: 'var(--ink-faint)' }}>Necesitas al menos dos sesiones con este ejercicio para ver la curva.</p>
-  const W = 300, H = 80
+  const W = 320, H = 140, L = 36, R = 10, T = 12, B = 26
   const max = Math.max(...points.map((p) => p.best)), min = Math.min(...points.map((p) => p.best))
   const span = Math.max(1, max - min)
-  const xy = points.map((p, i) => [(i / (points.length - 1)) * (W - 16) + 8, H - 12 - ((p.best - min) / span) * (H - 28)] as const)
+  const xy = points.map((p, i) => [L + (i / (points.length - 1)) * (W - L - R), T + (1 - (p.best - min) / span) * (H - T - B)] as const)
+  const first = points[0], last = points.at(-1)!
+  const diff = Math.round((last.best - first.best) * 10) / 10
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Mejor peso por sesión: de ${points[0].best} a ${points.at(-1)!.best}`}>
-      <polyline points={xy.map(([x, y]) => `${x},${y}`).join(' ')} fill="none" stroke="var(--music)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      {xy.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.5" fill="var(--music)" />)}
-    </svg>
+    <figure>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Mejor peso por sesión: de ${first.best} el ${fmtD(first.date)} a ${last.best} el ${fmtD(last.date)}`}>
+        {[min, max].map((v, i) => { const y = i ? T : H - B; return <g key={i}><line x1={L} x2={W - R} y1={y} y2={y} stroke="var(--borde)" strokeDasharray="3 4" /><text x={L - 6} y={y + 4} textAnchor="end" fontSize="11" fill="var(--ink-soft)">{v}</text></g> })}
+        <polyline points={xy.map(([x, y]) => `${x},${y}`).join(' ')} fill="none" stroke="var(--personal)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {xy.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.5" fill="var(--personal)"><title>{`${fmtD(points[i].date)}: ${points[i].best}`}</title></circle>)}
+        <text x={L} y={H - 6} fontSize="11" fill="var(--ink-soft)">{fmtD(first.date)}</text>
+        <text x={W - R} y={H - 6} fontSize="11" textAnchor="end" fill="var(--ink-soft)">{fmtD(last.date)}</text>
+      </svg>
+      <figcaption className="mt-1 text-sm">{diff > 0 ? `Subiste ${diff} desde la primera vez.` : diff < 0 ? `Hoy vas ${Math.abs(diff)} abajo de la primera vez; los días bajos también cuentan.` : 'Igual que la primera vez.'} <span style={{ color: 'var(--ink-faint)' }}>{points.length} sesiones</span></figcaption>
+    </figure>
   )
 }
 

@@ -20,7 +20,11 @@ export default function Stage() {
   const idx = Number(sp.get('i') ?? -1)
 
   const [semis, setSemis] = useState(Number(sp.get('t') ?? 0) || 0)
-  const [size, setSize] = useState(1)
+  const [size, setSizeRaw] = useState(() => { try { const n = Number(localStorage.getItem('mw_stage_size')); return n >= 0 && n <= 2 && localStorage.getItem('mw_stage_size') !== null ? n : 1 } catch { return 1 } })
+  const setSize = (f: (n: number) => number) => setSizeRaw((n) => { const v = f(n); try { localStorage.setItem('mw_stage_size', String(v)) } catch { /* sin almacenamiento */ } return v })
+  // Deslizar a los lados cambia de canción dentro del setlist
+  const touch = useRef<{ x: number; y: number } | null>(null)
+  const swiped = useRef(false)
   const [speed, setSpeed] = useState(0) // px por segundo
   const [bar, setBar] = useState(true)
   const scroller = useRef<HTMLDivElement>(null)
@@ -82,9 +86,13 @@ export default function Stage() {
         </>}
       </div>
 
-      <div ref={scroller} className="flex-1 overflow-y-auto px-5 pb-40" onClick={() => setBar((v) => !v)}>
+      <div ref={scroller} className="flex-1 overflow-y-auto px-5 pb-40" style={{ touchAction: 'pan-y' }}
+        onClick={() => { if (swiped.current) { swiped.current = false; return } setBar((v) => !v) }}
+        onTouchStart={(e) => { const t = e.touches[0]; touch.current = { x: t.clientX, y: t.clientY } }}
+        onTouchEnd={(e) => { const s0 = touch.current; touch.current = null; if (!s0 || !setlist) return; const t = e.changedTouches[0]; const dx = t.clientX - s0.x, dy = t.clientY - s0.y; if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) { swiped.current = true; go(dx < 0 ? 1 : -1) } }}>
         <div className="mx-auto max-w-3xl pt-2">
           <ChordSheet content={song.content} semis={semis} targetKey={shownKey} size={SIZES[size]} />
+          {setlist && idx >= 0 && (() => { const nx = songs.rows.find((x) => x.id === setlist.song_ids[idx + 1]); return nx ? <button type="button" className="mt-10 w-full rounded-2xl border p-4 text-left" style={{ borderColor: 'var(--line)' }} onClick={(e) => { e.stopPropagation(); go(1) }}><span className="block text-xs" style={{ color: 'var(--ink-soft)' }}>Sigue · desliza a la izquierda</span><span className="block font-semibold">{nx.title}</span></button> : <p className="mt-10 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>Fin del setlist</p> })()}
         </div>
       </div>
 

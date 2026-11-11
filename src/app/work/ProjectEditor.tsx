@@ -1,5 +1,7 @@
 import { motion } from 'motion/react'
-import { ExternalLink, Plus, Trash2, X } from 'lucide-react'
+import { ExternalLink, ImagePlus, Plus, Trash2, X } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Segmented } from '../../components/ui'
 import { STATUSES, currentMonth, hasBilling, monthLabel, money, monthlyStates, setupPaid, type CheckTask, type NewPayment, type Payment, type Project, type Status } from '../../lib/projects'
@@ -186,6 +188,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                 </div>
                 <label className="grid gap-2 text-sm">Sitio o enlace<input className="field" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} maxLength={500} placeholder="https://" /></label>
                 {url.trim() && /^https?:\/\//i.test(url.trim()) && <a href={url.trim()} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm underline" style={{ color: 'var(--sky)' }}><ExternalLink size={14} aria-hidden /> Abrir sitio</a>}
+                {(status === 'delivered' || status === 'closed') && /^https?:\/\//i.test(url.trim()) && <PortfolioButton url={url.trim()} title={title.trim() || project.title} client={client.trim()} />}
                 <label className="grid gap-2 text-sm">Notas<textarea className="field py-3" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={4000} /></label>
               </div>
             )}
@@ -344,5 +347,29 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
         </motion.div>
       )}
     </>
+  )
+}
+
+/** Publicar en el portafolio: guarda el sitio entregado en Links marcado como portafolio. Pide confirmar y avisa si ya estaba. */
+function PortfolioButton({ url, title, client }: { url: string; title: string; client: string }) {
+  const [state, setState] = useState<'idle' | 'confirm' | 'busy' | 'done' | 'already' | 'error'>('idle')
+  useEffect(() => { setState('idle'); void supabase.from('links').select('id').eq('url', url).eq('portfolio', true).limit(1).then(({ data }) => { if ((data ?? []).length) setState('already') }) }, [url])
+  const publish = async () => {
+    setState('busy')
+    const { data } = await supabase.from('links').select('id').eq('url', url).limit(1)
+    const row = (data ?? [])[0] as { id: string } | undefined
+    const { error } = row
+      ? await supabase.from('links').update({ portfolio: true }).eq('id', row.id)
+      : await supabase.from('links').insert({ url, title, category: 'Portafolio', description: client ? `Hecho para ${client}` : null, portfolio: true, favorite: false })
+    setState(error ? 'error' : 'done')
+  }
+  if (state === 'already' || state === 'done') return <p className="text-sm" style={{ color: 'var(--personal-texto)' }}>{state === 'done' ? 'Listo: ya está en tu portafolio.' : 'Este sitio ya está en tu portafolio.'} <Link to="/app/descubrir/portafolio" className="underline">Ver</Link></p>
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {state === 'confirm'
+        ? <><span className="text-sm">¿Publicar «{title}» en tu portafolio?</span><button type="button" className="btn btn-primary btn-chico" onClick={() => void publish()}>Sí, publicar</button><button type="button" className="btn btn-ghost btn-chico" onClick={() => setState('idle')}>No</button></>
+        : <button type="button" className="btn btn-sec btn-chico w-fit" disabled={state === 'busy'} onClick={() => setState('confirm')}><ImagePlus size={15} aria-hidden /> {state === 'busy' ? 'Publicando…' : 'Publicar en portafolio'}</button>}
+      {state === 'error' && <span role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>No se pudo publicar.</span>}
+    </div>
   )
 }

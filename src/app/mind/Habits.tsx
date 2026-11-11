@@ -1,4 +1,5 @@
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Minus, Plus, Trash2 } from 'lucide-react'
+import { step, useHabitExtras } from '../../lib/habitExtra'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { Chk, Group, PageHeader, Row } from '../../components/ui'
@@ -9,7 +10,7 @@ import { useTable } from '../../lib/table'
 import { DAYS, localISO } from '../../lib/time'
 import { ErrorBar, chip } from '../money/shared'
 
-type Draft = { id?: string; name: string; target: number; moment: Moment }
+type Draft = { id?: string; name: string; target: number; moment: Moment; perDay: number; monthGoal: string }
 
 export default function Habits() {
   const mins = useMinHabits()
@@ -19,6 +20,15 @@ export default function Habits() {
   const [d, setD] = useState<Draft | null>(null)
   const [err, setErr] = useState('')
   const [confirm, setConfirm] = useState(false)
+  const ex = useHabitExtras(today)
+  // Con contador: cada toque suma uno; al llegar a la meta del día queda hecho (y si bajas, se desmarca)
+  const bump = async (h: Habit, delta: number) => {
+    const r = step(ex.all[h.id], today, delta)
+    ex.setCount(h.id, today, r.count)
+    const log = logs.rows.find((l) => l.habit_id === h.id && l.day === today)
+    if (r.done && !log) await logs.add({ habit_id: h.id, day: today })
+    else if (!r.done && log) await logs.remove(log.id)
+  }
 
   const active = useMemo(() => habits.rows.filter((h) => !h.archived), [habits.rows])
   const monday = dayNum(weekStart(today))
@@ -35,7 +45,10 @@ export default function Habits() {
     if (!d) return
     if (!d.name.trim()) return setErr('Ponle un nombre.')
     const v = { name: d.name.trim(), target_per_week: d.target, moment: d.moment }
-    if (d.id) await habits.update(d.id, v); else await habits.add({ ...v, position: (habits.rows.at(-1)?.position ?? 0) + 1, archived: false })
+    const mg = Math.round(Number(d.monthGoal))
+    const extra = { perDay: d.perDay > 1 ? d.perDay : undefined, monthGoal: mg >= 1 && mg <= 31 ? mg : undefined }
+    if (d.id) { await habits.update(d.id, v); ex.set(d.id, extra) }
+    else { const h = await habits.add({ ...v, position: (habits.rows.at(-1)?.position ?? 0) + 1, archived: false }); if (h) ex.set(h.id, extra) }
     setD(null); setErr(''); setConfirm(false)
   }
 
@@ -45,7 +58,7 @@ export default function Habits() {
 
   return (
     <div>
-      <PageHeader eyebrow="Mente y cuerpo" title="Hábitos" sub={active.length > 0 ? <>{doneToday} de {active.length} hoy. Un día sin hacerlo no borra lo avanzado.</> : undefined} action={<button className="btn btn-primary" onClick={() => setD({ name: '', target: 7, moment: 'any' })}><Plus size={18} aria-hidden /> Hábito</button>} />
+      <PageHeader eyebrow="Mente y cuerpo" title="Hábitos" sub={active.length > 0 ? <>{doneToday} de {active.length} hoy. Un día sin hacerlo no borra lo avanzado.</> : undefined} action={<button className="btn btn-primary" onClick={() => setD({ name: '', target: 7, moment: 'any', perDay: 1, monthGoal: '' })}><Plus size={18} aria-hidden /> Hábito</button>} />
       <ErrorBar msg={habits.error || logs.error} onClose={habits.clearError} />
 
       {active.length === 0 ? (
@@ -61,13 +74,17 @@ export default function Habits() {
               const wd = weekDone(h.id, logs.rows, today)
               const st = habitMonthStats(h.id, logs.rows, today)
               const doneT = logs.rows.some((l) => l.habit_id === h.id && l.day === today)
+              const e = ex.all[h.id]
+              const per = e?.perDay ?? 1
+              const cnt = e?.tally?.[today] ?? 0
               return (
                 <li key={h.id} className="row">
                   <div className="flex items-center">
-                    <button onClick={() => toggle(h, today)} aria-pressed={doneT} aria-label={`${h.name}: ${doneT ? 'hecho hoy' : 'marcar hecho hoy'}`} className="grid size-14 shrink-0 place-items-center"><Chk on={doneT} tone="var(--pos)" /></button>
-                    <button className="row-hit !pl-0" onClick={() => setD({ id: h.id, name: h.name, target: h.target_per_week, moment: h.moment })}>
-                      <span className="row-main"><span className="row-title">{h.name}</span><span className="row-sub">{wd} de {h.target_per_week} esta semana{st.thisMonth > 0 && ` · ${st.thisMonth} ${st.thisMonth === 1 ? 'día' : 'días'} este mes`}{st.best > st.thisMonth && ` · mejor mes: ${st.best}`}</span></span>
+                    <button onClick={() => (per > 1 ? void bump(h, doneT ? -cnt : per - cnt) : toggle(h, today))} aria-pressed={doneT} aria-label={`${h.name}: ${doneT ? 'hecho hoy' : 'marcar hecho hoy'}`} className="grid size-14 shrink-0 place-items-center"><Chk on={doneT} tone="var(--pos)" /></button>
+                    <button className="row-hit !pl-0" onClick={() => setD({ id: h.id, name: h.name, target: h.target_per_week, moment: h.moment, perDay: per, monthGoal: e?.monthGoal ? String(e.monthGoal) : '' })}>
+                      <span className="row-main"><span className="row-title">{h.name}{per > 1 && <span style={{ color: 'var(--ink-soft)', fontWeight: 400 }}> · {cnt} de {per} hoy</span>}</span><span className="row-sub">{wd} de {h.target_per_week} esta semana{e?.monthGoal ? ` · ${st.thisMonth} de ${e.monthGoal} días del mes` : st.thisMonth > 0 ? ` · ${st.thisMonth} ${st.thisMonth === 1 ? 'día' : 'días'} este mes` : ''}{st.best > st.thisMonth && ` · mejor mes: ${st.best}`}</span></span>
                     </button>
+                    {per > 1 && <span className="flex shrink-0 items-center pr-2"><button className="grid size-11 place-items-center rounded-full" onClick={() => void bump(h, -1)} disabled={cnt === 0} aria-label={`Quitar uno a ${h.name}`}><Minus size={16} aria-hidden /></button><button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => void bump(h, 1)} aria-label={`Sumar uno a ${h.name}`}><Plus size={16} aria-hidden /></button></span>}
                   </div>
                   <div className="flex gap-1 px-4 pb-3 pl-14" role="group" aria-label={`Semana de ${h.name}`}>
                     {week.map((day, i) => {
@@ -91,6 +108,13 @@ export default function Habits() {
               <legend className="mb-2 text-sm">Cuántas veces por semana</legend>
               <div className="flex gap-2">{[1, 2, 3, 4, 5, 6, 7].map((n) => <button key={n} type="button" aria-pressed={d.target === n} onClick={() => setD({ ...d, target: n })} className="grid size-11 place-items-center rounded-full border text-sm font-semibold" style={chip(d.target === n)}>{n}</button>)}</div>
             </fieldset>
+            <label className="grid gap-2 text-sm">Contador por día (opcional)
+              <select className="field" value={d.perDay} onChange={(e) => setD({ ...d, perDay: Number(e.target.value) })}>
+                <option value={1}>Sin contador: hecho o no hecho</option>
+                {[2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map((n) => <option key={n} value={n}>{n} veces al día (vasos, páginas, series…)</option>)}
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm">Meta del mes en días (opcional)<input className="field" inputMode="numeric" value={d.monthGoal} onChange={(e) => setD({ ...d, monthGoal: e.target.value.replace(/\D/g, '').slice(0, 2) })} placeholder="Por ejemplo, 20" /></label>
             <fieldset>
               <legend className="mb-2 text-sm">Momento del día</legend>
               <div className="flex flex-wrap gap-2">{MOMENTS.map((m) => <button key={m.id} type="button" aria-pressed={d.moment === m.id} onClick={() => setD({ ...d, moment: m.id })} className="min-h-11 rounded-full border px-4 text-sm" style={chip(d.moment === m.id)}>{m.label}</button>)}</div>

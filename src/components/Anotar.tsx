@@ -10,8 +10,12 @@ import { supabase } from '../lib/supabase'
 import { localISO } from '../lib/time'
 import { useTable } from '../lib/table'
 import { lastAccount } from '../app/money/AccountPick'
+import { syncReminder } from '../lib/remind'
+import { logOf, markUndone, pushLog, undoRefs, type LogEntry, type Ref } from '../lib/anotarLog'
+import { Undo2, WifiOff } from 'lucide-react'
+import { enqueue, isOffline } from '../lib/offline'
 
-export type Saved = { label: string; undo: () => Promise<void> }
+export type Saved = { label: string; undo: () => Promise<void>; refs?: Ref[]; noUndo?: boolean }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -75,10 +79,21 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
   }
 
   const del = (table: string, id: string) => async () => { await supabase.from(table).delete().eq('id', id) }
+  const one = (label: string, table: string, id: string): Saved => ({ label, undo: del(table, id), refs: [{ table, id }] })
+  const [log, setLog] = useState<LogEntry[]>([])
+  useEffect(() => { if (open) setLog(logOf(today)) }, [open, today])
+  const undoEntry = async (x: LogEntry) => { await undoRefs(x.refs); markUndone(today, x.at); setLog(logOf(today)) }
 
   const save = async () => {
     const t = text.trim()
     if (!t || busy || needsAmount) return
+    // Sin internet: se guarda en el teléfono y se manda a Pendientes al volver la conexión
+    if (isOffline()) {
+      enqueue(t.split('\n').map((x) => x.trim()).filter(Boolean))
+      setText(''); onClose()
+      onSaved?.({ label: 'Sin internet: lo guardé aquí y lo mando a Pendientes al volver', undo: async () => {}, noUndo: true })
+      return
+    }
     setBusy(true); setErr('')
     try {
       const persist = async (e: Entendido, t: string, auto: Entendido): Promise<Saved | null> => {
@@ -87,7 +102,7 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
           const acct = lastAccount()
           const { data, error } = await supabase.from('fin_transactions').insert({ kind: e.kind === 'gasto' ? 'expense' : 'income', amount: e.amount, currency: 'GTQ', category: e.category ?? 'Otros', area: e.area ?? 'personal', tx_date: e.date ?? today, note: e.title ?? null, ...(acct ? { account_id: acct } : {}) }).select('id').single()
           if (error || !data) throw new Error('No pude guardar el movimiento.')
-          saved = { label: `${KIND_LABEL[e.kind]} guardado`, undo: del('fin_transactions', data.id) }
+          saved = one(`${KIND_LABEL[e.kind]} guardado`, 'fin_transactions', data.id)
           // aprende: si cambiaste la categoría a mano, la próxima vez ya la pone
           const w = keyWord(e.title ?? '')
           if (w && e.kind === 'gasto' && e.category && e.category !== auto.category) {
@@ -116,40 +131,44 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
           }
           const pay = await work.addPayment({ project_id: p.id, amount, due_date: null, paid_at: e.date ?? today, method: null, note: null, kind, period, account_id: acct })
           if (!pay) throw new Error('No pude registrar el pago.')
-          saved = { label: `Pago de ${p.title} · ${money(pay.amount)}`, undo: async () => { await work.removePayment(pay.id) } }
+          saved = { label: `Pago de ${p.title} · ${money(pay.amount)}`, undo: async () => { await work.removePayment(pay.id) }, refs: [{ table: 'payments', id: pay.id }] }
         } else if (e.kind === 'transferencia' && e.fromId && e.toId) {
           const { data, error } = await supabase.from('fin_transfers').insert({ from_id: e.fromId, to_id: e.toId, amount: e.amount, fee: 0, tx_date: e.date ?? today }).select('id').single()
           if (error || !data) throw new Error('No pude registrar la transferencia.')
-          saved = { label: `Transferencia ${e.title} guardada`, undo: del('fin_transfers', data.id) }
+          saved = one(`Transferencia ${e.title} guardada`, 'fin_transfers', data.id)
         } else if (e.kind === 'evento') {
           const { data, error } = await supabase.from('events').insert({ type: 'event', title: e.title, kind: e.eventKind ?? 'other', start_date: e.date ?? today, start_min: e.startMin ?? 9 * 60, repeat: 'none', alerts: [10] }).select('id').single()
           if (error || !data) throw new Error('No pude crear el evento.')
-          saved = { label: 'Evento guardado en Agenda', undo: del('events', data.id) }
+          saved = one('Evento guardado en Agenda', 'events', data.id)
         } else if (e.kind === 'comprar') {
           const { data, error } = await supabase.from('shopping_items').insert({ name: e.title, category: e.category ?? 'Súper y comida', priority: 2, currency: 'GTQ', status: 'pending' }).select('id').single()
           if (error || !data) throw new Error('No pude agregarlo a Por comprar.')
-          saved = { label: 'Agregado a Por comprar', undo: del('shopping_items', data.id) }
+          saved = one('Agregado a Por comprar', 'shopping_items', data.id)
         } else if (e.kind === 'prestado') {
           const { data, error } = await supabase.from('stuff').insert({ name: e.title, kind: 'lent', person: e.person ?? null }).select('id').single()
           if (error || !data) throw new Error('No pude anotar lo prestado.')
-          saved = { label: 'Cosa prestada guardada', undo: del('stuff', data.id) }
+          saved = one('Cosa prestada guardada', 'stuff', data.id)
         } else if (e.kind === 'promesa') {
-          const { data, error } = await supabase.from('promises').insert({ text: e.title, person: e.person ?? null, due_date: e.date ?? null }).select('id').single()
-          if (error || !data) throw new Error('No pude guardar la promesa.')
-          saved = { label: 'Promesa guardada', undo: del('promises', data.id) }
+          // Toda promesa nace con su recordatorio: el día que dijiste o, si no dijiste, mañana
+          const due = e.date ?? (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localISO(d) })()
+          const ev = await syncReminder(null, { title: `Cumplir: ${e.title}`, action: e.person ? `Se lo prometiste a ${e.person}.` : 'Es una promesa que hiciste.', date: due })
+          const { data, error } = await supabase.from('promises').insert({ text: e.title, person: e.person ?? null, due_date: due, event_id: ev }).select('id').single()
+          if (error || !data) { if (ev) await supabase.from('events').delete().eq('id', ev); throw new Error('No pude guardar la promesa.') }
+          const refs: Ref[] = [...(ev ? [{ table: 'events', id: ev }] : []), { table: 'promises', id: data.id }]
+          saved = { label: e.date ? 'Promesa guardada con su recordatorio' : 'Promesa guardada · te la recuerdo mañana', undo: () => undoRefs(refs), refs }
         } else if (e.kind === 'video' && e.videoId) {
           const { data, error } = await supabase.from('videos').insert({ provider: 'youtube', video_id: e.videoId, title: e.title, status: 'queue' }).select('id').single()
           if (error || !data) throw new Error('No pude guardar el video.')
-          saved = { label: 'Video guardado en Aprender', undo: del('videos', data.id) }
+          saved = one('Video guardado en Aprender', 'videos', data.id)
         } else if (e.kind === 'enlace' && e.url) {
           const { data, error } = await supabase.from('links').insert({ url: e.url, title: e.title, category: 'Otros' }).select('id').single()
           if (error || !data) throw new Error('No pude guardar el enlace.')
-          saved = { label: 'Enlace guardado en Links', undo: del('links', data.id) }
+          saved = one('Enlace guardado en Links', 'links', data.id)
         } else {
           const body = e.kind === 'idea' ? `Idea: ${e.title}` : t
           const { data, error } = await supabase.from('inbox_items').insert({ text: body }).select('id').single()
           if (error || !data) throw new Error('No pude guardarlo.')
-          saved = { label: e.kind === 'idea' ? 'Idea guardada en Pendientes' : 'Anotado en Pendientes', undo: del('inbox_items', data.id) }
+          saved = one(e.kind === 'idea' ? 'Idea guardada en Pendientes' : 'Anotado en Pendientes', 'inbox_items', data.id)
         }
         return saved
       }
@@ -159,10 +178,16 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
         // Varias cosas a la vez: una por línea, cada una con sus propias reglas
         const done: Saved[] = []
         for (const ln of lines) { const one = entender(ln, ctx); const r = await persist(one.kind === 'gasto' || one.kind === 'ingreso' ? one : one, ln, one); if (r) done.push(r) }
-        saved = { label: `${done.length} ${done.length === 1 ? 'cosa guardada' : 'cosas guardadas'}`, undo: async () => { for (const d of done) await d.undo() } }
+        saved = { label: `${done.length} ${done.length === 1 ? 'cosa guardada' : 'cosas guardadas'}`, undo: async () => { for (const d of done) await d.undo() }, refs: done.flatMap((d) => d.refs ?? []) }
       } else saved = await persist(e, t, auto)
       // Si venía de Pendientes («Clasificar»), el original ya no hace falta
       if (inboxId && e.kind !== 'bandeja') await supabase.from('inbox_items').delete().eq('id', inboxId)
+      if (saved) {
+        const at = Date.now()
+        pushLog(today, { at, text: t, label: saved.label, refs: saved.refs ?? [] })
+        const u = saved.undo
+        saved = { ...saved, undo: async () => { await u(); markUndone(today, at) } }
+      }
       setText(''); onClose()
       if (saved) onSaved?.(saved)
     } catch (x) { setErr(x instanceof Error ? x.message : 'No se pudo guardar.') } finally { setBusy(false) }
@@ -175,6 +200,7 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
         <textarea id="anotar-in" ref={field} className="field min-h-24" value={text} maxLength={2000} rows={3} onChange={(ev) => { setText(ev.target.value); setForced(null); setCat(null) }}
           placeholder="Q 45 almuerzo · ensayo vie 7pm · comprar leche… (una cosa por línea si son varias)"
           onKeyDown={(ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); void save() } }} />
+        {isOffline() && <p className="flex items-center gap-2 text-sm" style={{ color: 'var(--aviso-texto)' }}><WifiOff size={15} aria-hidden /> Sin internet. Lo guardo en este teléfono y lo mando a Pendientes cuando vuelva la conexión.</p>}
         {SR && <button type="button" className="chip-btn w-fit" aria-pressed={listening} onClick={dictate}><Mic size={16} aria-hidden /> {listening ? 'Escuchando… toca para terminar' : 'Dictar'}</button>}
         {lineCount > 1 && <p className="text-sm" aria-live="polite">Se guardarán <strong>{lineCount} cosas</strong>, una por línea, cada una en su lugar.</p>}
         {text.trim() && lineCount <= 1 && (
@@ -189,6 +215,15 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
         <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Enter guarda. Si no reconoce nada, queda en Pendientes para después.</p>
         <button className="btn btn-primary" disabled={!text.trim() || busy || needsAmount}>{busy ? 'Guardando…' : 'Guardar'}</button>
       </form>
+      {log.length > 0 && (
+        <details className="mt-4"><summary className="min-h-11 cursor-pointer text-sm font-semibold">Lo que anotaste hoy ({log.filter((x) => !x.undone).length})</summary>
+          <ul className="mt-2 grid gap-2">{log.map((x) => (
+            <li key={x.at} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'var(--surface-2)', opacity: x.undone ? 0.55 : 1 }}>
+              <div className="min-w-0 flex-1"><p className={`truncate text-sm font-semibold ${x.undone ? 'line-through' : ''}`}>{x.text}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>{new Date(x.at).toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit' })} · {x.undone ? 'deshecho' : x.label}</p></div>
+              {!x.undone && x.refs.length > 0 && <button type="button" className="btn btn-sec btn-chico" onClick={() => void undoEntry(x)}><Undo2 size={14} aria-hidden /> Deshacer</button>}
+            </li>))}</ul>
+        </details>
+      )}
       <details className="mt-4"><summary className="min-h-11 cursor-pointer text-sm font-semibold">Prefiero grabar una nota de voz</summary><div className="mt-2"><VoiceNotes /></div></details>
     </Sheet>
   )

@@ -20,7 +20,18 @@ export function installMockApi() {
     const method = (init?.method ?? 'GET').toUpperCase()
     const headers = new Headers(init?.headers)
     const single = (headers.get('Accept') ?? '').includes('vnd.pgrst.object')
-    const match = (r: Row) => [...url.searchParams].every(([k, v]) => !v.startsWith('eq.') || String(r[k]) === v.slice(3))
+    // Filtros básicos de PostgREST (solo para probar en desarrollo): eq, gte, lte, gt, lt, is.null y not.is.null
+    const cmp = (a: unknown, b: string) => String(a ?? '').localeCompare(b, undefined, { numeric: true })
+    const match = (r: Row) => [...url.searchParams].every(([k, v]) => {
+      if (v.startsWith('eq.')) return String(r[k]) === v.slice(3)
+      if (v.startsWith('gte.')) return r[k] != null && cmp(r[k], v.slice(4)) >= 0
+      if (v.startsWith('lte.')) return r[k] != null && cmp(String(r[k]).slice(0, v.slice(4).length), v.slice(4)) <= 0
+      if (v.startsWith('gt.')) return r[k] != null && cmp(r[k], v.slice(3)) > 0
+      if (v.startsWith('lt.')) return r[k] != null && cmp(r[k], v.slice(3)) < 0
+      if (v === 'is.null') return r[k] == null
+      if (v === 'not.is.null') return r[k] != null
+      return true
+    })
     const out = (list: Row[]) => (single ? (list[0] ? json(list[0]) : json({ message: 'no rows' }, 406)) : json(list))
     const body = init?.body ? JSON.parse(String(init.body)) : null
 

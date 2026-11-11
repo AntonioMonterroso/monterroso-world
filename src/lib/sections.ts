@@ -19,8 +19,7 @@ export const sections: Section[] = [
   ] },
   { id: 'dinero', label: 'Dinero', to: `${A}/dinero`, icon: Wallet, area: null, blurb: 'Lo que entra, lo que sale y tu ahorro', views: [] },
   { id: 'trabajo', label: 'Trabajo', to: `${A}/trabajo`, icon: Briefcase, area: 'web', blurb: 'Clientes, propuestas y cobros', views: [
-    { to: `${A}/trabajo`, label: 'Clientes', icon: Users, match: [`${A}/trabajo`], end: true },
-    { to: `${A}/trabajo/mes`, label: 'Trabajos', icon: Briefcase, match: [`${A}/trabajo/mes`] },
+    { to: `${A}/trabajo`, label: 'Clientes', icon: Users, match: [`${A}/trabajo`, `${A}/trabajo/mes`], end: true },
     { to: `${A}/trabajo/propuestas`, label: 'Propuestas', icon: FileText, match: [`${A}/trabajo/propuestas`] },
     { to: `${A}/envios`, label: 'Envíos', icon: Send, match: [`${A}/envios`] },
     { to: `${A}/trabajo/precios`, label: 'Precios públicos', icon: Globe2, match: [`${A}/trabajo/precios`] },
@@ -40,7 +39,7 @@ export const sections: Section[] = [
     { to: `${A}/mente/reglas`, label: 'Si… entonces…', icon: Zap, match: [`${A}/mente/reglas`], group: 'Cada día', hint: 'Acciones atadas a un momento' },
     { to: `${A}/mente/logros`, label: 'Logros', icon: Trophy, match: [`${A}/mente/logros`], group: 'Cada día', hint: 'Puntos, niveles y premios' },
     { to: `${A}/ejercicio`, label: 'Ejercicio', icon: Dumbbell, match: [`${A}/ejercicio`], group: 'Cuerpo y casa', hint: 'Rutinas, progreso y cuerpo', subs: [{ to: `${A}/ejercicio`, label: 'Rutinas', end: true }, { to: `${A}/ejercicio/historial`, label: 'Historial' }, { to: `${A}/ejercicio/cuerpo`, label: 'Cuerpo' }, { to: `${A}/ejercicio/companeros`, label: 'Compañeros' }] },
-    { to: `${A}/cocina`, label: 'Cocina', icon: ChefHat, match: [`${A}/cocina`], group: 'Cuerpo y casa', hint: 'Recetas y despensa', subs: [{ to: `${A}/cocina`, label: 'Qué cocino', fallback: true }, { to: `${A}/cocina/despensa`, label: 'Despensa' }] },
+    { to: `${A}/cocina`, label: 'Cocina', icon: ChefHat, match: [`${A}/cocina`], group: 'Cuerpo y casa', hint: 'Recetas y despensa', subs: [{ to: `${A}/cocina`, label: 'Qué cocino', fallback: true }, { to: `${A}/cocina/semana`, label: 'Mi semana' }, { to: `${A}/cocina/despensa`, label: 'Despensa' }] },
     { to: `${A}/compras`, label: 'Por comprar', icon: ShoppingBag, match: [`${A}/compras`], group: 'Cuerpo y casa', hint: 'Lo que falta' },
     { to: `${A}/mente/cosas`, label: 'Cosas y promesas', icon: Handshake, match: [`${A}/mente/cosas`], group: 'Para no olvidar', hint: 'Dónde dejé qué, a quién le debo' },
     { to: `${A}/lugares`, label: 'Salidas', icon: MapPin, match: [`${A}/lugares`], group: 'Para no olvidar', hint: 'Lugares y viajes' },

@@ -836,3 +836,10 @@ button.row-hit:active, a.row-hit:active { background: var(--surface-2); transiti
 
 /* Pantallas de escenario (canción, presentador, rutina guiada, enfoque, sesión): siempre oscuras, también si eliges el modo claro */
 .force-dark { color: var(--tinta); color-scheme: dark; }
+
+/* Hoy en dos columnas cuando hay espacio (computadora): Ahora y Mis 3 a la izquierda; lo que sigue y hábitos a la derecha */
+.hoy { container-type: inline-size; }
+.hoy-cols, .hoy-col { display: grid; gap: 1.25rem; align-content: start; }
+@container (min-width: 760px) {
+  .hoy-cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
+}

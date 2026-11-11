@@ -8,6 +8,19 @@ import { entender } from '../lib/anotar'
 import { localISO } from '../lib/time'
 import { decryptItem } from '../lib/vault'
 import { useVaultKey } from '../lib/vaultSession'
+import { parseMonthQuery } from '../lib/searchDates'
+import { money } from '../lib/projects'
+import { clientKey } from '../lib/clients'
+
+/** Filtros por tipo: cada uno junta los tipos del índice que le tocan. */
+const FILTERS: { id: string; label: string; types: string[] }[] = [
+  { id: 'todo', label: 'Todo', types: [] },
+  { id: 'dinero', label: 'Dinero', types: ['Movimiento', 'Préstamo', 'Suscripción', 'Meta', 'Pago'] },
+  { id: 'trabajo', label: 'Trabajo', types: ['Trabajo', 'Envío', 'Propuesta'] },
+  { id: 'musica', label: 'Música y púlpito', types: ['Canción', 'Setlist', 'Prédica', 'Nota de fe', 'Nota de voz'] },
+  { id: 'agenda', label: 'Agenda', types: ['Evento', 'Prioridad'] },
+  { id: 'personal', label: 'Personal', types: ['Receta', 'Rutina', 'Rutina diaria', 'Hábito', 'Compañero', 'Por comprar', 'Lugar', 'Video', 'Link', 'Inspiración', 'Captura', 'Bóveda'] },
+]
 
 type Item = { id: string; title: string; sub?: string; type: string; run: () => void }
 
@@ -19,6 +32,45 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
   const [index, setIndex] = useState<Hit[]>([])
   const [loading, setLoading] = useState(false)
   const input = useRef<HTMLInputElement>(null)
+  const [filter, setFilter] = useState('todo')
+  // «pagos de octubre», «gastos de septiembre»: se buscan en la base por fecha
+  const mq = useMemo(() => parseMonthQuery(q, localISO()), [q])
+  const [monthHits, setMonthHits] = useState<{ total: number; rows: Item[] } | null>(null)
+  useEffect(() => {
+    if (!mq) { setMonthHits(null); return }
+    let alive = true
+    const [y, m] = mq.month.split('-').map(Number)
+    const from = `${mq.month}-01`, to = `${mq.month}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`
+    const rest = clientKey(mq.rest)
+    const fmtD = (d: string) => new Date(`${d.slice(0, 10)}T12:00:00`).toLocaleDateString('es', { day: 'numeric', month: 'short' })
+    ;(async () => {
+      let rows: Item[] = [], total = 0
+      if (mq.what === 'pagos') {
+        const [{ data: pays }, { data: projs }] = await Promise.all([
+          supabase.from('payments').select('id,amount,paid_at,project_id').gte('paid_at', from).lte('paid_at', to).order('paid_at', { ascending: false }),
+          supabase.from('projects').select('id,title,client'),
+        ])
+        const pr = new Map(((projs ?? []) as { id: string; title: string; client: string | null }[]).map((p) => [p.id, p]))
+        const list = ((pays ?? []) as { id: string; amount: number; paid_at: string; project_id: string }[]).map((x) => ({ x, p: pr.get(x.project_id) })).filter(({ p }) => !rest || clientKey(`${p?.client ?? ''} ${p?.title ?? ''}`).includes(rest))
+        total = list.reduce((a, { x }) => a + Number(x.amount), 0)
+        rows = list.map(({ x, p }) => ({ id: `pay-${x.id}`, title: `${p?.client || p?.title || 'Pago'} · ${money(Number(x.amount))}`, sub: `${fmtD(x.paid_at)}${p?.client ? ` · ${p.title}` : ''}`, type: 'Pago', run: () => nav(`/app/trabajo/recibo/${x.id}`) }))
+      } else if (mq.what === 'eventos') {
+        const { data } = await supabase.from('events').select('id,title,start_date').eq('active', true).gte('start_date', from).lte('start_date', to).order('start_date')
+        rows = ((data ?? []) as { id: string; title: string; start_date: string }[]).filter((e) => !rest || clientKey(e.title).includes(rest)).map((e) => ({ id: `ev-${e.id}`, title: e.title, sub: fmtD(e.start_date), type: 'Evento', run: () => nav(`/app/planear/agenda?e=${e.id}`) }))
+        total = rows.length
+      } else {
+        let qb = supabase.from('fin_transactions').select('id,kind,amount,category,note,tx_date').gte('tx_date', from).lte('tx_date', to).order('tx_date', { ascending: false })
+        if (mq.what === 'gastos') qb = qb.eq('kind', 'expense')
+        if (mq.what === 'ingresos') qb = qb.eq('kind', 'income')
+        const { data } = await qb
+        const list = ((data ?? []) as { id: string; kind: string; amount: number; category: string; note: string | null; tx_date: string }[]).filter((t) => !rest || clientKey(`${t.category} ${t.note ?? ''}`).includes(rest))
+        total = list.reduce((a, t) => a + (t.kind === 'expense' && mq.what === 'movimientos' ? -1 : 1) * Number(t.amount), 0)
+        rows = list.map((t) => ({ id: `tx-${t.id}`, title: `${t.category} · ${t.kind === 'expense' ? '−' : '+'}${money(Number(t.amount))}`, sub: `${fmtD(t.tx_date)}${t.note ? ` · ${t.note}` : ''}`, type: 'Movimiento', run: () => nav('/app/dinero/movimientos') }))
+      }
+      if (alive) setMonthHits({ total, rows })
+    })()
+    return () => { alive = false }
+  }, [mq, nav])
 
   // Atajos y acciones (siempre disponibles)
   const statics = useMemo<Item[]>(() => [
@@ -34,7 +86,7 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
   // Al abrir: trae tus datos para buscar (y los títulos de la bóveda si está desbloqueada)
   useEffect(() => {
     if (!open) return
-    setQ(''); setI(0)
+    setQ(''); setI(0); setFilter('todo')
     setTimeout(() => input.current?.focus(), 30)
     let alive = true
     setLoading(true)
@@ -55,6 +107,12 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
 
   const results = useMemo<Item[]>(() => {
     const t = q.trim()
+    if (mq && monthHits) {
+      const head: Item = { id: 'mq-head', title: `${mq.label}${mq.rest ? ` · ${mq.rest}` : ''}: ${mq.what === 'eventos' ? `${monthHits.total} ${monthHits.total === 1 ? 'evento' : 'eventos'}` : money(monthHits.total)}`, sub: monthHits.rows.length ? `${monthHits.rows.length} en total` : 'No encontré nada en ese mes', type: 'Resumen', run: () => nav(mq.what === 'eventos' ? '/app/planear/agenda' : mq.what === 'pagos' ? '/app/dinero/entra' : '/app/dinero/movimientos') }
+      return [head, ...monthHits.rows.slice(0, 30)]
+    }
+    const allowed = FILTERS.find((f) => f.id === filter)?.types ?? []
+    if (!t && allowed.length) return index.filter((h) => allowed.includes(h.type)).slice(0, 30).map((h) => ({ id: `${h.type}-${h.id}`, title: h.title, sub: h.sub, type: h.type, run: () => nav(h.to) }))
     if (!t) return statics.filter((s) => s.type === 'Ir a' || s.type === 'Acción').slice(0, 9)
     const dynamic: Item[] = index.map((h) => ({ id: `${h.type}-${h.id}`, title: h.title, sub: h.sub, type: h.type, run: () => nav(h.to) }))
     // Órdenes: «gasto 45 almuerzo», «cobrar barbería», «nueva canción»… (las mismas reglas que ＋ Anotar)
@@ -69,8 +127,9 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
     if (g || c || paid || e.kind !== 'bandeja') orders.push({ id: 'o-anotar', title: `Anotar: ${t}`, sub: c || paid ? 'Pago de cliente · se confirma al guardar' : e.label, type: 'Orden', run: () => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text } })) })
     if (/^nueva canci[oó]n|^canci[oó]n nueva/i.test(t)) orders.push({ id: 'o-cancion', title: 'Nueva canción', sub: 'Música › Canciones', type: 'Orden', run: () => nav('/app/musica') })
     if (/^nuevo evento|^evento nuevo/i.test(t)) orders.push({ id: 'o-evento', title: 'Nuevo evento', sub: 'Agenda', type: 'Orden', run: () => nav('/app/planear/agenda') })
+    if (allowed.length) return searchHits(dynamic.filter((d) => allowed.includes(d.type)), t, 30)
     return [...orders, ...searchHits([...dynamic, ...statics], t, 12)]
-  }, [q, index, statics, nav])
+  }, [q, index, statics, nav, filter, mq, monthHits])
 
   useEffect(() => setI(0), [q])
 
@@ -88,8 +147,11 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
         }}>
         <div className="flex items-center gap-3 border-b px-4" style={{ borderColor: 'var(--line-soft)' }}>
           {loading ? <Loader2 size={18} className="animate-spin" aria-hidden style={{ color: 'var(--ink-faint)' }} /> : <Search size={18} aria-hidden style={{ color: 'var(--ink-faint)' }} />}
-          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca canciones, trabajos, notas, módulos…" aria-label="Buscar" className="h-14 w-full bg-transparent outline-none" style={{ fontSize: 16, color: 'var(--ink)' }} autoComplete="off" />
+          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca canciones, trabajos… o «pagos de octubre»" aria-label="Buscar" className="h-14 w-full bg-transparent outline-none" style={{ fontSize: 16, color: 'var(--ink)' }} autoComplete="off" />
         </div>
+        {!mq && <div className="flex flex-wrap gap-1.5 border-b px-3 py-2" style={{ borderColor: 'var(--line-soft)' }} role="group" aria-label="Filtrar por tipo">
+          {FILTERS.map((f) => <button key={f.id} type="button" className="min-h-9 rounded-full px-3 text-xs font-semibold" aria-pressed={filter === f.id} onClick={() => { setFilter(f.id); input.current?.focus() }} style={{ background: filter === f.id ? 'var(--tinta)' : 'var(--surface-2)', color: filter === f.id ? 'var(--fondo)' : 'var(--ink-soft)' }}>{f.label}</button>)}
+        </div>}
         <ul role="listbox" className="max-h-[55vh] overflow-auto p-2">
           {results.length === 0 && <li className="px-3 py-6 text-center text-sm" style={{ color: 'var(--ink-soft)' }}>{loading ? 'Buscando en tus datos…' : 'Nada coincide.'}</li>}
           {results.map((it, n) => (

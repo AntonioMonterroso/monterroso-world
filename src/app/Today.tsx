@@ -1,4 +1,4 @@
-import { ChevronDown, Feather, HeartHandshake, Moon, Plus, Sparkles, Trash2, Wind, Zap } from 'lucide-react'
+import { ChevronDown, Feather, HeartHandshake, Moon, Plus, Repeat2, Sparkles, Trash2, Wind } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Chk } from '../components/ui'
@@ -7,15 +7,16 @@ import DayRitual from '../components/DayRitual'
 import OverwhelmSheet from '../components/OverwhelmSheet'
 import { ResumeHint } from '../components/Resume'
 import Cobrado from '../components/Cobrado'
+import WeekCard from '../components/WeekCard'
 import { useProgress } from '../lib/progress'
 import { dueRules, type Rule } from '../lib/ifthen'
 import { daysUntil, stateOf, type Renewal } from '../lib/renewals'
 import { lentToChase, promiseState, sortPromises, type Promise_, type Stuff } from '../lib/loose'
 import { useCheckins } from '../lib/checkin'
-import { ENERGY, isSoftDay } from '../lib/rhythm'
+import { isSoftDay } from '../lib/rhythm'
 import { exitKindFor, type ExitList } from '../lib/exitlist'
 import type { SuggestInput } from '../lib/suggest'
-import { ahora, readSnoozed, snooze, tomorrowMorning, type Item } from '../lib/ahora'
+import { ahora, readSnoozed, snooze, snoozeCount, tomorrowMorning, type Item } from '../lib/ahora'
 import { freeGaps, peakHour, planDay } from '../lib/dayplan'
 import { duePlans, type Plan } from '../lib/savings'
 import type { Goal } from '../lib/finance'
@@ -24,6 +25,7 @@ import { monthlyClients, type ClientRow } from '../lib/incoming'
 import { rankRecipes, type PantryItem, type Recipe } from '../lib/kitchen'
 import { useFreeToSpend } from '../lib/useFree'
 import { useMinHabits } from '../lib/minHabits'
+import { step, useHabitExtras } from '../lib/habitExtra'
 import { supabase } from '../lib/supabase'
 import { useAttention } from '../lib/attention'
 import { blockApplies, useBlocks, useInbox, usePriorities } from '../lib/data'
@@ -36,7 +38,6 @@ import { fmtMin, localISO, nowMin } from '../lib/time'
 const greet = (h: number) => (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches')
 const softKey = (d: string) => `mw_soft_${d}`
 const readSoft = (d: string) => { try { return localStorage.getItem(softKey(d)) === '1' } catch { return false } }
-const E_LABEL: Record<number, string> = Object.fromEntries(ENERGY.map((e) => [e.n, e.label]))
 
 export default function Today() {
   const [now, setNow] = useState(() => new Date())
@@ -55,8 +56,18 @@ export default function Today() {
   const habits = useTable<Habit>('habits', { col: 'position', asc: true })
   const hlogs = useTable<HabitLog>('habit_logs', { col: 'day', asc: false })
   const activeHabits = habits.rows.filter((h) => !h.archived)
+  const hx = useHabitExtras(todayISO)
   const toggleHabit = async (h: Habit) => {
     const ex = hlogs.rows.find((l) => l.habit_id === h.id && l.day === todayISO)
+    const per = hx.all[h.id]?.perDay ?? 1
+    if (per > 1) {
+      // Con contador: cada toque suma uno; al llegar a la meta queda hecho. Si ya estaba hecho, vuelve a cero.
+      const r = ex ? { count: 0, done: false } : step(hx.all[h.id], todayISO, 1)
+      hx.setCount(h.id, todayISO, r.count)
+      if (r.done && !ex) await hlogs.add({ habit_id: h.id, day: todayISO })
+      else if (!r.done && ex) await hlogs.remove(ex.id)
+      return
+    }
     if (ex) await hlogs.remove(ex.id); else await hlogs.add({ habit_id: h.id, day: todayISO })
   }
 
@@ -145,7 +156,6 @@ export default function Today() {
   const setlistToday = setlists.rows.find((x) => x.event_date === localISO(now))
   const minHabits = useMinHabits()
   const [manualSoft, setManualSoft] = useState(() => readSoft(localISO()))
-  const [energyOpen, setEnergyOpen] = useState(false)
   const [snoozed, setSnoozed] = useState(() => readSnoozed())
   const [moreOpen, setMoreOpen] = useState(false)
   const [cobro, setCobro] = useState<ClientRow | null>(null)
@@ -162,6 +172,7 @@ export default function Today() {
 
   const items = useMemo(() => ahora(suggestInput, { collect, savings: savingsRows, cookReady, quotes: quotesToFollow }, { soft: softOn, snoozed }), [suggestInput, collect, savingsRows, cookReady, quotesToFollow, softOn, snoozed])
   const top = items[0]
+  const topSnoozes = top ? snoozeCount(top.id, now.getTime()) : 0
   const rest = items.slice(1)
 
   // Momento del día: arranque antes del primer bloque, cierre después del último
@@ -224,17 +235,13 @@ export default function Today() {
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="chip-btn" aria-pressed={softOn} onClick={toggleSoft}><Feather size={16} aria-hidden /> Día suave</button>
           <button type="button" className="chip-btn" onClick={() => setOverwhelm(true)}><HeartHandshake size={16} aria-hidden /> Me abruma</button>
-          <button type="button" className="chip-btn" aria-expanded={energyOpen} onClick={() => setEnergyOpen((v) => !v)}><Zap size={16} aria-hidden /> Energía{checkins.today?.energy ? `: ${E_LABEL[checkins.today.energy]}` : ''}</button>
         </div>
-        {energyOpen && (
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Energía de hoy">
-            {ENERGY.map((e) => <button key={e.n} type="button" className="chip-btn" aria-pressed={checkins.today?.energy === e.n} onClick={() => { void checkins.save({ energy: e.n }); setEnergyOpen(false) }}>{e.label}</button>)}
-          </div>
-        )}
       </header>
 
       {error && <p role="alert" className="rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{error}</p>}
 
+      <div className="hoy-cols">
+      <div className="hoy-col">
       {/* 2. Ahora */}
       {mode !== 'dia' ? (
         <section aria-label={mode === 'arranque' ? 'Arranque del día' : 'Cierre del día'} className="grid gap-3">
@@ -257,6 +264,13 @@ export default function Today() {
               <h2 className="mt-2 font-display text-3xl leading-tight">{top.title}</h2>
               <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>{top.reason}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2"><Action it={top} big /><button className="btn btn-ghost" onClick={() => later(top)}>Más tarde</button><button className="btn btn-ghost" onClick={() => tomorrow(top)}>Mañana</button></div>
+              {topSnoozes >= 3 && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>
+                  <Repeat2 size={16} aria-hidden /><span className="min-w-0 flex-1">Lo has pospuesto {topSnoozes} veces estas dos semanas. Quizá esta no es su hora.</span>
+                  {top.to && !top.inline && <Link to={top.to} className="font-semibold underline">Cambiarle la hora</Link>}
+                  {top.inline === 'event-done' && <Link to="/app/planear/agenda" className="font-semibold underline">Cambiarle la hora</Link>}
+                </div>
+              )}
               {rest.length > 0 && (
                 <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--borde)' }}>
                   <button type="button" className="flex min-h-11 w-full items-center justify-between text-sm font-semibold" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}>{rest.length} {rest.length === 1 ? 'más' : 'más'} <ChevronDown size={16} aria-hidden style={{ transform: moreOpen ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }} /></button>
@@ -304,6 +318,10 @@ export default function Today() {
         </ul>
       </section>
 
+      </div>
+      <div className="hoy-col">
+      <WeekCard payments={work.payments} now={now} />
+
       {/* 4. Lo que sigue */}
       {mode === 'dia' && (upcoming.length > 0 || setlistToday) && (
         <section aria-labelledby="sigue-t" className="bloque">
@@ -332,7 +350,7 @@ export default function Today() {
               const done = hlogs.rows.some((l) => l.habit_id === h.id && l.day === todayISO)
               return (
                 <button key={h.id} type="button" className="habito" aria-pressed={done} onClick={() => void toggleHabit(h)} title={`${weekDone(h.id, hlogs.rows, todayISO)}/${h.target_per_week} esta semana`}>
-                  <Chk on={done} tone="var(--personal)" /><span>{h.name}</span>
+                  <Chk on={done} tone="var(--personal)" /><span>{h.name}{(hx.all[h.id]?.perDay ?? 1) > 1 && !done && <span style={{ color: 'var(--ink-soft)' }}> {hx.all[h.id]?.tally?.[todayISO] ?? 0}/{hx.all[h.id]!.perDay}</span>}</span>
                 </button>
               )
             })}
@@ -352,6 +370,8 @@ export default function Today() {
           <Link to="/app/mente/logros" className="pie-dato"><span className="etq">Puntos de hoy</span><span className="cifra">{gained > 0 ? `+${gained}` : '0'}</span></Link>
         )}
       </footer>
+      </div>
+      </div>
 
       {cobroMsg && <p role="status" className="rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{cobroMsg}</p>}
       <Cobrado row={cobro} addPayment={work.addPayment} onClose={() => setCobro(null)} onDone={setCobroMsg} />

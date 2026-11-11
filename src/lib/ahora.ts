@@ -31,7 +31,26 @@ export function tomorrowMorning(now = Date.now()): number { const d = new Date(n
 export function snooze(id: string, now = Date.now(), until?: number): Snoozed {
   const next = { ...readSnoozed(now), [id]: until ?? now + SNOOZE_MS }
   store(next)
+  countSnooze(id, now)
   return next
+}
+
+// Cuántas veces pospones lo mismo: si pasa seguido, Hoy sugiere cambiarle la hora (sin regañar)
+const CKEY = 'mw_snooze_count'
+const WINDOW_MS = 14 * 24 * 60 * 60 * 1000
+let cmem: Record<string, number[]> = {}
+const cload = (): Record<string, number[]> => { try { const raw = localStorage.getItem(CKEY); return raw ? (JSON.parse(raw) as Record<string, number[]>) : cmem } catch { return cmem } }
+function countSnooze(id: string, now: number): void {
+  const all = cload()
+  const next: Record<string, number[]> = {}
+  for (const [k, v] of Object.entries(all)) { const keep = v.filter((t) => now - t < WINDOW_MS); if (keep.length) next[k] = keep }
+  next[id] = [...(next[id] ?? []), now]
+  cmem = next
+  try { localStorage.setItem(CKEY, JSON.stringify(next)) } catch { /* sin almacenamiento */ }
+}
+/** Veces que se pospuso esta sugerencia en las últimas dos semanas. */
+export function snoozeCount(id: string, now = Date.now()): number {
+  return (cload()[id] ?? []).filter((t) => now - t < WINDOW_MS).length
 }
 
 /** Tipo de regla y texto del botón principal según el id que genera suggest(). */

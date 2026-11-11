@@ -2,6 +2,7 @@ import { CalendarClock, Loader2, Pencil, Plus, ShieldAlert, Trash2 } from 'lucid
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Sheet from '../../components/Sheet'
+import Calculator from './Calculator'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat, Switch } from '../../components/ui'
 import type { Account } from '../../lib/accounts'
 import { lastMonths, type Goal, type Tx } from '../../lib/finance'
@@ -363,6 +364,9 @@ export default function Goals() {
           <button className="btn btn-primary w-fit">Crear meta</button>
         </form>
       </Sheet>
+
+      {/* Ahorro y reparto en un solo plan: primero tus metas, después cómo repartes lo que entra */}
+      <section id="reparto" className="mt-10 border-t pt-8" style={{ borderColor: 'var(--borde)' }}><Calculator embedded /></section>
     </div>
   )
 }

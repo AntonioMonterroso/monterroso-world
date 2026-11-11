@@ -13,8 +13,10 @@ type What = 'monthly' | 'setup' | 'other'
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 
 /** Registrar un pago desde Trabajo: cualquier pago que te hicieron un cliente (de hoy o de antes). Queda en Dinero como ingreso, sube la cuenta y aparta el ahorro. */
-export default function RegistrarPago({ open, projects, payments, addPayment, onClose, onDone }: {
+export default function RegistrarPago({ open, projects, payments, addPayment, onClose, onDone, preset }: {
   open: boolean
+  /** Pago ya armado (por ejemplo, la renovación del dominio): llega como «Otro pago» con monto y nota. */
+  preset?: { amount: number; note: string } | null
   projects: Project[]
   payments: Payment[]
   addPayment: (v: NewPayment) => Promise<Payment | null> | void
@@ -49,7 +51,8 @@ export default function RegistrarPago({ open, projects, payments, addPayment, on
     if (!open) return
     const first = projects.find((x) => x.status !== 'closed') ?? projects[0]
     setErr(''); setNote(''); setDate(localISO()); setPeriod(currentMonth())
-    if (first) { setPid(first.id); pick(first, Number(first.monthly_fee ?? 0) > 0 ? 'monthly' : 'other') }
+    if (first) { setPid(first.id); pick(first, preset ? 'other' : Number(first.monthly_fee ?? 0) > 0 ? 'monthly' : 'other') }
+    if (preset) { setAmount(String(preset.amount)); setNote(preset.note) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
   const pick = (proj: Project, w: What) => {

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Sheet from './Sheet'
 
 /** Crear algo nuevo con confirmación: pide el nombre y solo guarda cuando tocas «Crear». Si cierras, no se crea nada. */
-export default function NewItem({ open, title, label, placeholder, confirm = 'Crear', hint, extra, extraValid = true, onCreate, onClose }: {
+export default function NewItem({ open, title, label, placeholder, initial = '', confirm = 'Crear', hint, extra, extraValid = true, onCreate, onClose }: {
   open: boolean
   title: string
   label: string
   placeholder?: string
+  /** Nombre ya escrito al abrir (por ejemplo, «Pierna (copia)»). */
+  initial?: string
   confirm?: string
   hint?: string
   /** Campos adicionales (por ejemplo, el cliente). */
@@ -19,7 +21,7 @@ export default function NewItem({ open, title, label, placeholder, confirm = 'Cr
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const field = useRef<HTMLInputElement>(null)
-  useEffect(() => { if (open) { setName(''); setErr(''); setBusy(false); setTimeout(() => field.current?.focus(), 80) } }, [open])
+  useEffect(() => { if (open) { setName(initial); setErr(''); setBusy(false); setTimeout(() => field.current?.focus(), 80) } }, [open, initial])
   const ok = name.trim().length > 0 && extraValid
 
   const submit = async (e: React.FormEvent) => {

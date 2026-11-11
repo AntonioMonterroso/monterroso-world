@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Copy, Link2, Link2Off, Plus, Printer, Trash2, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { RUBROS, bodyForRubro, type Rubro } from '../../lib/rubros'
 import ClientField from '../../components/ClientField'
 import { clientKey } from '../../lib/clients'
 import { useClientPhones, waNumber } from '../../lib/clientNotes'
@@ -52,11 +53,11 @@ export default function Quotes() {
   const setBody = (patch: Partial<Body>) => setD((x) => { if (!x) return x; setDirty(true); return { ...x, body: { ...x.body, ...patch } } })
   const setLine = (id: string, patch: Partial<Line>) => set({ lines: (d?.lines ?? []).map((l) => (l.id === id ? { ...l, ...patch } : l)) })
 
-  const create = async (t: Template, withPkg?: string) => {
+  const create = async (t: Template, withPkg?: string, rubro?: Rubro) => {
     const pkg = cat.pkgs.rows.find((p) => p.id === withPkg)
     const q = await db.add({
-      number: nextNumber(db.rows.map((r) => r.number), new Date().getFullYear()), title: t === 'custom' ? 'Propuesta de servicios' : TEMPLATE_LABEL[t], client_name: '', client_contact: null, template: t, status: 'draft',
-      lines: pkg ? linesFromPick({ pkg, extras: [] }) : [], iva: 'none', upfront_pct: 70, valid_until: addDays(today, cat.page.validity_days), body: bodyFor(t), shared: false, share_token: null, project_id: null,
+      number: nextNumber(db.rows.map((r) => r.number), new Date().getFullYear()), title: rubro ? rubro.title : t === 'custom' ? 'Propuesta de servicios' : TEMPLATE_LABEL[t], client_name: '', client_contact: null, template: t, status: 'draft',
+      lines: pkg ? linesFromPick({ pkg, extras: [] }) : [], iva: 'none', upfront_pct: 70, valid_until: addDays(today, cat.page.validity_days), body: rubro ? bodyForRubro(bodyFor(t), rubro) : bodyFor(t), shared: false, share_token: null, project_id: null,
     } as never)
     setPick(false)
     if (q) { setTab('datos'); setErr(''); setDirty(false); setD(q) }
@@ -132,6 +133,10 @@ export default function Quotes() {
       {/* Elegir tipo */}
       <Sheet open={pick} title="¿Qué vas a cotizar?" onClose={() => setPick(false)}>
         <div className="grid gap-3">
+          <p className="text-sm font-semibold">Para un rubro</p>
+          <div className="flex flex-wrap gap-2">{RUBROS.map((r) => <button key={r.id} type="button" className="chip-btn" onClick={() => void create(r.template, (cat.pkgs.rows.find((p) => p.category && r.match.test(p.category)) ?? (r.template === 'citas' ? cat.pkgs.rows.find((p) => p.recommended) : cat.pkgs.rows.find((p) => p.kind === 'closed')))?.id, r)}>{r.label}</button>)}</div>
+          <p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Trae la introducción y los puntos que ese negocio necesita, y el paquete de tu catálogo para ese rubro si lo tienes.</p>
+          <p className="mt-2 text-sm font-semibold">O por tipo de servicio</p>
           {TEMPLATES.map((t) => (
             <button key={t.id} type="button" className="rounded-2xl p-4 text-left" style={{ background: 'var(--surface-2)' }} onClick={() => void create(t.id, t.id === 'citas' ? cat.pkgs.rows.find((p) => p.recommended)?.id : t.id === 'web' ? cat.pkgs.rows.find((p) => p.kind === 'closed')?.id : undefined)}>
               <strong>{TEMPLATE_LABEL[t.id]}</strong><br /><span className="text-sm" style={{ color: 'var(--ink-faint)' }}>{t.hint}</span>

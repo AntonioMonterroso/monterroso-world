@@ -1,8 +1,10 @@
-import { Loader2, Plus, Search } from 'lucide-react'
+import { ClipboardPaste, Loader2, Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTable } from '../../lib/table'
 import NewItem from '../../components/NewItem'
+import ImportSong from './ImportSong'
+import type { Imported } from '../../lib/chordpro'
 import { fmtDuration, instrumentLabel, SONG_STATUS, statusOf, type Song, type SongStatus } from '../../lib/music'
 import { Group, PageHeader, Row, Segmented } from '../../components/ui'
 import { Empty } from '../money/shared'
@@ -25,9 +27,16 @@ export default function Songs() {
     setCreating(false); nav(`/app/musica/cancion/${s.id}?editar=1`)
   }
 
+  const [pasting, setPasting] = useState(false)
+  const importIt = async (x: Imported) => {
+    const s = await db.add({ title: x.title, artist: x.artist, song_key: x.key, bpm: x.bpm, time_sig: x.timeSig ?? '4/4', status: 'learning', instruments: ['guitar'], duration_sec: null, capo: x.capo, content: x.content, notes: null })
+    if (!s) throw new Error('no creada')
+    setPasting(false); nav(`/app/musica/cancion/${s.id}`)
+  }
+
   return (
     <div>
-      <PageHeader eyebrow="Música" title="Canciones" action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Canción</button>} />
+      <PageHeader eyebrow="Música" title="Canciones" action={<div className="flex flex-wrap gap-2"><button className="btn btn-sec" onClick={() => setPasting(true)}><ClipboardPaste size={18} aria-hidden /> Pegar</button><button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Canción</button></div>} />
 
       <div className="relative mt-6">
         <Search size={16} aria-hidden className="absolute top-1/2 left-4 -translate-y-1/2" style={{ color: 'var(--ink-faint)' }} />
@@ -49,6 +58,7 @@ export default function Songs() {
           })}
         </Group>
       )}
+      <ImportSong open={pasting} onClose={() => setPasting(false)} onCreate={importIt} />
       <NewItem open={creating} title="Nueva canción" label="¿Cómo se llama la canción?" placeholder="Título" onClose={() => setCreating(false)} onCreate={create} />
     </div>
   )

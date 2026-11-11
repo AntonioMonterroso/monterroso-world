@@ -45,6 +45,10 @@ export default function Presenter() {
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [pi, setPi] = useState(0)
+  // Tiempo por fase: cuánto llevas en cada una (se suma mientras corre el cronómetro)
+  const [spent, setSpent] = useState<Record<number, number>>({})
+  const piRef = useRef(0)
+  piRef.current = pi
 
   useEffect(() => { getSettings().then((s) => s.church && setChurch(s.church)) }, [])
 
@@ -100,7 +104,7 @@ export default function Presenter() {
   // Cronómetro
   useEffect(() => {
     if (!running) return
-    const t = setInterval(() => setElapsed((e) => e + 1), 1000)
+    const t = setInterval(() => { setElapsed((e) => e + 1); setSpent((m) => ({ ...m, [piRef.current]: (m[piRef.current] ?? 0) + 1 })) }, 1000)
     return () => clearInterval(t)
   }, [running])
 
@@ -135,7 +139,17 @@ export default function Presenter() {
   const cur = idx >= 0 ? slides[idx] : null
   const planned = phases.reduce<number[]>((acc, p) => [...acc, (acc.at(-1) ?? 0) + (p.minutes ?? 0) * 60], [])
   const phase = phases[pi]
-  const over = planned[pi] !== undefined && planned[pi] > 0 && elapsed > planned[pi]
+  const phaseSec = (phase?.minutes ?? 0) * 60
+  const inPhase = spent[pi] ?? 0
+  const over = phaseSec > 0 && inPhase > phaseSec
+  const totalPlanned = planned.at(-1) ?? 0
+  const timerChip = (
+    <div className="flex items-center gap-3 rounded-2xl border px-4 py-2" style={{ borderColor: over ? 'var(--aviso)' : 'var(--line-soft)', background: 'var(--surface)' }}>
+      <span className="font-display text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{mmss(elapsed)}</span>
+      {phase && <span className="min-w-0 flex-1 truncate text-sm" style={{ color: over ? 'var(--aviso)' : 'var(--ink-soft)' }}>{phase.title}: {mmss(inPhase)}{phaseSec ? ` de ${mmss(phaseSec)}` : ''}</span>}
+      <button className="btn btn-ghost !min-h-10" onClick={() => setRunning((r) => !r)} aria-pressed={running}>{running ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />} {running ? 'Pausar' : 'Iniciar'}</button>
+    </div>
+  )
 
   return (
     <div className="safe-top fixed inset-0 z-50 flex flex-col overflow-hidden force-dark" style={{ background: '#0d0d0f' }}>
@@ -171,6 +185,7 @@ export default function Presenter() {
 
           {tab === 'slides' ? (
             <>
+              {phases.length > 0 && timerChip}
               <section aria-label="Diapositiva actual" className="rounded-2xl border p-5 text-center" style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}>
                 <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>{idx < 0 ? 'Pantalla de inicio' : `Diapositiva ${idx + 1} de ${slides.length}`}</p>
                 <p className="mt-3 font-display text-2xl">{cur ? label(cur) : church.name || 'Monterroso World'}</p>
@@ -188,21 +203,27 @@ export default function Presenter() {
             </>
           ) : (
             <>
-              <section className="rounded-2xl border p-4" style={{ borderColor: over ? 'var(--personal)' : 'var(--line)', background: 'var(--surface)' }} aria-label="Cronómetro">
+              <section className="rounded-2xl border p-4" style={{ borderColor: over ? 'var(--aviso)' : 'var(--line)', background: 'var(--surface)' }} aria-label="Cronómetro">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-display text-5xl" style={{ color: over ? 'var(--personal)' : 'var(--ink)' }} aria-live="off">{mmss(elapsed)}</p>
+                  <p className="font-display text-5xl" style={{ fontVariantNumeric: 'tabular-nums' }} aria-live="off">{mmss(elapsed)}</p>
                   <div className="flex gap-2">
                     <button className="btn btn-primary" onClick={() => setRunning((r) => !r)} aria-pressed={running}>{running ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />} {running ? 'Pausar' : 'Iniciar'}</button>
-                    <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => { setRunning(false); setElapsed(0); setPi(0) }} aria-label="Reiniciar"><RotateCcw size={16} aria-hidden /></button>
+                    <button className="grid size-11 place-items-center rounded-full border" style={{ borderColor: 'var(--line)' }} onClick={() => { setRunning(false); setElapsed(0); setPi(0); setSpent({}) }} aria-label="Reiniciar"><RotateCcw size={16} aria-hidden /></button>
                   </div>
                 </div>
-                {phases.length > 0 && <p className="mt-2 text-sm" style={{ color: 'var(--ink-soft)' }}>Planeado en total: {mmss(planned.at(-1) ?? 0)}{over && ' · Vas pasado de tiempo en esta fase, sin prisa: ve cerrando.'}</p>}
+                {phases.length > 0 && (
+                  <div className="mt-3 grid gap-2">
+                    <div className="flex items-baseline justify-between gap-3 text-sm"><span>Esta fase: <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{mmss(inPhase)}</strong>{phaseSec ? ` de ${mmss(phaseSec)}` : ''}</span><span style={{ color: 'var(--ink-soft)' }}>Total planeado {mmss(totalPlanned)}{totalPlanned ? ` · quedan ${mmss(Math.max(0, totalPlanned - elapsed))}` : ''}</span></div>
+                    {phaseSec > 0 && <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} aria-hidden><div className="h-full rounded-full" style={{ width: `${Math.min(100, (inPhase / phaseSec) * 100)}%`, background: over ? 'var(--aviso)' : 'var(--personal)', transition: 'width 1s linear' }} /></div>}
+                    {over && <p className="text-sm" style={{ color: 'var(--aviso)' }}>Ya pasó el tiempo de esta fase. Sin prisa, ve cerrando.</p>}
+                  </div>
+                )}
               </section>
 
               {phases.length === 0 ? <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Esta prédica no tiene guion. Agrega fases en su página.</p> : (
                 <>
                   <ol className="flex gap-2 overflow-x-auto pb-1" aria-label="Fases">
-                    {phases.map((p, i) => <li key={p.id}><button onClick={() => setPi(i)} aria-current={pi === i} className="min-h-11 shrink-0 rounded-full border px-4 text-sm" style={{ borderColor: pi === i ? 'var(--accent)' : 'var(--line)', background: pi === i ? 'var(--accent)' : 'transparent', color: pi === i ? 'var(--bg)' : 'var(--ink-soft)' }}>{i + 1}. {p.title}{p.minutes ? ` · ${p.minutes}′` : ''}</button></li>)}
+                    {phases.map((p, i) => <li key={p.id}><button onClick={() => setPi(i)} aria-current={pi === i} className="min-h-11 shrink-0 rounded-full border px-4 text-sm" style={{ borderColor: pi === i ? 'var(--accent)' : 'var(--line)', background: pi === i ? 'var(--accent)' : 'transparent', color: pi === i ? 'var(--bg)' : 'var(--ink-soft)' }}>{i + 1}. {p.title}{p.minutes ? ` · ${spent[i] ? `${Math.floor(spent[i] / 60)}/` : ''}${p.minutes}′` : ''}</button></li>)}
                   </ol>
                   <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)' }} aria-label={phase?.title}>
                     <h2 className="font-display text-3xl">{phase?.title}</h2>

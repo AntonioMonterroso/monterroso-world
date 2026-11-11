@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowDownWideNarrow, ArrowUp, Combine, Loader2, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row } from '../../components/ui'
@@ -7,6 +7,19 @@ import { supabase } from '../../lib/supabase'
 import { useTable } from '../../lib/table'
 import { AREA_COLORS, useTaxonomy, type FinArea, type FinCategory } from '../../lib/taxonomy'
 import { ErrorBar } from './shared'
+import { similarPairs } from '../../lib/catSimilar'
+
+/** Junta una categoría con otra: sus movimientos, pagos fijos y límites pasan a la otra y la primera desaparece. */
+export async function mergeCategory(tax: ReturnType<typeof useTaxonomy>, from: FinCategory, into: FinCategory) {
+  await supabase.from('fin_transactions').update({ category: into.name }).eq('category', from.name).eq('kind', from.kind)
+  if (from.kind === 'expense') {
+    await supabase.from('subscriptions').update({ category: into.name }).eq('category', from.name)
+    const { data } = await supabase.from('fin_budgets').select('id').eq('category', into.name)
+    if ((data ?? []).length) await supabase.from('fin_budgets').delete().eq('category', from.name)
+    else await supabase.from('fin_budgets').update({ category: into.name }).eq('category', from.name)
+  }
+  await tax.catsDb.remove(from.id)
+}
 
 type Target = { type: 'area'; area?: FinArea } | { type: 'cat'; kind: Kind; cat?: FinCategory }
 
@@ -18,11 +31,18 @@ export default function Categories() {
   const txs = useTable<Tx>('fin_transactions', { col: 'tx_date', asc: false })
   const subs = useTable<Sub>('subscriptions', { col: 'next_due', asc: true })
   const [target, setTarget] = useState<Target | null>(null)
+  const [merging, setMerging] = useState<string | null>(null)
 
   const areaUse = useMemo(() => { const m = new Map<string, number>(); for (const t of txs.rows) m.set(t.area, (m.get(t.area) ?? 0) + 1); for (const s of subs.rows) m.set(s.area, (m.get(s.area) ?? 0) + 1); return m }, [txs.rows, subs.rows])
   const catUse = useMemo(() => { const m = new Map<string, number>(); for (const t of txs.rows) { const k = `${t.kind}|${t.category}`; m.set(k, (m.get(k) ?? 0) + 1) } return m }, [txs.rows])
 
   if (tax.loading || txs.loading) return <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
+
+  const sortByUse = async (kind: Kind) => {
+    const list = [...tax.cats(kind)].sort((a, b) => (catUse.get(`${kind}|${b.name}`) ?? 0) - (catUse.get(`${kind}|${a.name}`) ?? 0))
+    await Promise.all(list.map((c, i) => (c.position === i + 1 ? Promise.resolve() : tax.catsDb.update(c.id, { position: i + 1 }))))
+  }
+  const pairs = (['expense', 'income'] as Kind[]).flatMap((kind) => similarPairs(tax.cats(kind).map((c) => c.name), (n) => catUse.get(`${kind}|${n}`) ?? 0).map(([keep, drop]) => ({ kind, keep: tax.cats(kind).find((c) => c.name === keep)!, drop: tax.cats(kind).find((c) => c.name === drop)! })))
 
   const kinds: { kind: Kind; title: string; foot: string }[] = [
     { kind: 'expense', title: 'Categorías de gasto', foot: 'Salen en el selector de Movimientos, Presupuesto y Suscripciones.' },
@@ -42,6 +62,17 @@ export default function Categories() {
         <Row icon={<Plus size={16} aria-hidden />} tone="var(--accent)" title={<span style={{ color: 'var(--accent)' }}>Nueva área</span>} chevron={false} onClick={() => setTarget({ type: 'area' })} />
       </Group>
 
+      {pairs.length > 0 && (
+        <Group title="Parecen la misma" footer="Al juntarlas, los movimientos de la segunda pasan a la primera (la que más usas). No se borra ningún movimiento.">
+          {pairs.map((p) => (
+            <Row key={`${p.kind}-${p.drop.id}`} icon={<Combine size={16} aria-hidden />} chevron={false} title={`${p.drop.name} → ${p.keep.name}`} sub={(() => { const n = catUse.get(`${p.kind}|${p.drop.name}`) ?? 0; return `${plural(n, 'movimiento', 'movimientos')} ${n === 1 ? 'pasaría' : 'pasarían'} a «${p.keep.name}»` })()}
+              trailing={merging === p.drop.id
+                ? <span className="flex gap-1"><button className="btn btn-primary btn-chico" onClick={async () => { await mergeCategory(tax, p.drop, p.keep); setMerging(null); void txs.reload() }}>Sí, juntar</button><button className="btn btn-ghost btn-chico" onClick={() => setMerging(null)}>No</button></span>
+                : <button className="btn btn-sec btn-chico" onClick={() => setMerging(p.drop.id)}>Juntar</button>} />
+          ))}
+        </Group>
+      )}
+
       {kinds.map(({ kind, title, foot }) => {
         const list = tax.cats(kind)
         return (
@@ -51,6 +82,7 @@ export default function Categories() {
                 trailing={<Mover i={i} n={list.length} label={c.name} onMove={(d) => tax.move(list, i, d, tax.catsDb)} />} />
             ))}
             <Row icon={<Plus size={16} aria-hidden />} tone="var(--accent)" title={<span style={{ color: 'var(--accent)' }}>Nueva categoría</span>} chevron={false} onClick={() => setTarget({ type: 'cat', kind })} />
+            {list.length > 2 && <Row icon={<ArrowDownWideNarrow size={16} aria-hidden />} title="Ordenar por uso" sub="Las que más usas quedan primero en los selectores" chevron={false} onClick={() => void sortByUse(kind)} />}
           </Group>
         )
       })}
@@ -129,6 +161,9 @@ function CatForm({ kind, cat, tax, uses, onDone }: { kind: Kind; cat?: FinCatego
   const [name, setName] = useState(cat?.name ?? '')
   const [confirm, setConfirm] = useState(false)
   const [err, setErr] = useState('')
+  const [into, setInto] = useState('')
+  const [mergeOk, setMergeOk] = useState(false)
+  const others = tax.cats(kind).filter((c) => c.id !== cat?.id)
 
   const save = async () => {
     const n = name.trim()
@@ -142,6 +177,15 @@ function CatForm({ kind, cat, tax, uses, onDone }: { kind: Kind; cat?: FinCatego
     <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); void save() }}>
       <label className="grid gap-2 text-sm">Nombre<input autoFocus className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder={kind === 'expense' ? 'Gasolina, Cursos, Regalos…' : 'Regalías, Eventos, Consultoría…'} /></label>
       {cat && uses > 0 && <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>Si le cambias el nombre, se actualizan sus {uses} {uses === 1 ? 'movimiento' : 'movimientos'}.</p>}
+      {cat && others.length > 0 && (
+        <details className="text-sm">
+          <summary className="min-h-11 cursor-pointer py-2 font-semibold">Juntar con otra categoría</summary>
+          <div className="mt-2 grid gap-2">
+            <select className="field" value={into} onChange={(e) => { setInto(e.target.value); setMergeOk(false) }} aria-label="Juntar con"><option value="">Elige con cuál…</option>{others.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+            {into && <button type="button" className={`btn ${mergeOk ? 'btn-primary' : 'btn-sec'} w-fit`} onClick={async () => { const t = others.find((c) => c.id === into); if (!t) return; if (!mergeOk) { setMergeOk(true); return } await mergeCategory(tax, cat, t); onDone() }}><Combine size={16} aria-hidden /> {mergeOk ? `Sí, pasar ${uses} a «${others.find((c) => c.id === into)?.name}»` : 'Juntar'}</button>}
+          </div>
+        </details>
+      )}
       {err && <p role="alert" className="text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
       <div className="flex items-center gap-3">
         <button className="btn btn-primary">Guardar</button>

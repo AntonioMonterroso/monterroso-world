@@ -1,5 +1,6 @@
-import { ArrowDown, ArrowLeft, ArrowUp, BellOff, BellPlus, Play, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowDown, ArrowLeft, ArrowUp, BellOff, BellPlus, GripVertical, Play, Plus, Trash2 } from 'lucide-react'
+import { Reorder, useDragControls } from 'motion/react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Field from '../../components/Field'
 import { supabase } from '../../lib/supabase'
@@ -18,6 +19,15 @@ export default function RoutineEditor() {
 
   const r = routines.rows.find((x) => x.id === id)
   const steps = stepsDb.rows.filter((s) => s.routine_id === id).sort((a, b) => a.position - b.position)
+  // Orden mientras arrastras; al soltar se guarda
+  const [order, setOrder] = useState<string[]>([])
+  const [dragging, setDragging] = useState(false)
+  const key = steps.map((s) => `${s.id}:${s.position}`).join(',')
+  useEffect(() => { if (!dragging) setOrder(steps.map((s) => s.id)) }, [key, dragging]) // eslint-disable-line react-hooks/exhaustive-deps
+  const persistOrder = async () => {
+    setDragging(false)
+    await Promise.all(order.map((sid, i) => { const st = steps.find((x) => x.id === sid); return st && st.position !== i + 1 ? stepsDb.update(sid, { position: i + 1 }) : Promise.resolve() }))
+  }
 
   if (routines.loading) return <p style={{ color: 'var(--ink-soft)' }}>Cargando…</p>
   if (!r) return <div><Link to="/app/mente/rutinas" className="underline">Volver a rutinas</Link><p className="mt-4">No encontré esta rutina.</p></div>
@@ -80,28 +90,38 @@ export default function RoutineEditor() {
       {(routines.error || stepsDb.error) && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{routines.error || stepsDb.error}</p>}
 
       <h2 className="mt-8 font-display text-2xl">Pasos <span className="text-base" style={{ color: 'var(--ink-faint)' }}>{totalMinutes(steps) > 0 && `· ${totalMinutes(steps)} min`}</span></h2>
-      <ol className="mt-3 grid gap-3">
-        {steps.map((s, i) => (
-          <li key={s.id} className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)' }}>
-            <div className="flex items-center gap-2">
-              <span className="w-6 text-center font-display text-xl" style={{ color: 'var(--accent)' }}>{i + 1}</span>
-              <Field value={s.title} onCommit={(v) => v.trim() && stepsDb.update(s.id, { title: v.trim() })} maxLength={160} aria-label="Paso" />
-              <label className="flex shrink-0 items-center gap-1 text-sm"><Field value={s.minutes ? String(s.minutes) : ''} onCommit={(v) => { const n = Math.round(Number(v)); stepsDb.update(s.id, { minutes: n > 0 ? Math.min(180, n) : null }) }} inputMode="numeric" aria-label="Minutos" style={{ width: 60 }} /> min</label>
-            </div>
-            <div className="mt-2"><Field value={s.note ?? ''} onCommit={(v) => stepsDb.update(s.id, { note: v.trim() || null })} maxLength={300} placeholder="Nota (opcional)" aria-label="Nota del paso" /></div>
-            <div className="mt-1 flex justify-end">
-              <button className="grid size-11 place-items-center" disabled={i === 0} onClick={() => swap(i, -1)} aria-label="Subir paso"><ArrowUp size={16} aria-hidden /></button>
-              <button className="grid size-11 place-items-center" disabled={i === steps.length - 1} onClick={() => swap(i, 1)} aria-label="Bajar paso"><ArrowDown size={16} aria-hidden /></button>
-              <button className="grid size-11 place-items-center" onClick={() => stepsDb.remove(s.id)} aria-label="Quitar paso"><Trash2 size={16} aria-hidden /></button>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <p className="mt-1 text-xs" style={{ color: 'var(--ink-soft)' }}>Arrastra desde la manija para cambiar el orden.</p>
+      <Reorder.Group as="ol" axis="y" values={order} onReorder={setOrder} className="mt-3 grid gap-3">
+        {order.map((sid, i) => { const s = steps.find((x) => x.id === sid); return s ? (
+          <StepRow key={s.id} s={s} i={i} n={order.length} onDragStart={() => setDragging(true)} onDragEnd={() => void persistOrder()}
+            onUpdate={(p) => stepsDb.update(s.id, p)} onRemove={() => stepsDb.remove(s.id)} onSwap={(d) => swap(steps.findIndex((x) => x.id === s.id), d)} />
+        ) : null })}
+      </Reorder.Group>
       <button className="btn btn-ghost mt-3" onClick={() => stepsDb.add({ routine_id: r.id, position: (steps.at(-1)?.position ?? 0) + 1, title: 'Nuevo paso', minutes: 5, note: null })}><Plus size={16} aria-hidden /> Agregar paso</button>
 
       <div className="mt-10">
         <button className="btn btn-ghost" style={{ color: confirm ? 'var(--neg)' : undefined }} onClick={() => (confirm ? del() : setConfirm(true))}><Trash2 size={16} aria-hidden /> {confirm ? '¿Seguro? Se borra con su historial' : 'Eliminar rutina'}</button>
       </div>
     </div>
+  )
+}
+
+function StepRow({ s, i, n, onDragStart, onDragEnd, onUpdate, onRemove, onSwap }: { s: Step; i: number; n: number; onDragStart: () => void; onDragEnd: () => void; onUpdate: (p: Partial<Omit<Step, 'id'>>) => void; onRemove: () => void; onSwap: (d: number) => void }) {
+  const controls = useDragControls()
+  return (
+    <Reorder.Item as="li" value={s.id} dragListener={false} dragControls={controls} onDragStart={onDragStart} onDragEnd={onDragEnd} className="rounded-xl border p-3" style={{ background: 'var(--surface)', borderColor: 'var(--line-soft)', position: 'relative' }}>
+      <div className="flex items-center gap-2">
+        <button type="button" className="grid size-11 shrink-0 cursor-grab place-items-center rounded-full" style={{ touchAction: 'none', color: 'var(--ink-faint)' }} onPointerDown={(e) => controls.start(e)} aria-label={`Arrastrar el paso ${i + 1}`}><GripVertical size={18} aria-hidden /></button>
+        <span className="w-6 text-center font-display text-xl" style={{ color: 'var(--accent)' }}>{i + 1}</span>
+        <Field value={s.title} onCommit={(v) => v.trim() && onUpdate({ title: v.trim() })} maxLength={160} aria-label="Paso" />
+        <label className="flex shrink-0 items-center gap-1 text-sm"><Field value={s.minutes ? String(s.minutes) : ''} onCommit={(v) => { const m = Math.round(Number(v)); onUpdate({ minutes: m > 0 ? Math.min(180, m) : null }) }} inputMode="numeric" aria-label="Minutos" style={{ width: 60 }} /> min</label>
+      </div>
+      <div className="mt-2"><Field value={s.note ?? ''} onCommit={(v) => onUpdate({ note: v.trim() || null })} maxLength={300} placeholder="Nota (opcional)" aria-label="Nota del paso" /></div>
+      <div className="mt-1 flex justify-end">
+        <button className="grid size-11 place-items-center" disabled={i === 0} onClick={() => onSwap(-1)} aria-label="Subir paso"><ArrowUp size={16} aria-hidden /></button>
+        <button className="grid size-11 place-items-center" disabled={i === n - 1} onClick={() => onSwap(1)} aria-label="Bajar paso"><ArrowDown size={16} aria-hidden /></button>
+        <button className="grid size-11 place-items-center" onClick={onRemove} aria-label="Quitar paso"><Trash2 size={16} aria-hidden /></button>
+      </div>
+    </Reorder.Item>
   )
 }

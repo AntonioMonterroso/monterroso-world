@@ -14,6 +14,8 @@ import { useTable } from '../../lib/table'
 import { reminderText, useClientExtra, waNumber } from '../../lib/clientNotes'
 import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
+import ClientDomains from './ClientDomains'
+import WorkHours from './WorkHours'
 import { removeProject, saveProject } from './saveProject'
 
 type Quote = { id: string; title: string; client_name: string; status: string }
@@ -32,6 +34,7 @@ export default function ClientPage() {
   const [row, setRow] = useState<ClientRow | null>(null)
   const [msg, setMsg] = useState('')
   const [paying, setPaying] = useState(false)
+  const [preset, setPreset] = useState<{ amount: number; note: string } | null>(null)
   const [creating, setCreating] = useState(false)
   const [sp, setSp] = useSearchParams()
   const k = decodeURIComponent(key)
@@ -64,7 +67,7 @@ export default function ClientPage() {
   return (
     <div>
       <Link to="/app/trabajo" className="mb-3 inline-flex min-h-11 items-center gap-1 text-sm" style={{ color: 'var(--ink-soft)' }}><ChevronLeft size={16} aria-hidden /> Clientes</Link>
-      <PageHeader eyebrow={extra.rubro ? `Cliente · ${extra.rubro}` : 'Cliente'} title={name} action={<span className="flex flex-wrap gap-2">{extra.phone && <a className="btn btn-sec" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a>}<button className="btn btn-primary" onClick={() => { setMsg(''); setPaying(true) }}><Plus size={16} aria-hidden /> Registrar pago</button></span>} />
+      <PageHeader eyebrow={extra.rubro ? `Cliente · ${extra.rubro}` : 'Cliente'} title={name} action={<span className="flex flex-wrap gap-2">{extra.phone && <a className="btn btn-sec" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a>}<button className="btn btn-primary" onClick={() => { setMsg(''); setPreset(null); setPaying(true) }}><Plus size={16} aria-hidden /> Registrar pago</button></span>} />
       {msg && <p role="status" className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{msg}</p>}
 
       <Group title={`Este mes · ${cap(monthLabel(month))}`}>
@@ -90,6 +93,10 @@ export default function ClientPage() {
           return <Row key={h.id} onClick={() => setEditing(h.project_id)} tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} trailing={<Link to={`/app/trabajo/recibo/${h.id}`} className="btn btn-sec btn-chico">Recibo</Link>} />
         })}
       </Group>
+
+      <WorkHours client={name} projects={mine} payments={db.payments} hours={extra.hours} addHours={extra.addHours} removeHours={extra.removeHours} />
+
+      <ClientDomains client={name} domains={extra.domains} setDomains={extra.setDomains} onCharge={(amount, note) => { setMsg(''); setPreset({ amount, note }); setPaying(true) }} />
 
       <Group title="Propuestas y envíos">
         {myQuotes.length === 0 && myDeliv.length === 0 ? <Row title="Nada todavía" sub="Las propuestas y envíos con su nombre aparecen aquí." chevron={false} /> : (
@@ -125,7 +132,7 @@ export default function ClientPage() {
       </Group>
 
       <NewWork open={creating} month={month} client={name} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); setEditing(p.id) }} />
-      <RegistrarPago open={paying} projects={mine} payments={db.payments} addPayment={db.addPayment} onClose={() => setPaying(false)} onDone={setMsg} />
+      <RegistrarPago open={paying} preset={preset} projects={mine} payments={db.payments} addPayment={db.addPayment} onClose={() => { setPaying(false); setPreset(null) }} onDone={setMsg} />
       <Cobrado row={row} addPayment={db.addPayment} onClose={() => setRow(null)} onDone={setMsg} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
         onSave={async (id, patch, stay) => { await saveProject(db, id, patch); if (!stay) setEditing(null) }}

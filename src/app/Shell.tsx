@@ -1,4 +1,5 @@
-import { Bell, CalendarDays, Loader2, LayoutGrid, Plus, Search, Settings, Sun, Wallet } from 'lucide-react'
+import { Bell, CalendarDays, Loader2, LayoutGrid, Plus, Search, Settings, Sun, Wallet, Wifi, WifiOff } from 'lucide-react'
+import { useOffline } from '../lib/offline'
 import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Globe from '../components/Globe'
@@ -34,6 +35,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
   const currentKind = blocks.find((b) => blockApplies(b, localISO(now)) && m >= b.start_min && m < b.end_min)?.kind
   useMode(resolveMode({ pathname, currentKind, hour: now.getHours() }))
   const attention = useAttention(now)
+  const net = useOffline()
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -103,10 +105,16 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
       {saved && (
         <div role="status" className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full py-1 pr-2 pl-5 text-sm" style={{ bottom: 'calc(6.5rem + env(safe-area-inset-bottom))', background: 'var(--tinta)', color: 'var(--fondo)' }}>
           {saved.label}
-          <button className="min-h-11 rounded-full px-3 font-semibold underline" onClick={() => { const u = saved.undo; setSaved(null); void u() }}>Deshacer</button>
+          {saved.noUndo ? <span className="min-h-11 pr-3" aria-hidden /> : <button className="min-h-11 rounded-full px-3 font-semibold underline" onClick={() => { const u = saved.undo; setSaved(null); void u() }}>Deshacer</button>}
         </div>
       )}
 
+      {(net.offline || net.pending > 0 || net.sentMsg) && (
+        <div role="status" className="fixed top-2 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 text-sm" style={{ marginTop: 'env(safe-area-inset-top)', background: net.sentMsg ? 'var(--personal-suave)' : 'var(--aviso-suave)', color: net.sentMsg ? 'var(--personal-texto)' : 'var(--aviso-texto)', boxShadow: '0 4px 16px rgba(0,0,0,.18)' }}>
+          {net.sentMsg ? <Wifi size={15} aria-hidden /> : <WifiOff size={15} aria-hidden />}
+          {net.sentMsg || (net.offline ? `Sin internet${net.pending ? ` · ${net.pending} por enviar` : ''}` : `${net.pending} por enviar…`)}
+        </div>
+      )}
       <NotificationActions />
       <Palette open={open} onClose={() => setOpen(false)} onLock={onLock} onSignOut={onSignOut} />
     </div>

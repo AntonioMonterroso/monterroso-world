@@ -57,7 +57,7 @@ export default function PublicSong() {
   useEffect(() => { void load() }, [load])
 
   const shell = (children: React.ReactNode) => (
-    <main className="safe-top mx-auto min-h-dvh max-w-2xl px-4 py-8">
+    <main className="safe-top mx-auto min-h-dvh max-w-2xl px-4 py-8" style={{ ['--accent' as string]: 'var(--musica)' }}>
       <header className="no-print mb-6 flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 font-display text-lg"><Globe size={26} /> Monterroso World</span>
         <span className="rounded-full px-3 py-1 text-xs" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>Solo lectura</span>
@@ -76,7 +76,7 @@ export default function PublicSong() {
         <div className="mb-6">
           <h1 className="font-display text-4xl">{data.title}</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>{data.event_date ? `${data.event_date} · ` : ''}{data.songs.length} {data.songs.length === 1 ? 'canción' : 'canciones'}</p>
-          <ol className="no-print mt-3 grid gap-1 text-sm">{data.songs.map((s, i) => <li key={i}><a href={`#c${i}`} className="flex min-h-11 items-center gap-3 rounded-lg px-2 underline" style={{ color: 'var(--sky)' }}><span style={{ color: 'var(--accent)' }}>{i + 1}</span>{s.title}</a></li>)}</ol>
+          <ol className="no-print mt-3 grid gap-1 text-sm">{data.songs.map((s, i) => <li key={i}><a href={`#c${i}`} className="flex min-h-11 items-center gap-3 rounded-lg px-2 underline" style={{ color: 'var(--ink)' }}><span style={{ color: 'var(--accent)' }}>{i + 1}</span>{s.title}</a></li>)}</ol>
         </div>
       )}
       <div className="no-print mb-6 flex flex-wrap items-center gap-2">

@@ -1,7 +1,7 @@
-import { Check, Flame, Loader2, Pause, Play, SkipForward, X } from 'lucide-react'
+import { Check, Flame, Loader2, Pause, Play, Plus, SkipForward, Volume2, VolumeX, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { chime } from '../../lib/ambient'
+import { softChime } from '../../lib/ambient'
 import { mmss, remainingSeconds } from '../../lib/focus'
 import { routineMonthDays, type Routine, type Run, type Step } from '../../lib/routines'
 import { supabase } from '../../lib/supabase'
@@ -28,6 +28,8 @@ export default function RoutineRun() {
   const [now, setNow] = useState(() => Date.now())
   const [finished, setFinished] = useState<null | { completed: boolean; count: number }>(null)
   const [err, setErr] = useState('')
+  const [sound, setSound] = useState(() => { try { return localStorage.getItem('mw_routine_sound') !== 'off' } catch { return true } })
+  const toggleSound = () => setSound((v) => { try { localStorage.setItem('mw_routine_sound', v ? 'off' : 'on') } catch { /* sin almacenamiento */ } if (!v) softChime(); return !v })
 
   const ready = !routines.loading && !stepsDb.loading && !runsDb.loading
 
@@ -52,7 +54,7 @@ export default function RoutineRun() {
   }, [step?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const left = endAt === null ? null : paused !== null ? paused : remainingSeconds(endAt, now)
-  useEffect(() => { if (left === 0 && paused === null) { chime(); navigator.vibrate?.([200, 100, 200]) } }, [left, paused])
+  useEffect(() => { if (left === 0 && paused === null) { if (sound) softChime(); navigator.vibrate?.([200, 100, 200]) } }, [left, paused]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let lock: WakeLockSentinel | null = null
@@ -107,7 +109,7 @@ export default function RoutineRun() {
       <div className="flex items-center gap-2 px-3 py-2">
         <button className="grid size-11 place-items-center rounded-full" onClick={() => nav('/app/mente/rutinas')} aria-label="Salir"><X size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1 text-center"><p className="truncate text-sm font-semibold">{r.name}</p><p className="text-xs" style={{ color: 'var(--ink-soft)' }}>Paso {idx + 1} de {steps.length}</p></div>
-        <span className="size-11" aria-hidden />
+        <button className="grid size-11 place-items-center rounded-full" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Sonido suave encendido. Toca para silenciar' : 'Sin sonido. Toca para activar el sonido suave'}>{sound ? <Volume2 size={20} aria-hidden /> : <VolumeX size={20} aria-hidden />}</button>
       </div>
       <div className="mx-4 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }} role="progressbar" aria-valuenow={done.length} aria-valuemin={0} aria-valuemax={steps.length} aria-label="Progreso de la rutina"><div className="h-full rounded-full" style={{ width: `${(done.length / steps.length) * 100}%`, background: 'var(--pos)', transition: 'width 300ms var(--ease-out)' }} /></div>
 
@@ -128,6 +130,7 @@ export default function RoutineRun() {
 
       <div className="flex items-center justify-center gap-3 border-t px-4 py-4" style={{ borderColor: 'var(--line-soft)', background: 'var(--surface)', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         {left !== null && left > 0 && <button className="btn btn-ghost min-h-14" onClick={() => (paused !== null ? (setEndAt(Date.now() + paused * 1000), setPaused(null)) : setPaused(remainingSeconds(endAt!, Date.now())))} aria-label={paused !== null ? 'Seguir' : 'Pausar'}>{paused !== null ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}</button>}
+        {left !== null && <button className="btn btn-ghost min-h-14" onClick={() => { if (paused !== null) setPaused(paused + 60); else setEndAt(Math.max(Date.now(), endAt ?? Date.now()) + 60_000) }} aria-label="Un minuto más"><Plus size={16} aria-hidden /> 1 min</button>}
         <button className="btn btn-ghost min-h-14" onClick={() => void next(false)}><SkipForward size={16} aria-hidden /> Saltar</button>
         <button className="btn btn-primary min-h-14 px-8 text-lg" onClick={() => void next(true)}><Check size={20} aria-hidden /> {idx + 1 === steps.length ? 'Terminar' : 'Hecho'}</button>
       </div>

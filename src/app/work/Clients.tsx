@@ -2,6 +2,7 @@ import { Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import NewWork from './NewWork'
+import ViewToggle from './ViewToggle'
 import RegistrarPago from '../../components/RegistrarPago'
 import { useAllClientExtra } from '../../lib/clientNotes'
 import { clientName } from '../../lib/clients'
@@ -33,6 +34,7 @@ export default function Clients() {
   return (
     <div>
       <PageHeader eyebrow="Trabajo" title="Clientes" sub="Cada cliente con lo que te debe este mes y su trabajo activo." action={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus size={18} aria-hidden /> Trabajo</button>} />
+      <ViewToggle now="cliente" />
       <MonthStepper month={month} onChange={setMonth} />
       {list.length > 6 && <label className="mb-4 grid gap-1 text-sm">Buscar cliente<input className="field" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre…" /></label>}
       {db.error && <p role="alert" className="mb-3 rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{db.error}</p>}

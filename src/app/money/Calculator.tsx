@@ -14,7 +14,7 @@ const TONE: Record<Bucket['kind'], string> = { spend: 'var(--personal)', save: '
 const GIVE = /iglesia|diezmo|ofrenda/i
 
 /** Calculadora de reparto: de tu ingreso, cuánto va a gastos, ahorro, ofrendas y gustos, y cómo vas contra eso. */
-export default function Calculator() {
+export default function Calculator({ embedded = false }: { embedded?: boolean } = {}) {
   const txs = useTable<Tx>('fin_transactions', { col: 'tx_date', asc: false })
   const subs = useTable<Sub>('subscriptions', { col: 'next_due', asc: true })
   const moves = useTable<{ id: string; amount: number; tx_date: string }>('fin_goal_moves', { col: 'tx_date', asc: false })
@@ -49,9 +49,13 @@ export default function Calculator() {
   const saveTarget = buckets.filter((x) => x.kind === 'save').reduce((s, x) => s + amountOf(x.id), 0)
   const saved = real.save ?? 0
 
+  useEffect(() => { if (embedded && location.hash === '#reparto') setTimeout(() => document.getElementById('reparto')?.scrollIntoView({ block: 'start' }), 300) }, [embedded])
+
   return (
     <div>
-      <PageHeader eyebrow="Dinero" title="Reparto" sub="Pon tu ingreso y decide cuánto va a gastos, ahorro y lo demás. Después ves cómo vas contra ese plan." />
+      {embedded
+        ? <div><h2 className="font-display text-2xl">Reparto de lo que entra</h2><p className="mt-1 text-sm" style={{ color: 'var(--ink-soft)' }}>Decide cuánto de tu ingreso va a gastos, ahorro y lo demás, y mira cómo vas contra ese plan.</p></div>
+        : <PageHeader eyebrow="Dinero" title="Reparto" sub="Pon tu ingreso y decide cuánto va a gastos, ahorro y lo demás. Después ves cómo vas contra ese plan." />}
       <MonthStepper month={month} onChange={setMonth} />
 
       <Segmented label="Ingreso base" value={base} onChange={setBase} options={[{ id: 'month', label: 'Lo que entró' }, { id: 'avg', label: 'Promedio 3 meses' }, { id: 'fixed', label: 'Mensualidades' }, { id: 'custom', label: 'Otro monto' }]} />

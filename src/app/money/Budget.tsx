@@ -1,7 +1,10 @@
 import { Loader2, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { quincenaOf, quincenaStatus } from '../../lib/quincena'
+import { getSettings, patchSettings } from '../../lib/settings'
+import { localISO } from '../../lib/time'
 import Sheet from '../../components/Sheet'
-import { Group, PageHeader, Row } from '../../components/ui'
+import { Group, PageHeader, Row, Segmented } from '../../components/ui'
 import { budgetStatus, type Budget as B, type Tx } from '../../lib/finance'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { CategoryField } from './fields'
@@ -22,6 +25,12 @@ export default function Budget() {
   const [limit, setLimit] = useState('')
   const [cur] = useState(defaultCurrency())
   const [err, setErr] = useState('')
+  // Por quincena: para cuando te pagan dos veces al mes. Se guarda en tus ajustes.
+  const [view, setView] = useState<'mes' | 'quincena'>('mes')
+  useEffect(() => { void getSettings().then((s) => { if ((s as { budgetView?: string }).budgetView === 'quincena') setView('quincena') }) }, [])
+  const changeView = (v: 'mes' | 'quincena') => { setView(v); void patchSettings({ budgetView: v } as never) }
+  const q = quincenaOf(localISO())
+  const qStatus = useMemo(() => quincenaStatus(budgets.rows, txs.rows, q), [budgets.rows, txs.rows, q.from]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,8 +46,18 @@ export default function Budget() {
     <div>
       <PageHeader eyebrow="Dinero" title="Presupuesto" sub={<span className="first-letter:uppercase">{monthLabel(month)}</span>} action={<button className="btn btn-primary" onClick={() => setOpen(true)}><Plus size={18} aria-hidden /> Límite</button>} />
       <ErrorBar msg={budgets.error || txs.error} />
+      {budgets.rows.length > 0 && <div className="mt-4"><Segmented label="Ver" value={view} onChange={changeView} options={[{ id: 'mes', label: 'Mes completo' }, { id: 'quincena', label: 'Por quincena' }]} /></div>}
       {budgets.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : status.length === 0 ? (
         <Empty title="Sin límites todavía" text="Ponle un tope mensual a una categoría y te aviso cuando vas por el 80%." action="Poner el primero" onAction={() => setOpen(true)} />
+      ) : view === 'quincena' ? (
+        <Group title={q.label} footer="El límite de cada categoría se parte a la mitad para cada quincena.">
+          {qStatus.map((x, i) => (
+            <Row key={budgets.rows[i].id} tone={color[x.state]} title={x.category} value={`${money(x.spent)} / ${money(x.limit)}`} valueTone={x.state === 'ok' ? 'soft' : x.state === 'over' ? 'neg' : undefined}
+              sub={x.state === 'over' ? `Te pasaste ${money(x.spent - x.limit)} esta quincena` : `Quedan ${money(x.limit - x.spent)} esta quincena`}>
+              <div className="meter mx-4 mb-3 -mt-1" style={{ ['--meter' as string]: color[x.state] }} role="img" aria-label={`${x.pct}% del límite de la quincena`}><i style={{ width: `${Math.min(100, x.pct)}%` }} /></div>
+            </Row>
+          ))}
+        </Group>
       ) : (
         <Group title="Este mes">
           {status.map(({ budget: b, spent, pct, state }) => (

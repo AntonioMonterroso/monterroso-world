@@ -48,6 +48,7 @@ const Inspiration = lazy(() => import('./discover/Inspiration'))
 const Learn = lazy(() => import('./discover/Learn'))
 const Links = lazy(() => import('./discover/Links'))
 const Places = lazy(() => import('./discover/Places'))
+const MealPlan = lazy(() => import('./kitchen/MealPlan'))
 const Portfolio = lazy(() => import('./discover/Portfolio'))
 const Shopping = lazy(() => import('./discover/Shopping'))
 const VideoPage = lazy(() => import('./discover/VideoPage'))
@@ -70,7 +71,6 @@ const Wins = lazy(() => import('./mind/Wins'))
 const PricesEditor = lazy(() => import('./work/PricesEditor'))
 const Quotes = lazy(() => import('./work/Quotes'))
 const QuoteSheet = lazy(() => import('./work/QuoteSheet'))
-const Calculator = lazy(() => import('./money/Calculator'))
 const Incoming = lazy(() => import('./money/Incoming'))
 const Areas = lazy(() => import('./Areas'))
 const ReceiptSheet = lazy(() => import('./work/ReceiptSheet'))
@@ -154,7 +154,7 @@ function Gate() {
           <Route path="metas" element={<Goals />} />
           <Route path="suscripciones" element={<Subscriptions />} />
           <Route path="prestamos" element={<Loans />} />
-          <Route path="reparto" element={<Calculator />} />
+          <Route path="reparto" element={<Navigate to="/app/dinero/metas#reparto" replace />} />
           <Route path="entra" element={<Incoming />} />
         </Route>
         <Route path="pulpito/predica/:id/presentar" element={<Presenter />} />
@@ -223,6 +223,7 @@ function Gate() {
           <Route path="cocina" element={<KitchenLayout />}>
             <Route index element={<Recipes />} />
             <Route path="despensa" element={<Pantry />} />
+            <Route path="semana" element={<MealPlan />} />
             <Route path="receta/:id" element={<RecipePage />} />
           </Route>
           <Route path="lugares" element={<Places />} />

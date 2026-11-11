@@ -1,5 +1,8 @@
 import { motion } from 'motion/react'
-import { ExternalLink, Plus, Trash2, X } from 'lucide-react'
+import { ExternalLink, ListChecks, MapPin, Plus, Trash2, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
+import { exitKindFor } from '../../lib/exitlist'
 import { useEffect, useState } from 'react'
 import { ALERT_OPTIONS, eventKinds, mapsUrl, type CheckItem, type EventKind, type EventRow, type NewEvent } from '../../lib/events'
 import { DAYS, fmtMin, localISO, toMin } from '../../lib/time'
@@ -40,6 +43,21 @@ export default function EventEditor({ target, onClose, onSave, onDelete, onSkip 
   const [newItem, setNewItem] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [err, setErr] = useState('')
+  // Lugares que ya usaste: si el evento se llama igual que otro («ensayo»), te propone el mismo lugar
+  const [places, setPlaces] = useState<{ title: string; kind: string; location: string }[]>([])
+  const [exitName, setExitName] = useState<string | null>(null)
+  useEffect(() => {
+    if (!target) return
+    void supabase.from('events').select('title,kind,location').not('location', 'is', null).order('created_at', { ascending: false }).limit(300)
+      .then(({ data }) => setPlaces(((data ?? []) as { title: string; kind: string; location: string | null }[]).filter((x) => x.location?.trim()).map((x) => ({ title: x.title, kind: x.kind, location: x.location!.trim() }))))
+  }, [target])
+  const norm = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+  const placeHint = !location.trim() && title.trim().length >= 3 ? (places.find((p) => norm(p.title) === norm(title)) ?? places.find((p) => norm(title).split(/\s+/)[0].length >= 4 && norm(p.title).startsWith(norm(title).split(/\s+/)[0])))?.location ?? null : null
+  const exitKind = exitKindFor(kind)
+  useEffect(() => {
+    if (!exitKind) { setExitName(null); return }
+    void supabase.from('exit_lists').select('name').eq('kind', exitKind).limit(1).then(({ data }) => setExitName(((data ?? [])[0] as { name?: string } | undefined)?.name ?? null))
+  }, [exitKind])
 
   useEffect(() => {
     if (!target) return
@@ -172,6 +190,8 @@ export default function EventEditor({ target, onClose, onSave, onDelete, onSkip 
 
               <div className="grid gap-4">
                 <label className="grid gap-2 text-sm">Dirección o lugar<input className="field" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={300} placeholder="Calle, colonia o enlace de Mapas" /></label>
+                {placeHint && <button type="button" className="chip-btn w-fit" onClick={() => setLocation(placeHint)}><MapPin size={14} aria-hidden /> ¿El mismo lugar de siempre? {placeHint.length > 40 ? `${placeHint.slice(0, 40)}…` : placeHint}</button>}
+                {exitName && type === 'event' && <Link to="/app/mente/salida" className="inline-flex min-h-11 items-center gap-2 text-sm underline" style={{ color: 'var(--ink-soft)' }}><ListChecks size={14} aria-hidden /> Antes de salir te recuerdo tu lista «{exitName}»</Link>}
                 {location.trim() && <a href={mapsUrl(location.trim())} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm underline" style={{ color: 'var(--sky)' }}><ExternalLink size={14} aria-hidden /> Abrir en Mapas</a>}
                 <label className="grid gap-2 text-sm">Contacto<input className="field" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={200} placeholder="Nombre o teléfono" /></label>
                 <label className="grid gap-2 text-sm">Enlace<input className="field" value={link} onChange={(e) => setLink(e.target.value)} maxLength={500} inputMode="url" placeholder="https://" /></label>

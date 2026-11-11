@@ -68,3 +68,21 @@ export function chime() {
     setTimeout(() => c.close().catch(() => {}), 1800)
   } catch { /* sin audio */ }
 }
+
+/** Campana suave para rutinas: dos notas bajas y cortas, a poco volumen. */
+export function softChime() {
+  try {
+    const c = new AudioContext()
+    ;[523.25, 783.99].forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain()
+      o.type = 'sine'; o.frequency.value = f
+      const t = c.currentTime + i * 0.25
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.12, t + 0.04)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4)
+      o.connect(g).connect(c.destination)
+      o.start(t); o.stop(t + 1.5)
+    })
+    setTimeout(() => void c.close(), 2200)
+  } catch { /* sin audio */ }
+}
