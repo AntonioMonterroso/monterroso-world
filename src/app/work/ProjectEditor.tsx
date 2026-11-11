@@ -6,6 +6,7 @@ import { STATUSES, currentMonth, hasBilling, monthLabel, money, monthlyStates, s
 import { localISO } from '../../lib/time'
 import type { Account } from '../../lib/accounts'
 import { useTable } from '../../lib/table'
+import ClientField from '../../components/ClientField'
 import { AccountPick, lastAccount, rememberAccount } from '../money/AccountPick'
 import type { Goal } from '../../lib/finance'
 import { NO_RULE, PCTS, applyRule, loadRule, ruleActive, ruleAmount, saveRule, type Rule } from '../../lib/savingsRule'
@@ -168,7 +169,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
             {tab === 'datos' && (
               <div className="mt-4 grid gap-4">
                 <label className="grid gap-2 text-sm">Nombre<input className="field" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} /></label>
-                <label className="grid gap-2 text-sm">Cliente<input className="field" value={client} onChange={(e) => setClient(e.target.value)} maxLength={200} /></label>
+                <ClientField value={client} onChange={setClient} />
                 <fieldset>
                   <legend className="mb-2 text-sm">¿En qué etapa va?</legend>
                   <div className="flex flex-wrap gap-2">

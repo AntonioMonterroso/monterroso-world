@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Copy, Link2, Link2Off, Plus, Printer, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import ClientField from '../../components/ClientField'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Segmented, Switch } from '../../components/ui'
 import { useCatalog } from '../../lib/quoteData'
@@ -143,7 +144,7 @@ export default function Quotes() {
             {tab === 'datos' && (
               <div className="grid gap-4">
                 <label className="grid gap-2 text-sm">Título<input className="field" value={d.title} maxLength={200} onChange={(e) => set({ title: e.target.value })} /></label>
-                <label className="grid gap-2 text-sm">Cliente<input className="field" value={d.client_name} maxLength={200} onChange={(e) => set({ client_name: e.target.value })} placeholder="Nombre del negocio o la persona" /></label>
+                <ClientField value={d.client_name} onChange={(v) => set({ client_name: v })} />
                 <label className="grid gap-2 text-sm">Contacto (opcional)<input className="field" value={d.client_contact ?? ''} maxLength={200} onChange={(e) => set({ client_contact: e.target.value })} placeholder="Teléfono o correo" /></label>
                 <label className="grid gap-2 text-sm">Vigente hasta<input type="date" className="field" value={d.valid_until ?? ''} onChange={(e) => set({ valid_until: e.target.value || null })} /></label>
                 <fieldset>
