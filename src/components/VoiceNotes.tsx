@@ -111,8 +111,8 @@ export default function VoiceNotes({ songId }: { songId?: string }) {
           </div>
         </div>
       )}
-      {err && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{err}</p>}
-      {notes.error && <p role="alert" className="mt-3 text-sm" style={{ color: '#e8a393' }}>{notes.error}</p>}
+      {err && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{err}</p>}
+      {notes.error && <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--aviso-texto)' }}>{notes.error}</p>}
 
       {shown.length > 0 && (
         <ul className="mt-4 grid gap-3">

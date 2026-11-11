@@ -1,14 +1,17 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import AppRoot from './app/AppRoot'
-import PublicShare from './app/fit/PublicShare'
-import PublicSong from './app/music/PublicSong'
-import Live from './app/pulpit/Live'
 import Landing from './pages/Landing'
 import PricingRedirect from './app/work/PricingRedirect'
-import QuotePublic from './app/work/QuotePublic'
+
+const AppRoot = lazy(() => import('./app/AppRoot'))
+const PublicShare = lazy(() => import('./app/fit/PublicShare'))
+const PublicSong = lazy(() => import('./app/music/PublicSong'))
+const Live = lazy(() => import('./app/pulpit/Live'))
+const QuotePublic = lazy(() => import('./app/work/QuotePublic'))
 
 export default function App() {
   return (
+    <Suspense fallback={<div style={{ minHeight: '100dvh', background: 'var(--fondo)' }} aria-busy />}>
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/app/*" element={<AppRoot />} />
@@ -19,5 +22,6 @@ export default function App() {
       <Route path="/cancion/:token" element={<PublicSong />} />
       <Route path="*" element={<Landing />} />
     </Routes>
+    </Suspense>
   )
 }

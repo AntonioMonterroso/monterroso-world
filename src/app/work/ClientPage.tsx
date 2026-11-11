@@ -10,7 +10,7 @@ import type { Delivery } from '../../lib/deliveries'
 import { monthlyClients, type ClientRow } from '../../lib/incoming'
 import { currentMonth, monthLabel, money, statusMeta, useProjects, workKindLabel, type WorkTx } from '../../lib/projects'
 import { useTable } from '../../lib/table'
-import { useClientExtra, waNumber } from '../../lib/clientNotes'
+import { reminderText, useClientExtra, waNumber } from '../../lib/clientNotes'
 import { localISO } from '../../lib/time'
 import ProjectEditor from './ProjectEditor'
 import { removeProject, saveProject } from './saveProject'
@@ -45,6 +45,15 @@ export default function ClientPage() {
   const myDeliv = deliveries.rows.filter((d) => d.recipient && clientKey(d.recipient) === k)
   const acct = (id?: string | null) => accounts.rows.find((a) => a.id === id)?.name
   const editingProject = db.projects.find((x) => x.id === editing) ?? null
+  const addWork = async () => {
+    const p = await db.add({ title: 'Nuevo trabajo', client: name, status: 'active', month, due_date: null, amount: 0, currency: 'GTQ', site_url: null, notes: null, checklist: [], setup_fee: 0, monthly_fee: 0, billing_day: null, monthly_start: null, monthly_end: null, account_id: mine[0]?.account_id ?? null } as never)
+    if (p) setEditing(p.id)
+  }
+  const remind = (r: ClientRow) => {
+    const when = r.lateMonths[0] ?? month
+    const concept = r.setupDue && !r.fee ? 'la instalación' : `la mensualidad de ${monthLabel(when)}`
+    return `https://wa.me/${waNumber(extra.phone)}?text=${encodeURIComponent(reminderText({ name, concept, amount: money(r.setupDue && !r.fee ? r.setupDue : r.fee) }))}`
+  }
 
   if (db.loading) return <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div>
   if (!mine.length) return (
@@ -61,11 +70,11 @@ export default function ClientPage() {
         {rows.length === 0 ? <Row title="Sin cobro este mes" sub="Pon una mensualidad en el acuerdo de cobro de su trabajo." chevron={false} /> : rows.map((r) => (
           <Row key={r.project.id} tone={r.owed > 0 ? 'var(--aviso)' : 'var(--pos)'} title={r.project.title} chevron={false}
             sub={r.owed > 0 ? `${r.state === 'late' || r.lateMonths.length ? 'Atrasado' : 'Por cobrar'} · debe ${money(r.owed)}` : 'Pagado este mes'} value={money(r.fee)}
-            trailing={r.owed > 0 ? <button className="btn btn-primary !min-h-11 !px-4" onClick={() => { setMsg(''); setRow(r) }}>Cobrado</button> : undefined} />
+            trailing={r.owed > 0 ? <span className="flex items-center gap-1">{extra.phone && <a className="btn btn-sec btn-chico" href={remind(r)} target="_blank" rel="noreferrer" aria-label="Recordar el pago por WhatsApp"><MessageCircle size={15} aria-hidden /> Recordar</a>}<button className="btn btn-primary !min-h-11 !px-4" onClick={() => { setMsg(''); setRow(r) }}>Cobrado</button></span> : undefined} />
         ))}
       </Group>
 
-      <Group title="Trabajos" aside={<span>{mine.length}</span>} footer="Abre uno para cambiar su estado, entrega, monto, sitio, checklist, notas y su acuerdo de cobro.">
+      <Group title="Trabajos" aside={<button className="underline" onClick={() => void addWork()}>Agregar trabajo</button>} footer="Abre uno para cambiar su estado, entrega, monto, sitio, checklist, notas y su acuerdo de cobro.">
         {mine.map((p) => (
           <Row key={p.id} tone={statusMeta(p.status).color} title={p.title} onClick={() => setEditing(p.id)}
             sub={[statusMeta(p.status).label, p.due_date && `entrega ${p.due_date}`, Number(p.monthly_fee ?? 0) > 0 && `${money(Number(p.monthly_fee))} al mes · día ${p.billing_day ?? '—'}`, Number(p.setup_fee ?? 0) > 0 && `instalación ${money(Number(p.setup_fee))}`].filter(Boolean).join(' · ')}
@@ -77,7 +86,7 @@ export default function ClientPage() {
       <Group title="Pagos recibidos" aside={<button className="underline" onClick={() => { setMsg(''); setPaying(true) }}>Registrar</button>} footer="Cada pago queda también en Dinero › Movimientos. Toca uno para corregirlo o borrarlo desde su trabajo.">
         {history.length === 0 ? <Row title="Aún no hay pagos" sub="Toca Registrar para anotar uno" chevron={false} /> : history.slice(0, 12).map((h) => {
           const w = { project_id: h.project_id, title: mine.find((p) => p.id === h.project_id)?.title ?? '', kind: h.kind ?? 'other', period: h.period ?? null } as WorkTx['work']
-          return <Row key={h.id} onClick={() => setEditing(h.project_id)} tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} />
+          return <Row key={h.id} onClick={() => setEditing(h.project_id)} tone="var(--pos)" title={workKindLabel(w)} sub={`${new Date((h.paid_at as string) + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}${acct(h.account_id) ? ` · ${acct(h.account_id)}` : ''}`} value={money(h.amount)} trailing={<Link to={`/app/trabajo/recibo/${h.id}`} className="btn btn-sec btn-chico">Recibo</Link>} />
         })}
       </Group>
 

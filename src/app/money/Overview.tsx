@@ -1,14 +1,16 @@
 import { Loader2, Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { budgetStatus, incomeByArea, lastMonths, loanTotals, monthTotals, spendByCategory, type Budget, type Loan, type LoanPayment, type Sub, type Tx } from '../../lib/finance'
-import { currentMonth, money, monthLabel, useProjects } from '../../lib/projects'
+import { currentMonth, money, monthLabel, summarizeMonth, useProjects } from '../../lib/projects'
 import { Group, MonthStepper, PageHeader, Row, Segmented, Stat } from '../../components/ui'
 import { dayNum } from '../../lib/recur'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
 import { useBalances } from '../../lib/balances'
 import { freeToSpend, upcomingPayments } from '../../lib/free'
+import { buildClose, closeNote, loadCloses, saveClose, type Close } from '../../lib/monthClose'
+import Sheet from '../../components/Sheet'
 import { incomingTotals, monthlyClients } from '../../lib/incoming'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { Empty, ErrorBar } from './shared'
@@ -43,6 +45,10 @@ export default function Overview() {
   const work = useProjects()
   const [month, setMonth] = useState(currentMonth())
   const [pick, setPick] = useState('')
+  const moves = useTable<{ id: string; amount: number; tx_date: string }>('fin_goal_moves', { col: 'tx_date', asc: false })
+  const [closes, setCloses] = useState<Record<string, Close>>({})
+  const [closing, setClosing] = useState(false)
+  useEffect(() => { void loadCloses().then(setCloses) }, [])
   const nav = useNavigate()
   const tax = useTaxonomy()
   const bals = useBalances()
@@ -69,6 +75,14 @@ export default function Overview() {
   // Tus áreas, más cualquier clave con ingresos que ya no exista en la lista (p. ej. un área borrada)
   const areaRows = useMemo(() => [...tax.areas.map((a) => ({ key: a.key, name: a.name, color: a.color })), ...Object.keys(byArea).filter((k) => !tax.areas.some((a) => a.key === k) && byArea[k] > 0).map((k) => tax.areaMeta(k))], [tax, byArea])
   const areaMax = Math.max(1, ...Object.values(byArea))
+
+  const closeNow = useMemo(() => buildClose({
+    month, income: t?.income ?? 0, expense: t?.expense ?? 0,
+    saved: moves.rows.filter((m) => m.tx_date.startsWith(month) && Number(m.amount) > 0).reduce((a, m) => a + Number(m.amount), 0),
+    pending: summarizeMonth(work.projects, work.payments, month).GTQ?.pending ?? 0, clients: inc.clients, paidClients: inc.paidClients,
+  }), [month, t, moves.rows, work.projects, work.payments, inc])
+  const closed = closes[month]
+  const confirmClose = async () => { await saveClose(closeNow); setCloses((c) => ({ ...c, [month]: closeNow })); setClosing(false) }
 
   const loading = txs.loading || work.loading
   const empty = currencies.length === 0
@@ -163,6 +177,22 @@ export default function Overview() {
           )}
         </div>
       )}
+
+      {!loading && (
+        <Group title="Cierre del mes" footer="Guarda una foto de cómo terminó el mes para compararla después.">
+          <Row tone={closed ? 'var(--pos)' : 'var(--accent)'} title={closed ? `${monthLabel(month)} cerrado` : `Cerrar ${monthLabel(month)}`} sub={closed ? `Cerrado el ${closed.closedAt} · te sobró ${money(closed.left)}` : 'Revisa lo que entró, salió y ahorraste'} onClick={() => setClosing(true)} />
+        </Group>
+      )}
+      <Sheet open={closing} title={`Cierre de ${monthLabel(month)}`} onClose={() => setClosing(false)}>
+        <div className="grid gap-3">
+          <dl className="grid gap-2 text-sm">
+            {([['Entró', closeNow.income], ['Salió', closeNow.expense], ['Te sobró', closeNow.left], ['Apartaste para ahorro', closeNow.saved], ['Quedó por cobrar', closeNow.pending]] as const).map(([k, v]) => <div key={k} className="flex justify-between border-b pb-2" style={{ borderColor: 'var(--borde)' }}><dt>{k}</dt><dd className="font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>{money(v)}</dd></div>)}
+            <div className="flex justify-between"><dt>Clientes con mensualidad</dt><dd className="font-semibold">{closeNow.paidClients} de {closeNow.clients} pagaron</dd></div>
+          </dl>
+          <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{closeNote(closeNow)}</p>
+          <button className="btn btn-primary" onClick={() => void confirmClose()}>{closed ? 'Volver a guardar el cierre' : 'Guardar el cierre'}</button>
+        </div>
+      </Sheet>
 
       <details className="mt-8 rounded-[var(--r-card)] p-4 text-sm" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }}>
         <summary className="cursor-pointer font-semibold">¿Cómo se mueve mi dinero?</summary>

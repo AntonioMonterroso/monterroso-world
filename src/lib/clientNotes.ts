@@ -29,3 +29,14 @@ export function useClientExtra(key: string) {
     removeLog: (id: string) => save({ ...all, [key]: { ...cur, log: (cur.log ?? []).filter((e) => e.id !== id) } }),
   }
 }
+
+/** Los WhatsApp de todos los clientes (para recordar un cobro desde cualquier lista). */
+export function useClientPhones(): Record<string, string> {
+  const [all, setAll] = useState<All>({})
+  useEffect(() => { void getSettings().then((s) => setAll(cleanAll((s as { clientExtra?: unknown }).clientExtra))) }, [])
+  return Object.fromEntries(Object.entries(all).filter(([, v]) => v.phone).map(([k, v]) => [k, v.phone as string]))
+}
+/** Mensaje amable para recordar un pago por WhatsApp. */
+export function reminderText(o: { name: string; concept: string; amount: string }) {
+  return `Hola ${o.name}, ¿cómo estás? Te recuerdo el pago de ${o.concept} por ${o.amount}. Cuando lo hagas, me avisas por aquí. ¡Gracias!`
+}

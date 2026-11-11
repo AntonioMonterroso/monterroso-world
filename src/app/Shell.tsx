@@ -1,5 +1,5 @@
-import { Bell, CalendarDays, LayoutGrid, Plus, Search, Settings, Sun, Wallet } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bell, CalendarDays, Loader2, LayoutGrid, Plus, Search, Settings, Sun, Wallet } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Globe from '../components/Globe'
 import { useAttention } from '../lib/attention'
@@ -87,7 +87,7 @@ export default function Shell({ onLock, onSignOut }: { onLock: () => void; onSig
             <NavLink to="/app/pendientes" className="bell grid size-11 place-items-center rounded-full" aria-label={attention.count > 0 ? `Pendientes, ${attention.count}` : 'Pendientes'}><Bell size={20} aria-hidden />{attention.count > 0 && <span className="bell-dot" aria-hidden>{attention.count > 9 ? '9+' : attention.count}</span>}</NavLink>
           </span>
         </header>
-        <main className="mx-auto max-w-4xl px-4 py-6 md:px-10 md:py-10"><div key={pathname.split('/').slice(0, 3).join('/')} className="page-in"><Outlet /></div></main>
+        <main className="mx-auto max-w-4xl px-4 py-6 md:px-10 md:py-10"><div key={pathname.split('/').slice(0, 3).join('/')} className="page-in"><Suspense fallback={<div className="grid h-40 place-items-center" aria-busy><Loader2 className="animate-spin" aria-label="Cargando" /></div>}><Outlet /></Suspense></div></main>
       </div>
 
       <nav aria-label="Principal" className="tabbar fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 items-start md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>

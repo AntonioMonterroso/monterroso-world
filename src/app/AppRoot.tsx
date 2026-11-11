@@ -1,90 +1,92 @@
 import { Loader2 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from '../lib/auth'
 import { clearPin, hasPin } from '../lib/pin'
 import { supabase } from '../lib/supabase'
-import CenterPage from './CenterPage'
 import Login from './Login'
 import { PinSetup, PinUnlock } from './PinGate'
-import Agenda from './plan/Agenda'
-import Calendar from './plan/Calendar'
-import Deliveries from './send/Deliveries'
-import Notices from './send/Notices'
 import PlanLayout from './plan/PlanLayout'
-import Schedule from './plan/Schedule'
-import Settings from './Settings'
-import Ideas from './music/Ideas'
 import MusicLayout from './music/MusicLayout'
-import Practice from './music/Practice'
-import Setlists from './music/Setlists'
-import SongPage from './music/SongPage'
-import Songs from './music/Songs'
-import Stage from './music/Stage'
-import FaithNotes from './pulpit/FaithNotes'
-import Presenter from './pulpit/Presenter'
 import PulpitLayout from './pulpit/PulpitLayout'
-import Sermons from './pulpit/Sermons'
-import SermonPage from './pulpit/SermonPage'
-import Body from './fit/Body'
 import FitLayout from './fit/FitLayout'
-import History from './fit/History'
-import Partners from './fit/Partners'
-import RoutinePage from './fit/RoutinePage'
-import Routines from './fit/Routines'
-import Session from './fit/Session'
 import DiscoverLayout from './discover/DiscoverLayout'
-import Inspiration from './discover/Inspiration'
-import Learn from './discover/Learn'
-import Links from './discover/Links'
-import Places from './discover/Places'
-import Portfolio from './discover/Portfolio'
-import Shopping from './discover/Shopping'
-import VideoPage from './discover/VideoPage'
-import Focus from './mind/Focus'
-import Habits from './mind/Habits'
 import MindLayout from './mind/MindLayout'
-import RoutineEditor from './mind/RoutineEditor'
-import RoutineRun from './mind/RoutineRun'
-import DailyRoutines from './mind/Routines'
-import Budget from './money/Budget'
-import Goals from './money/Goals'
-import Loans from './money/Loans'
 import MoneyLayout from './money/MoneyLayout'
-import Accounts from './money/Accounts'
-import Categories from './money/Categories'
-import Exit from './mind/Exit'
-import Leisure from './mind/Leisure'
-import Loose from './mind/Loose'
-import Renewals from './mind/Renewals'
-import Rules from './mind/Rules'
-import Wins from './mind/Wins'
 import WorkLayout from './work/WorkLayout'
-import PricesEditor from './work/PricesEditor'
-import Quotes from './work/Quotes'
-import QuoteSheet from './work/QuoteSheet'
-import Calculator from './money/Calculator'
-import Incoming from './money/Incoming'
-import Areas from './Areas'
-import AppearancePage from './Appearance'
 import { bootAppearance } from '../lib/appearance'
 import { localISO } from '../lib/time'
-import AgendaDia from './plan/AgendaDia'
-import Clients from './work/Clients'
-import ClientPage from './work/ClientPage'
 import SectionLayout from '../components/SectionLayout'
-import Share from './Share'
-import Overview from './money/Overview'
-import Subscriptions from './money/Subscriptions'
-import Transactions from './money/Transactions'
-import Vault from './vault/Vault'
-import Projects from './work/Projects'
 import Shell from './Shell'
 import KitchenLayout from './kitchen/KitchenLayout'
-import Pantry from './kitchen/Pantry'
-import RecipePage from './kitchen/RecipePage'
-import Recipes from './kitchen/Recipes'
 import Today from './Today'
+
+// Cada pantalla se descarga solo cuando la abres: la app abre más rápido, sobre todo en el teléfono.
+const Agenda = lazy(() => import('./plan/Agenda'))
+const Calendar = lazy(() => import('./plan/Calendar'))
+const Deliveries = lazy(() => import('./send/Deliveries'))
+const Notices = lazy(() => import('./send/Notices'))
+const Schedule = lazy(() => import('./plan/Schedule'))
+const Settings = lazy(() => import('./Settings'))
+const Ideas = lazy(() => import('./music/Ideas'))
+const Practice = lazy(() => import('./music/Practice'))
+const Setlists = lazy(() => import('./music/Setlists'))
+const SongPage = lazy(() => import('./music/SongPage'))
+const Songs = lazy(() => import('./music/Songs'))
+const Stage = lazy(() => import('./music/Stage'))
+const FaithNotes = lazy(() => import('./pulpit/FaithNotes'))
+const Presenter = lazy(() => import('./pulpit/Presenter'))
+const Sermons = lazy(() => import('./pulpit/Sermons'))
+const SermonPage = lazy(() => import('./pulpit/SermonPage'))
+const Body = lazy(() => import('./fit/Body'))
+const History = lazy(() => import('./fit/History'))
+const Partners = lazy(() => import('./fit/Partners'))
+const RoutinePage = lazy(() => import('./fit/RoutinePage'))
+const Routines = lazy(() => import('./fit/Routines'))
+const Session = lazy(() => import('./fit/Session'))
+const Inspiration = lazy(() => import('./discover/Inspiration'))
+const Learn = lazy(() => import('./discover/Learn'))
+const Links = lazy(() => import('./discover/Links'))
+const Places = lazy(() => import('./discover/Places'))
+const Portfolio = lazy(() => import('./discover/Portfolio'))
+const Shopping = lazy(() => import('./discover/Shopping'))
+const VideoPage = lazy(() => import('./discover/VideoPage'))
+const Focus = lazy(() => import('./mind/Focus'))
+const Habits = lazy(() => import('./mind/Habits'))
+const RoutineEditor = lazy(() => import('./mind/RoutineEditor'))
+const RoutineRun = lazy(() => import('./mind/RoutineRun'))
+const DailyRoutines = lazy(() => import('./mind/Routines'))
+const Budget = lazy(() => import('./money/Budget'))
+const Goals = lazy(() => import('./money/Goals'))
+const Loans = lazy(() => import('./money/Loans'))
+const Accounts = lazy(() => import('./money/Accounts'))
+const Categories = lazy(() => import('./money/Categories'))
+const Exit = lazy(() => import('./mind/Exit'))
+const Leisure = lazy(() => import('./mind/Leisure'))
+const Loose = lazy(() => import('./mind/Loose'))
+const Renewals = lazy(() => import('./mind/Renewals'))
+const Rules = lazy(() => import('./mind/Rules'))
+const Wins = lazy(() => import('./mind/Wins'))
+const PricesEditor = lazy(() => import('./work/PricesEditor'))
+const Quotes = lazy(() => import('./work/Quotes'))
+const QuoteSheet = lazy(() => import('./work/QuoteSheet'))
+const Calculator = lazy(() => import('./money/Calculator'))
+const Incoming = lazy(() => import('./money/Incoming'))
+const Areas = lazy(() => import('./Areas'))
+const ReceiptSheet = lazy(() => import('./work/ReceiptSheet'))
+const AppearancePage = lazy(() => import('./Appearance'))
+const AgendaDia = lazy(() => import('./plan/AgendaDia'))
+const Clients = lazy(() => import('./work/Clients'))
+const ClientPage = lazy(() => import('./work/ClientPage'))
+const Share = lazy(() => import('./Share'))
+const Overview = lazy(() => import('./money/Overview'))
+const Subscriptions = lazy(() => import('./money/Subscriptions'))
+const Transactions = lazy(() => import('./money/Transactions'))
+const Vault = lazy(() => import('./vault/Vault'))
+const Projects = lazy(() => import('./work/Projects'))
+const Pantry = lazy(() => import('./kitchen/Pantry'))
+const RecipePage = lazy(() => import('./kitchen/RecipePage'))
+const Recipes = lazy(() => import('./kitchen/Recipes'))
 
 const AWAY_LOCK_MS = 60_000
 const IDLE_LOCK_MS = 10 * 60_000
@@ -132,8 +134,10 @@ function Gate() {
   const signOutAll = async () => { await supabase.auth.signOut() }
 
   return (
+    <Suspense fallback={<div className="grid min-h-dvh place-items-center" aria-busy><Loader2 className="animate-spin" aria-label="Cargando" /></div>}>
     <Routes>
       <Route path="trabajo/propuestas/:id/documento" element={<QuoteSheet />} />
+      <Route path="trabajo/recibo/:id" element={<ReceiptSheet />} />
       <Route element={<Shell onLock={lock} onSignOut={signOutAll} />}>
         <Route index element={<Today />} />
         <Route path="ajustes" element={<Settings onLock={lock} onResetPin={resetPin} />} />
@@ -225,9 +229,10 @@ function Gate() {
           <Route path="compras" element={<Shopping />} />
           <Route path="compartir" element={<Share />} />
         </Route>
-        <Route path=":center" element={<CenterPage />} />
+        <Route path=":center" element={<Navigate to="/app" replace />} />
       </Route>
     </Routes>
+    </Suspense>
   )
 }
 

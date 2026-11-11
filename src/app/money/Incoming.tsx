@@ -5,6 +5,9 @@ import Cobrado from '../../components/Cobrado'
 import { Group, MonthStepper, PageHeader, Row, Stat } from '../../components/ui'
 import { forecast, incomingTotals, monthlyClients, type ClientRow } from '../../lib/incoming'
 import { currentMonth, monthLabel, money, useProjects } from '../../lib/projects'
+import { clientKey, clientName } from '../../lib/clients'
+import { reminderText, useClientPhones, waNumber } from '../../lib/clientNotes'
+import { MessageCircle } from 'lucide-react'
 import { Empty, ErrorBar } from './shared'
 
 const STATE = { paid: { tone: 'var(--pos)', text: 'Pagó' }, pending: { tone: 'var(--accent)', text: 'Por cobrar' }, late: { tone: 'var(--aviso)', text: 'Atrasado' } } as const
@@ -15,6 +18,7 @@ export default function Incoming() {
   const work = useProjects()
   const [month, setMonth] = useState(currentMonth())
   const [row, setRow] = useState<ClientRow | null>(null)
+  const phones = useClientPhones()
   const [msg, setMsg] = useState('')
   const rows = useMemo(() => monthlyClients(work.projects, work.payments, month), [work.projects, work.payments, month])
   const totals = useMemo(() => incomingTotals(rows), [rows])
@@ -52,7 +56,7 @@ export default function Incoming() {
                 <Row key={r.project.id} tone={s.tone} title={r.project.title}
                   sub={<>{[r.project.client, r.project.billing_day ? `cobra el ${r.project.billing_day}` : null].filter(Boolean).join(' · ')}{(r.project.client || r.project.billing_day) && ' · '}<span style={{ color: s.tone }}>{r.state === 'paid' && r.paidAt ? `Pagó el ${new Date(r.paidAt + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' })}` : s.text}</span>{late > 0 && <span style={{ color: 'var(--aviso-texto)' }}> · debe {late} {late === 1 ? 'mes' : 'meses'} antes</span>}{r.setupDue > 0 && <span style={{ color: 'var(--aviso-texto)' }}> · falta instalación</span>}</>}
                   value={money(r.fee)}
-                  trailing={r.owed > 0 ? <button type="button" className="btn btn-primary !min-h-11 !px-4" onClick={() => open(r)}><CalendarCheck size={16} aria-hidden /> Cobrado</button> : undefined}
+                  trailing={r.owed > 0 ? <span className="flex items-center gap-1">{phones[clientKey(clientName(r.project))] && <a className="btn btn-sec btn-chico" target="_blank" rel="noreferrer" aria-label={`Recordar el pago a ${r.project.title} por WhatsApp`} href={`https://wa.me/${waNumber(phones[clientKey(clientName(r.project))])}?text=${encodeURIComponent(reminderText({ name: clientName(r.project), concept: `la mensualidad de ${cap(monthLabel(r.lateMonths[0] ?? month))}`, amount: money(r.fee) }))}`}><MessageCircle size={15} aria-hidden /></a>}<button type="button" className="btn btn-primary !min-h-11 !px-4" onClick={() => open(r)}><CalendarCheck size={16} aria-hidden /> Cobrado</button></span> : undefined}
                   to={r.owed > 0 ? undefined : `/app/trabajo?abrir=${r.project.id}`} />
               )
             })}
