@@ -2,7 +2,7 @@ import { ArrowLeft, ChefHat, Clock, Heart, Pencil, ShoppingBag, Users } from 'lu
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Chk } from '../../components/ui'
-import { mealLabel, missing, norm, type PantryItem, type Recipe } from '../../lib/kitchen'
+import { mealLabel, missing, norm, scaleLine, type PantryItem, type Recipe } from '../../lib/kitchen'
 import { sendToShopping } from '../../lib/kitchenDb'
 import { useTable } from '../../lib/table'
 import { localISO } from '../../lib/time'
@@ -13,6 +13,7 @@ export default function RecipePage() {
   const { id } = useParams()
   const nav = useNavigate()
   const db = useTable<Recipe>('recipes', { col: 'title', asc: true })
+  const [serv, setServ] = useState<number | null>(null)
   const pantry = useTable<PantryItem>('pantry_items', { col: 'name', asc: true })
   const [editing, setEditing] = useState(false)
   const [msg, setMsg] = useState('')
@@ -21,6 +22,7 @@ export default function RecipePage() {
 
   if (db.loading) return <p style={{ color: 'var(--ink-soft)' }}>Cargando…</p>
   if (!r) return <div><Link to="/app/cocina" className="underline">Volver a Cocina</Link><p className="mt-4">No encontré esta receta.</p></div>
+  const factor = r.servings && serv ? serv / r.servings : 1
 
   const miss = missing(r, pantry.rows)
   const say = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 4000) }
@@ -55,7 +57,7 @@ export default function RecipePage() {
       </div>
       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--ink-soft)' }}>
         {r.minutes && <span className="inline-flex items-center gap-1.5"><Clock size={14} aria-hidden /> {r.minutes} min</span>}
-        {r.servings && <span className="inline-flex items-center gap-1.5"><Users size={14} aria-hidden /> {r.servings} {r.servings === 1 ? 'porción' : 'porciones'}</span>}
+        {r.servings && <span className="inline-flex items-center gap-1.5"><Users size={14} aria-hidden /> <button type="button" className="grid size-9 place-items-center rounded-full" style={{ background: 'var(--surface-2)' }} aria-label="Menos porciones" onClick={() => setServ((v) => Math.max(1, (v ?? r.servings!) - 1))}>−</button> {serv ?? r.servings} {(serv ?? r.servings) === 1 ? 'porción' : 'porciones'} <button type="button" className="grid size-9 place-items-center rounded-full" style={{ background: 'var(--surface-2)' }} aria-label="Más porciones" onClick={() => setServ((v) => Math.min(40, (v ?? r.servings!) + 1))}>+</button></span>}
         {r.cooked_count > 0 && <span className="inline-flex items-center gap-1.5"><ChefHat size={14} aria-hidden /> La hiciste {r.cooked_count} {r.cooked_count === 1 ? 'vez' : 'veces'}{r.last_cooked ? ` · última: ${r.last_cooked}` : ''}</span>}
       </p>
       <ErrorBar msg={db.error || pantry.error} onClose={db.clearError} />
@@ -76,7 +78,7 @@ export default function RecipePage() {
         {r.ingredients.map((ing, idx) => {
           const p = ing.k ? inPantry(ing.k) : undefined
           const have = Boolean(p?.have)
-          const body = <><span className="min-w-0 flex-1">{ing.n}{ing.opt && <span className="text-xs" style={{ color: 'var(--ink-faint)' }}> · opcional</span>}</span>{ing.k && !have && !ing.opt && <span className="text-xs" style={{ color: 'var(--aviso-texto)' }}>falta</span>}</>
+          const body = <><span className="min-w-0 flex-1">{factor !== 1 ? scaleLine(ing.n, factor) : ing.n}{ing.opt && <span className="text-xs" style={{ color: 'var(--ink-faint)' }}> · opcional</span>}</span>{ing.k && !have && !ing.opt && <span className="text-xs" style={{ color: 'var(--aviso-texto)' }}>falta</span>}</>
           return (
             <li key={idx}>
               {ing.k ? (

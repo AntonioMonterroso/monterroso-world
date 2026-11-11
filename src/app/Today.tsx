@@ -140,6 +140,8 @@ export default function Today() {
   const pantry = useTable<PantryItem>('pantry_items', { col: 'name', asc: true })
   const free = useFreeToSpend()
   const setlists = useTable<{ id: string; title: string; event_date: string | null; song_ids: string[] }>('setlists', { col: 'created_at', asc: false })
+  const quotesDb = useTable<{ id: string; client_name: string; title: string; status: string; created_at: string; updated_at?: string }>('quotes', { col: 'created_at', asc: false })
+  const quotesToFollow = useMemo(() => quotesDb.rows.filter((q) => q.status === 'sent').map((q) => ({ id: q.id, client: q.client_name || q.title, days: Math.floor((now.getTime() - new Date(q.updated_at ?? q.created_at).getTime()) / 86_400_000) })).filter((q) => q.days >= 3), [quotesDb.rows, now])
   const setlistToday = setlists.rows.find((x) => x.event_date === localISO(now))
   const minHabits = useMinHabits()
   const [manualSoft, setManualSoft] = useState(() => readSoft(localISO()))
@@ -158,7 +160,7 @@ export default function Today() {
   const cookReady = useMemo(() => rankRecipes(recipes.rows, pantry.rows).filter((x) => x.miss.length === 0).length, [recipes.rows, pantry.rows])
   const savingsRows = useMemo(() => dueSavings.map((p) => ({ id: p.id, amount: money(p.amount), goal: savingsGoals.rows.find((g) => g.id === p.goal_id)?.title ?? 'tu ahorro' })), [dueSavings, savingsGoals.rows])
 
-  const items = useMemo(() => ahora(suggestInput, { collect, savings: savingsRows, cookReady }, { soft: softOn, snoozed }), [suggestInput, collect, savingsRows, cookReady, softOn, snoozed])
+  const items = useMemo(() => ahora(suggestInput, { collect, savings: savingsRows, cookReady, quotes: quotesToFollow }, { soft: softOn, snoozed }), [suggestInput, collect, savingsRows, cookReady, quotesToFollow, softOn, snoozed])
   const top = items[0]
   const rest = items.slice(1)
 

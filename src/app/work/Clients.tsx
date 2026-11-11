@@ -2,6 +2,8 @@ import { Loader2, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import NewWork from './NewWork'
+import RegistrarPago from '../../components/RegistrarPago'
+import { useAllClientExtra } from '../../lib/clientNotes'
 import { clientName } from '../../lib/clients'
 import { Group, MonthStepper, PageHeader, Row } from '../../components/ui'
 import { clientKey, groupClients } from '../../lib/clients'
@@ -24,6 +26,9 @@ export default function Clients() {
   const list = useMemo(() => groupClients(db.projects, db.payments, month), [db.projects, db.payments, month])
   const shown = list.filter((c) => !q.trim() || clientKey(c.name).includes(clientKey(q)))
   const [creating, setCreating] = useState(false)
+  const [payFor, setPayFor] = useState<string | null>(null)
+  const [msg, setMsg] = useState('')
+  const extras = useAllClientExtra()
 
   return (
     <div>
@@ -40,12 +45,15 @@ export default function Clients() {
             const work = c.active[0]
             return (
               <Row key={c.key} tone={s.tone} title={c.name} to={`/app/trabajo/cliente/${encodeURIComponent(c.key)}`}
-                sub={<><span style={{ color: c.state === 'late' ? 'var(--aviso-texto)' : undefined }}>{s.text}</span>{c.fee > 0 && ` · ${money(c.fee)} al mes`}{work && ` · ${work.title} (${statusMeta(work.status).label.toLowerCase()})`}</>}
-                value={c.owed > 0 ? money(c.owed) : undefined} />
+                sub={<>{extras[c.key]?.rubro && `${extras[c.key]!.rubro} · `}<span style={{ color: c.state === 'late' ? 'var(--aviso-texto)' : undefined }}>{s.text}</span>{c.fee > 0 && ` · ${money(c.fee)} al mes`}{work && ` · ${work.title} (${statusMeta(work.status).label.toLowerCase()})`}</>}
+                value={c.owed > 0 ? money(c.owed) : undefined}
+                trailing={<button className="btn btn-sec btn-chico" onClick={() => { setMsg(''); setPayFor(c.key) }} aria-label={`Registrar un pago de ${c.name}`}>Pago</button>} />
             )
           })}
         </Group>
       )}
+      {msg && <p role="status" className="mt-4 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{msg}</p>}
+      <RegistrarPago open={Boolean(payFor)} projects={list.find((c) => c.key === payFor)?.projects ?? []} payments={db.payments} addPayment={db.addPayment} onClose={() => setPayFor(null)} onDone={setMsg} />
       <NewWork open={creating} month={month} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); nav(`/app/trabajo/cliente/${encodeURIComponent(clientKey(clientName(p)))}?abrir=${p.id}`) }} />
     </div>
   )

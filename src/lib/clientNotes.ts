@@ -3,7 +3,7 @@ import { getSettings, patchSettings } from './settings'
 
 /** Lo extra de cada cliente: su WhatsApp (solo para ti, nunca en páginas públicas) y una bitácora con fecha. Vive en tus ajustes. */
 export type LogEntry = { id: string; date: string; text: string }
-export type ClientExtra = { phone?: string; log?: LogEntry[] }
+export type ClientExtra = { phone?: string; rubro?: string; log?: LogEntry[] }
 type All = Record<string, ClientExtra>
 
 export const digits = (s: string) => s.replace(/\D/g, '')
@@ -12,7 +12,7 @@ export const waNumber = (phone: string) => { const d = digits(phone); return d.l
 export const cleanAll = (raw: unknown): All => {
   if (!raw || typeof raw !== 'object') return {}
   const out: All = {}
-  for (const [k, v] of Object.entries(raw as Record<string, ClientExtra>)) out[k] = { phone: typeof v?.phone === 'string' ? v.phone.slice(0, 30) : undefined, log: Array.isArray(v?.log) ? v.log.filter((e) => e && typeof e.text === 'string').slice(0, 200) : [] }
+  for (const [k, v] of Object.entries(raw as Record<string, ClientExtra>)) out[k] = { phone: typeof v?.phone === 'string' ? v.phone.slice(0, 30) : undefined, ...(typeof v?.rubro === 'string' ? { rubro: v.rubro.slice(0, 60) } : {}), log: Array.isArray(v?.log) ? v.log.filter((e) => e && typeof e.text === 'string').slice(0, 200) : [] }
   return out
 }
 
@@ -23,6 +23,8 @@ export function useClientExtra(key: string) {
   const cur = all[key] ?? {}
   return {
     phone: cur.phone ?? '',
+    rubro: cur.rubro ?? '',
+    setRubro: (rubro: string) => save({ ...all, [key]: { ...cur, rubro: rubro.trim() || undefined } }),
     log: [...(cur.log ?? [])].sort((a, b) => b.date.localeCompare(a.date)),
     setPhone: (phone: string) => save({ ...all, [key]: { ...cur, phone: phone.trim() || undefined } }),
     addLog: (text: string, date: string) => save({ ...all, [key]: { ...cur, log: [...(cur.log ?? []), { id: Math.random().toString(36).slice(2, 10), date, text: text.trim() }] } }),
@@ -39,4 +41,11 @@ export function useClientPhones(): Record<string, string> {
 /** Mensaje amable para recordar un pago por WhatsApp. */
 export function reminderText(o: { name: string; concept: string; amount: string }) {
   return `Hola ${o.name}, ¿cómo estás? Te recuerdo el pago de ${o.concept} por ${o.amount}. Cuando lo hagas, me avisas por aquí. ¡Gracias!`
+}
+
+/** Todo lo extra de todos los clientes (rubro y teléfono), para listas. */
+export function useAllClientExtra(): Record<string, ClientExtra> {
+  const [all, setAll] = useState<All>({})
+  useEffect(() => { void getSettings().then((s) => setAll(cleanAll((s as { clientExtra?: unknown }).clientExtra))) }, [])
+  return all
 }

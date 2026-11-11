@@ -37,6 +37,7 @@ export default function ClientPage() {
   const k = decodeURIComponent(key)
   const extra = useClientExtra(k)
   const [phoneDraft, setPhoneDraft] = useState<string | null>(null)
+  const [rubroDraft, setRubroDraft] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const mine = useMemo(() => db.projects.filter((p) => clientKey(clientName(p)) === k), [db.projects, k])
   const name = mine[0] ? clientName(mine[0]) : ''
@@ -63,7 +64,7 @@ export default function ClientPage() {
   return (
     <div>
       <Link to="/app/trabajo" className="mb-3 inline-flex min-h-11 items-center gap-1 text-sm" style={{ color: 'var(--ink-soft)' }}><ChevronLeft size={16} aria-hidden /> Clientes</Link>
-      <PageHeader eyebrow="Cliente" title={name} action={<span className="flex flex-wrap gap-2">{extra.phone && <a className="btn btn-sec" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a>}<button className="btn btn-primary" onClick={() => { setMsg(''); setPaying(true) }}><Plus size={16} aria-hidden /> Registrar pago</button></span>} />
+      <PageHeader eyebrow={extra.rubro ? `Cliente · ${extra.rubro}` : 'Cliente'} title={name} action={<span className="flex flex-wrap gap-2">{extra.phone && <a className="btn btn-sec" href={`https://wa.me/${waNumber(extra.phone)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> WhatsApp</a>}<button className="btn btn-primary" onClick={() => { setMsg(''); setPaying(true) }}><Plus size={16} aria-hidden /> Registrar pago</button></span>} />
       {msg && <p role="status" className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: 'var(--personal-suave)', color: 'var(--personal-texto)' }}>{msg}</p>}
 
       <Group title={`Este mes · ${cap(monthLabel(month))}`}>
@@ -100,6 +101,11 @@ export default function ClientPage() {
       </Group>
 
       <Group title="Contacto" footer="El número es solo para ti: no aparece en ninguna página pública.">
+        {rubroDraft === null ? <Row title={extra.rubro || 'Agregar rubro'} sub={extra.rubro ? 'Rubro · toca para cambiarlo' : 'Barbería, pastelería, oficina…'} onClick={() => setRubroDraft(extra.rubro)} /> : (
+          <li className="row"><form className="row-hit" onSubmit={(e) => { e.preventDefault(); extra.setRubro(rubroDraft); setRubroDraft(null) }}>
+            <input className="row-input" value={rubroDraft} maxLength={60} onChange={(e) => setRubroDraft(e.target.value)} placeholder="Barbería" aria-label="Rubro del cliente" autoFocus />
+            <button className="btn btn-sec btn-chico">Guardar</button></form></li>
+        )}
         {phoneDraft === null ? <Row title={extra.phone || 'Agregar WhatsApp'} sub={extra.phone ? 'Toca para cambiarlo' : 'Para escribirle con un toque'} onClick={() => setPhoneDraft(extra.phone)} /> : (
           <li className="row"><form className="row-hit" onSubmit={(e) => { e.preventDefault(); extra.setPhone(phoneDraft); setPhoneDraft(null) }}>
             <input className="row-input" inputMode="tel" value={phoneDraft} onChange={(e) => setPhoneDraft(e.target.value)} placeholder="3764 5139" aria-label="WhatsApp del cliente" autoFocus />
@@ -122,7 +128,7 @@ export default function ClientPage() {
       <RegistrarPago open={paying} projects={mine} payments={db.payments} addPayment={db.addPayment} onClose={() => setPaying(false)} onDone={setMsg} />
       <Cobrado row={row} addPayment={db.addPayment} onClose={() => setRow(null)} onDone={setMsg} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
-        onSave={async (id, patch) => { await saveProject(db, id, patch); setEditing(null) }}
+        onSave={async (id, patch, stay) => { await saveProject(db, id, patch); if (!stay) setEditing(null) }}
         onDelete={(id) => { removeProject(db, id); setEditing(null); if (mine.length <= 1) nav('/app/trabajo') }}
         onAddPayment={db.addPayment} onUpdatePayment={db.updatePayment} onRemovePayment={db.removePayment} />
     </div>

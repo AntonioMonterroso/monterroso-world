@@ -19,7 +19,8 @@ type Props = {
   project: Project | null
   payments: Payment[]
   onClose: () => void
-  onSave: (id: string, patch: Partial<Omit<Project, 'id'>>) => void
+  /** `stay`: guardar sin cerrar el editor (para ver enseguida los recordatorios de cobro). */
+  onSave: (id: string, patch: Partial<Omit<Project, 'id'>>, stay?: boolean) => void
   onDelete: (id: string) => void
   onAddPayment: (v: NewPayment) => Promise<Payment | null> | void
   onUpdatePayment: (id: string, patch: Partial<NewPayment>) => void
@@ -86,8 +87,8 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
   // Lo que falta del monto del trabajo cuenta solo cobros sueltos; la instalación y las mensualidades van aparte
   const pending = Math.max(0, total - mine.filter((p) => p.paid_at && (p.kind ?? 'other') === 'other').reduce((x, p) => x + Number(p.amount), 0))
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const submit = (e: React.FormEvent | null, stay = false) => {
+    e?.preventDefault()
     if (!project) return
     if (!title.trim()) { setTab('datos'); return setErr('Ponle un nombre al trabajo.') }
     const n = mode === 'single' ? Number(amount || 0) : 0
@@ -99,7 +100,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
     if (mf > 0 && !(bd >= 1 && bd <= 28)) { setTab('cobros'); return setErr('El día de cobro va del 1 al 28.') }
     if (mEnd && mStart && mEnd < mStart) return setErr('El último mes no puede ser antes del primero.')
     rememberAccount(account)
-    onSave(project.id, { setup_fee: sf, monthly_fee: mf, billing_day: mf > 0 ? bd : null, monthly_start: mf > 0 ? mStart : null, monthly_end: mf > 0 && mEnd ? mEnd : null, account_id: account || null, title: title.trim(), client: client.trim() || null, status, month: month || project.month, due_date: due || null, amount: n, currency, site_url: url.trim() || null, notes: notes.trim() || null, checklist })
+    onSave(project.id, { setup_fee: sf, monthly_fee: mf, billing_day: mf > 0 ? bd : null, monthly_start: mf > 0 ? mStart : null, monthly_end: mf > 0 && mEnd ? mEnd : null, account_id: account || null, title: title.trim(), client: client.trim() || null, status, month: month || project.month, due_date: due || null, amount: n, currency, site_url: url.trim() || null, notes: notes.trim() || null, checklist }, stay)
   }
 
   const addPay = () => {
@@ -212,7 +213,8 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                 )}
                 {/* 1 · Cómo cobras */}
                 <section aria-labelledby="como">
-                  <h3 id="como" className="text-sm font-semibold">1 · ¿Cómo cobras este trabajo?</h3>
+                  <h3 id="como" className="text-sm font-semibold">1 · ¿Cómo te pagan este trabajo?</h3>
+                  <p className="mt-1 rounded-xl px-3 py-2 text-xs" style={{ background: 'var(--marca-suave)', color: 'var(--ink-soft)' }}>Esto es un <strong style={{ color: 'var(--ink)' }}>recordatorio</strong>: cada mes te aviso el día de cobro (en Hoy, en Lo que entra y en tu teléfono). No se suma a tu dinero hasta que tú me digas <strong style={{ color: 'var(--ink)' }}>«Ya la cobré»</strong>.</p>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2" role="group" aria-label="Forma de cobro">
                     {([['single', 'Un solo precio', 'Un monto total, que puedes cobrar en abonos.'], ['recurring', 'Instalación + mensualidad', 'Un cobro al inicio y una cuota cada mes.']] as const).map(([v, t, d]) => (
                       <button key={v} type="button" aria-pressed={mode === v} onClick={() => setMode(v)} className="rounded-2xl border p-3 text-left" style={{ borderColor: mode === v ? 'var(--accent)' : 'var(--line)', background: mode === v ? 'color-mix(in oklab, var(--accent) 10%, var(--bg))' : 'var(--bg)' }}>
@@ -229,7 +231,7 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
                         <label className="grid gap-2 text-sm">Instalación o inscripción<input className="field" inputMode="decimal" value={setupFee} onChange={(e) => setSetupFee(e.target.value.replace(',', '.'))} placeholder="0.00 (una vez)" /></label>
                         <label className="grid gap-2 text-sm">Mensualidad<input className="field" inputMode="decimal" value={monthlyFee} onChange={(e) => setMonthlyFee(e.target.value.replace(',', '.'))} placeholder="0.00 (cada mes)" /></label>
                         {Number(monthlyFee) > 0 && <>
-                          <label className="grid gap-2 text-sm">Cobras el día<input className="field" inputMode="numeric" value={billDay} onChange={(e) => setBillDay(e.target.value.replace(/\D/g, '').slice(0, 2))} placeholder="1 al 28" /></label>
+                          <label className="grid gap-2 text-sm">Te recuerdo cobrar el día<input className="field" inputMode="numeric" value={billDay} onChange={(e) => setBillDay(e.target.value.replace(/\D/g, '').slice(0, 2))} placeholder="1 al 28" /></label>
                           <label className="grid gap-2 text-sm">Desde el mes<input type="month" className="field" value={mStart} onChange={(e) => setMStart(e.target.value)} /></label>
                           <label className="col-span-2 grid gap-2 text-sm">Hasta el mes (si tiene final)<input type="month" className="field" value={mEnd} onChange={(e) => setMEnd(e.target.value)} /></label>
                         </>}
@@ -248,10 +250,11 @@ export default function ProjectEditor({ project, payments, onClose, onSave, onDe
 
                 {/* 3 · Qué toca cobrar */}
                 <section aria-labelledby="toca">
-                  <h3 id="toca" className="text-sm font-semibold">3 · Lo que toca cobrar</h3>
+                  <h3 id="toca" className="text-sm font-semibold">3 · Recordatorios de cobro</h3>
                   {dirty ? (
                     <div className="mt-2 rounded-2xl border p-4 text-sm" style={{ ...fieldStyle, color: 'var(--ink-soft)' }}>
-                      Cambiaste cómo cobras este trabajo. <strong style={{ color: 'var(--ink)' }}>Guarda</strong> para ver aquí lo que toca cobrar.
+                      <p>Guarda y aquí verás cada cobro pendiente. Cuando te paguen, tocas <strong style={{ color: 'var(--ink)' }}>«Ya la cobré»</strong>.</p>
+                      <button type="button" className="btn btn-primary mt-3" onClick={() => submit(null, true)}>Guardar y ver los recordatorios</button>
                     </div>
                   ) : (
                     <>

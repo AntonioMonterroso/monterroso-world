@@ -87,3 +87,15 @@ describe('pagos de clientes', () => {
     expect(entender('cobré barbería', ctx).amount).toBeUndefined()
   })
 })
+
+describe('transferencias entre cuentas', () => {
+  const c2 = { ...ctx, accounts: [{ id: 'a1', name: 'Efectivo' }, { id: 'a2', name: 'Ahorro BAM' }, { id: 'a3', name: 'Visa Débito Clásica' }] }
+  it('«pasé 500 de efectivo a bam» mueve entre cuentas', () => {
+    expect(entender('pasé 500 de efectivo a bam', c2)).toMatchObject({ kind: 'transferencia', fromId: 'a1', toId: 'a2', amount: 500 })
+    expect(entender('transferí Q 200.50 del ahorro bam a efectivo', c2)).toMatchObject({ kind: 'transferencia', fromId: 'a2', toId: 'a1', amount: 200.5 })
+  })
+  it('si no reconoce las cuentas no inventa', () => {
+    expect(entender('pasé 500 de efectivo a la luna', c2).kind).not.toBe('transferencia')
+    expect(entender('pasé 500 de efectivo a bam', ctx).kind).not.toBe('transferencia')
+  })
+})

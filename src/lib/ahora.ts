@@ -12,6 +12,8 @@ export type Extra = {
   savings?: { id: string; amount: string; goal: string }[]
   /** Cuántas recetas se pueden hacer ya con lo que hay en casa. */
   cookReady?: number
+  /** Propuestas enviadas hace 3 días o más sin respuesta. */
+  quotes?: { id: string; client: string; days: number }[]
 }
 
 export const SNOOZE_MS = 3 * 60 * 60 * 1000
@@ -70,6 +72,11 @@ export function ahora(input: SuggestInput, extra: Extra, o: { soft: boolean; sno
   if ((extra.cookReady ?? 0) > 0 && (inWindow(m, 11 * 60 + 30, 13 * 60) || inWindow(m, 18 * 60, 19 * 60 + 30))) {
     const n = extra.cookReady!
     items.push({ id: 'cocina', kind: 'cook', title: '¿Qué cocino?', reason: `Puedes hacer ${n} ${n === 1 ? 'receta' : 'recetas'} con lo que hay`, to: '/app/cocina', tone: 'calm', score: 66, act: 'Ver recetas' })
+  }
+
+  if (extra.quotes?.length) {
+    const q = [...extra.quotes].sort((a, b) => b.days - a.days)[0]
+    items.push({ id: `cot-${q.id}`, kind: 'quote', title: `Dar seguimiento a la propuesta de ${q.client}`, reason: `La enviaste hace ${q.days} días y aún no hay respuesta${extra.quotes.length > 1 ? ` (y ${extra.quotes.length - 1} más)` : ''}`, to: '/app/trabajo/propuestas', tone: 'soon', score: 62, act: 'Ver propuesta' })
   }
 
   const seen = new Set<string>()

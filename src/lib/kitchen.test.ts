@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { guessKey, missing, norm, parseIngredients, rankRecipes, toShop } from './kitchen'
+import { scaleLine } from './kitchen'
 import { SEED_PANTRY, SEED_RECIPES } from './kitchenSeed'
 
 const pantry = [{ name: 'Huevos', have: true }, { name: 'Tomate', have: false }, { name: 'Sal', have: true }]
@@ -35,5 +36,16 @@ describe('cocina', () => {
     // Solo pueden faltar cosas que de verdad no estaban en la lista (leche, limón…)
     const extra = new Set(SEED_RECIPES.flatMap((r) => r.ingredients.filter((i) => i.k && !names.includes(norm(i.k))).map((i) => i.k)))
     expect([...extra].sort()).toEqual(['Chile guaque', 'Leche', 'Lechuga', 'Limón', 'Papa'])
+  })
+})
+
+describe('porciones', () => {
+  it('ajusta la cantidad del inicio de la línea', () => {
+    expect(scaleLine('2 tazas de arroz', 1.5)).toBe('3 tazas de arroz')
+    expect(scaleLine('1/2 cebolla', 2)).toBe('1 cebolla')
+    expect(scaleLine('1 1/2 libras de pollo', 2)).toBe('3 libras de pollo')
+    expect(scaleLine('3 huevos', 0.5)).toBe('1 1/2 huevos')
+    expect(scaleLine('Sal al gusto', 2)).toBe('Sal al gusto')
+    expect(scaleLine('2 tazas', 1)).toBe('2 tazas')
   })
 })

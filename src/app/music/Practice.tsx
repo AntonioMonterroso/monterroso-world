@@ -1,5 +1,7 @@
 import { Flame, Loader2, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { getSettings, patchSettings } from '../../lib/settings'
+import { weekStart } from '../../lib/habits'
 import { useTable } from '../../lib/table'
 import { INSTRUMENTS, instrumentLabel, practiceMonth, type PracticeLog, type Song } from '../../lib/music'
 import { dayNum, isoFromNum } from '../../lib/recur'
@@ -16,6 +18,14 @@ export default function Practice() {
   const [date, setDate] = useState(today)
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')
+  // Metas por instrumento: minutos a la semana. Sin castigo si no llegas; es solo una guía.
+  const [goals, setGoals] = useState<Record<string, number>>({})
+  const [editGoal, setEditGoal] = useState<string | null>(null)
+  const [goalDraft, setGoalDraft] = useState('')
+  useEffect(() => { void getSettings().then((x) => { const g = (x as { practiceGoals?: unknown }).practiceGoals; if (g && typeof g === 'object') setGoals(Object.fromEntries(Object.entries(g as Record<string, unknown>).filter(([, v]) => typeof v === 'number' && v > 0)) as Record<string, number>) }) }, [])
+  const saveGoal = (id: string) => { const n = Math.round(Number(goalDraft)); const next = { ...goals }; if (n > 0) next[id] = Math.min(3000, n); else delete next[id]; setGoals(next); setEditGoal(null); void patchSettings({ practiceGoals: next } as never) }
+  const ws = weekStart(today)
+  const weekBy = useMemo(() => { const m: Record<string, number> = {}; for (const l of logs.rows) if (l.practiced_on >= ws && l.practiced_on <= today) m[l.instrument] = (m[l.instrument] ?? 0) + l.minutes; return m }, [logs.rows, ws, today])
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const iso = isoFromNum(dayNum(today) - (6 - i))
@@ -48,6 +58,27 @@ export default function Practice() {
           <p className="text-sm" style={{ color: 'var(--ink-soft)' }}>{pm.days > 0 ? 'de práctica este mes' : 'Hoy es un buen día para empezar. Con 10 minutos cuenta.'} · {week} min esta semana{Object.keys(pm.byInstrument).length > 0 && ` · ${Object.entries(pm.byInstrument).map(([k, v]) => `${instrumentLabel(k)} ${v} min`).join(' · ')}`}</p>
         </div>
       </div>
+
+      <section className="mt-6" aria-labelledby="metas-t">
+        <h2 id="metas-t" className="text-sm font-semibold">Metas de esta semana</h2>
+        <p className="text-xs" style={{ color: 'var(--ink-faint)' }}>Minutos por instrumento. Es una guía: si no llegas, no pasa nada.</p>
+        <ul className="mt-2 grid gap-2">
+          {INSTRUMENTS.filter((x) => goals[x.id] || weekBy[x.id] || editGoal === x.id).map((x) => {
+            const g = goals[x.id], done = weekBy[x.id] ?? 0, pct = g ? Math.min(100, Math.round((done / g) * 100)) : 0
+            return (
+              <li key={x.id} className="rounded-xl p-3" style={{ background: 'var(--surface)' }}>
+                <div className="flex items-center gap-2"><span className="flex-1 font-semibold">{x.label}</span>
+                  {editGoal === x.id ? (
+                    <form className="flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); saveGoal(x.id) }}><input className="field !min-h-10 w-24" inputMode="numeric" autoFocus value={goalDraft} onChange={(e) => setGoalDraft(e.target.value.replace(/\D/g, ''))} aria-label={`Meta semanal de ${x.label} en minutos`} /><button className="btn btn-sec btn-chico">Listo</button></form>
+                  ) : <button type="button" className="text-sm underline" style={{ color: 'var(--ink-soft)' }} onClick={() => { setEditGoal(x.id); setGoalDraft(g ? String(g) : '') }}>{g ? `${done} de ${g} min` : `${done} min · poner meta`}</button>}
+                </div>
+                {g ? <div className="meter mt-2" style={{ ['--meter' as string]: 'var(--music)' }}><i style={{ width: `${pct}%` }} /></div> : null}
+              </li>
+            )
+          })}
+        </ul>
+        <div className="mt-2 flex flex-wrap gap-2">{INSTRUMENTS.filter((x) => !goals[x.id] && !weekBy[x.id] && editGoal !== x.id).map((x) => <button key={x.id} type="button" className="chip-btn" onClick={() => { setEditGoal(x.id); setGoalDraft('') }}>+ {x.label}</button>)}</div>
+      </section>
 
       <div className="mt-4 flex h-28 items-end gap-2" role="img" aria-label={`Minutos por día de los últimos 7 días: ${days.map((d) => d.min).join(', ')}`}>
         {days.map((d) => (

@@ -25,11 +25,15 @@ export default function AgendaDia() {
 
   return (
     <div>
-      <PageHeader eyebrow="Agenda" title="Hoy" sub={now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })} />
+      <PageHeader eyebrow="Agenda" title="Hoy" sub={`${now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })} · toca una hora libre para anotar algo`} />
       {loading || ev.loading ? <div className="grid h-48 place-items-center"><Loader2 className="animate-spin" aria-label="Cargando" /></div> : (
         <div className="relative ml-12" style={{ height: (to - from) / 60 * PX }} role="list" aria-label="Línea de tiempo de hoy">
+          {hours.slice(0, -1).map((h) => (
+            <button key={`t${h}`} type="button" className="absolute right-0 left-0" style={{ top: y(h), height: PX }} aria-label={`Anotar algo hoy a las ${fmtMin(h)}`}
+              onClick={() => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text: `hoy ${fmtMin(h)} ` } }))} />
+          ))}
           {hours.map((h) => (
-            <div key={h} className="absolute right-0 left-0 border-t" style={{ top: y(h), borderColor: 'var(--borde)' }} aria-hidden>
+            <div key={h} className="pointer-events-none absolute right-0 left-0 border-t" style={{ top: y(h), borderColor: 'var(--borde)' }} aria-hidden>
               <span className="absolute -top-3 -left-12 w-10 text-right text-xs" style={{ color: 'var(--ink-faint)' }}>{fmtMin(h)}</span>
             </div>
           ))}

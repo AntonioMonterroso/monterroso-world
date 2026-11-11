@@ -44,4 +44,8 @@ describe('Ahora', () => {
     expect(new Date(tomorrowMorning(now)).getHours()).toBe(6)
     expect(snooze('x', now, tomorrowMorning(now))['x']).toBe(tomorrowMorning(now))
   })
+  it('propuesta sin respuesta pide seguimiento', () => {
+    const r = ahora(base, { quotes: [{ id: 'q1', client: 'Imperio', days: 4 }, { id: 'q2', client: 'Dulce', days: 9 }] }, { soft: false, snoozed: {}, limit: 10 })
+    expect(r.find((x) => x.kind === 'quote')?.title).toBe('Dar seguimiento a la propuesta de Dulce')
+  })
 })

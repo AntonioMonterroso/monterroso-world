@@ -6,6 +6,8 @@ import { isoFromNum, dayNum } from '../../lib/recur'
 import { fmtMin, localISO } from '../../lib/time'
 import EventEditor, { type EditorTarget } from './EventEditor'
 import { Group, PageHeader, Segmented } from '../../components/ui'
+import { downloadIcs } from '../../lib/ics'
+import { dayNum as dn, isoFromNum as ifn } from '../../lib/recur'
 import { Empty } from '../money/shared'
 
 const metaOf = (o: Occurrence) => (o.event.type === 'reminder' ? reminderMeta : eventKinds[o.event.kind])
@@ -97,7 +99,7 @@ export default function Agenda() {
 
   return (
     <div>
-      <PageHeader eyebrow="Planear" title="Agenda" sub="Lo que viene en los próximos 30 días." action={<button className="btn btn-primary" onClick={() => setTarget({ type: 'event' })}><Plus size={18} aria-hidden /> Nuevo</button>} />
+      <PageHeader eyebrow="Agenda" title="Próximos 30 días" sub="Lo que viene. «Exportar» lo baja a un archivo para verlo en el calendario de tu teléfono." action={<span className="flex flex-wrap gap-2"><button className="btn btn-sec" onClick={() => downloadIcs(ev.between(today, ifn(dn(today) + 90)).filter((o) => !o.state.done).map((o) => ({ uid: `${o.event.id}-${o.date}`, title: o.event.title, date: o.date, startMin: o.event.start_min, endMin: (o.event as { end_min?: number | null }).end_min, location: o.event.location, notes: o.event.notes })))}>Exportar</button><button className="btn btn-primary" onClick={() => setTarget({ type: 'event' })}><Plus size={18} aria-hidden /> Nuevo</button></span>} />
       <Segmented label="Filtro" value={filter} onChange={setFilter} options={[{ id: 'all', label: 'Todo' }, { id: 'event', label: 'Eventos' }, { id: 'reminder', label: 'Recordatorios' }]} />
 
       {ev.error && <p role="alert" className="mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--aviso-suave)', color: 'var(--aviso-texto)' }}>{ev.error} <button className="underline" onClick={ev.clearError}>Cerrar</button></p>}

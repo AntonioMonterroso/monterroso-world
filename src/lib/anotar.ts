@@ -2,7 +2,7 @@ import { DEFAULT_EXPENSE_CATEGORIES } from './finance'
 
 /** ＋ Anotar entiende frases escritas como hablas, con reglas simples de palabras (sin servicios de pago).
  *  Con el uso aprende tus palabras: si «pollo» siempre lo cambias a Comida, la próxima vez ya lo pone ahí. */
-export type Kind = 'gasto' | 'ingreso' | 'cobro' | 'evento' | 'comprar' | 'prestado' | 'promesa' | 'idea' | 'video' | 'enlace' | 'bandeja'
+export type Kind = 'gasto' | 'ingreso' | 'cobro' | 'evento' | 'comprar' | 'prestado' | 'promesa' | 'idea' | 'video' | 'enlace' | 'transferencia' | 'bandeja'
 export type Entendido = {
   kind: Kind
   label: string
@@ -15,13 +15,15 @@ export type Entendido = {
   person?: string
   clientId?: string
   url?: string
+  fromId?: string
+  toId?: string
   videoId?: string
   eventKind?: 'church' | 'meeting' | 'rehearsal' | 'outing' | 'appointment' | 'work' | 'other'
 }
 export type Learned = Record<string, { category?: string }>
-export type Ctx = { today: string; clients: { id: string; title: string; client?: string | null }[]; learned: Learned }
+export type Ctx = { today: string; clients: { id: string; title: string; client?: string | null }[]; learned: Learned; accounts?: { id: string; name: string }[] }
 
-export const KIND_LABEL: Record<Kind, string> = { gasto: 'Gasto', ingreso: 'Ingreso', cobro: 'Cobro', evento: 'Evento', comprar: 'Por comprar', prestado: 'Cosa prestada', promesa: 'Promesa', idea: 'Idea', video: 'Video', enlace: 'Enlace', bandeja: 'Bandeja' }
+export const KIND_LABEL: Record<Kind, string> = { gasto: 'Gasto', ingreso: 'Ingreso', cobro: 'Cobro', evento: 'Evento', comprar: 'Por comprar', prestado: 'Cosa prestada', promesa: 'Promesa', idea: 'Idea', video: 'Video', enlace: 'Enlace', transferencia: 'Transferencia', bandeja: 'Bandeja' }
 
 export const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
@@ -110,6 +112,14 @@ export function entender(raw: string, ctx: Ctx): Entendido {
     let host = text
     try { host = new URL(text).hostname.replace(/^www\./, '') } catch { /* deja el texto */ }
     return { kind: 'enlace', url: text, title: host, label: `Enlace · Guardado › Links` }
+  }
+
+  // «pasé 500 de efectivo a banco», «transferí Q 200 del BAM a efectivo»
+  const tr = text.match(/^(?:pas[eé]|transfer[ií]|mov[ií]|traslad[eé]|deposit[eé])\s+(?:q\s*)?(\d+(?:[.,]\d+)?)\s+(?:de|del|desde)\s+(.+?)\s+(?:a|al|hacia)\s+(.+)$/i)
+  if (tr && ctx.accounts?.length) {
+    const find = (q: string) => { const n = norm(q).replace(/^(la|el|mi|cuenta|cuenta de)\s+/, ''); return ctx.accounts!.find((a) => norm(a.name) === n) ?? ctx.accounts!.find((a) => norm(a.name).includes(n) || n.includes(norm(a.name))) }
+    const from = find(tr[2]), to = find(tr[3]), amount = Number(tr[1].replace(',', '.'))
+    if (from && to && from.id !== to.id && amount > 0) return { kind: 'transferencia', fromId: from.id, toId: to.id, amount, date: ctx.today, title: `${from.name} → ${to.name}`, label: `Transferencia · ${from.name} → ${to.name} · ${money(amount)}` }
   }
 
   // +Q 300 tocada boda → ingreso; Q 45 almuerzo → gasto

@@ -78,3 +78,22 @@ export function toShop(names: string[], pending: { name: string }[]): string[] {
   const seen = new Set(pending.map((p) => norm(p.name)))
   return names.filter((n) => { const k = norm(n); if (seen.has(k)) return false; seen.add(k); return true })
 }
+
+/** Cambia las cantidades de una línea de ingrediente según las porciones («2 tazas» × 1.5 → «3 tazas»; «1/2 cebolla» × 2 → «1 cebolla»). */
+export function scaleLine(text: string, factor: number): string {
+  if (!(factor > 0) || factor === 1) return text
+  const fmt = (n: number) => {
+    const r = Math.round(n * 100) / 100
+    const whole = Math.floor(r), frac = r - whole
+    const near = (a: number) => Math.abs(frac - a) < 0.04
+    const f = near(0.5) ? '1/2' : near(0.25) ? '1/4' : near(0.75) ? '3/4' : near(1 / 3) ? '1/3' : near(2 / 3) ? '2/3' : null
+    if (frac < 0.04) return String(whole)
+    if (f) return whole ? `${whole} ${f}` : f
+    return String(r).replace('.', ',')
+  }
+  // «1 1/2», «1/2», «2,5» o «2.5» al inicio de la línea
+  const m = text.match(/^(\d+)\s+(\d+)\/(\d+)\b|^(\d+)\/(\d+)\b|^(\d+(?:[.,]\d+)?)\b/)
+  if (!m) return text
+  const n = m[1] ? Number(m[1]) + Number(m[2]) / Number(m[3]) : m[4] ? Number(m[4]) / Number(m[5]) : Number(m[6].replace(',', '.'))
+  return fmt(n * factor) + text.slice(m[0].length)
+}

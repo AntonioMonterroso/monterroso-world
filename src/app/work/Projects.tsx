@@ -105,7 +105,7 @@ export default function Projects() {
 
       <NewWork open={creating} month={month} add={(v) => db.add(v) as Promise<never>} onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); setEditing(p.id) }} />
       <ProjectEditor project={editingProject} payments={db.payments} onClose={() => setEditing(null)}
-        onSave={async (id, patch) => { await saveProject(db, id, patch); setEditing(null) }}
+        onSave={async (id, patch, stay) => { await saveProject(db, id, patch); if (!stay) setEditing(null) }}
         onDelete={(id) => { removeProject(db, id); setEditing(null) }}
         onAddPayment={db.addPayment} onUpdatePayment={db.updatePayment} onRemovePayment={db.removePayment} />
     </div>

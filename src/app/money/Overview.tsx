@@ -11,6 +11,7 @@ import { useBalances } from '../../lib/balances'
 import { freeToSpend, upcomingPayments } from '../../lib/free'
 import { buildClose, closeNote, loadCloses, saveClose, type Close } from '../../lib/monthClose'
 import Sheet from '../../components/Sheet'
+import IncomeInsights from '../../components/IncomeInsights'
 import { incomingTotals, monthlyClients } from '../../lib/incoming'
 import { useTaxonomy } from '../../lib/taxonomy'
 import { Empty, ErrorBar } from './shared'
@@ -145,6 +146,8 @@ export default function Overview() {
               <div className="rounded-[var(--r-card)] p-4" style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--sep)' }}><Chart data={series} currency={cur} /></div>
             </section>
           )}
+
+          {!empty && <IncomeInsights projects={work.projects} payments={work.payments} month={month} income={t?.income ?? 0} />}
 
           {!empty && Object.values(byArea).some(Boolean) && (
             <Group title="Ingresos por área" footer={extra.some((e) => e.date.startsWith(month)) ? 'Incluye los cobros de tus trabajos web.' : undefined}>

@@ -1,10 +1,12 @@
-import { ArrowDown, ArrowUp, Copy, Link2, Link2Off, Plus, Printer, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Copy, Link2, Link2Off, Plus, Printer, Trash2, MessageCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ClientField from '../../components/ClientField'
+import { clientKey } from '../../lib/clients'
+import { useClientPhones, waNumber } from '../../lib/clientNotes'
 import Sheet from '../../components/Sheet'
 import { Group, PageHeader, Row, Segmented, Switch } from '../../components/ui'
 import { useCatalog } from '../../lib/quoteData'
-import { MILESTONE_STATUS, MILESTONE_TEMPLATE, PERIOD_LABEL, STATUS_LABEL, billingOf, progressPct, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Milestone, type MilestoneStatus, type Period, type Progress, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
+import { MILESTONE_STATUS, MILESTONE_TEMPLATE, PERIOD_LABEL, STATUS_LABEL, billingOf, nextMilestone, progressPct, TEMPLATE_LABEL, addDays, bodyFor, isExpired, linesFromPick, newToken, nextNumber, paymentPlan, totalsOf, uid, type Body, type Line, type Milestone, type MilestoneStatus, type Period, type Progress, type Quote, type Section, type Status, type Template } from '../../lib/quotes'
 import { currentMonth, money, useProjects } from '../../lib/projects'
 import { useTable } from '../../lib/table'
 import { profile } from '../../lib/profile'
@@ -16,6 +18,8 @@ const base = import.meta.env.BASE_URL
 const link = (t: string) => `${location.origin}${base}cotizacion/${t}`
 /** La página del cliente vive en tu página del estudio: propuesta y seguimiento en un solo lugar. */
 const clientLink = (t: string) => `${profile.site}cliente?t=${t}`
+// Mensaje para avisarle al cliente cómo va su proyecto (abre WhatsApp con el texto listo; tu número no aparece en ningún lado)
+const progressMsg = (o: { client: string; title: string; pct: number; next?: string; link?: string }) => `Hola ${o.client}, ¿cómo estás? Te cuento cómo va «${o.title}»: vamos en ${o.pct}%${o.next ? `; lo que sigue es ${o.next.toLowerCase()}` : ''}.${o.link ? ` Puedes ver el avance aquí: ${o.link}` : ''}`
 const STATUS_TONE: Record<Status, string> = { draft: 'var(--ink-faint)', sent: 'var(--sky)', accepted: 'var(--pos)', rejected: 'var(--aviso)' }
 const TEMPLATES: { id: Template; hint: string }[] = [
   { id: 'citas', hint: 'Citas en línea, panel y recordatorios, como el de la barbería.' },
@@ -28,6 +32,7 @@ const inputNum = (v: string) => v.replace(',', '.')
 
 /** Propuestas por cliente: se arman con tus precios, se ven como documento formal y se comparten con un enlace o en PDF. */
 export default function Quotes() {
+  const phones = useClientPhones()
   const db = useTable<Quote>('quotes', { col: 'created_at', asc: false })
   const cat = useCatalog()
   const work = useProjects()
@@ -258,6 +263,7 @@ export default function Quotes() {
 
                   <fieldset className="grid gap-2">
                     <legend className="mb-1 text-sm font-semibold">Avisos para el cliente</legend>
+                    <a className="btn btn-sec w-fit" target="_blank" rel="noreferrer" href={`https://wa.me/${phones[clientKey(d.client_name || '')] ? waNumber(phones[clientKey(d.client_name || '')]) : ''}?text=${encodeURIComponent(progressMsg({ client: d.client_name || 'qué tal', title: d.title, pct: progressPct(ms), next: nextMilestone(ms)?.title, link: d.shared && d.share_token ? clientLink(d.share_token) : undefined }))}`}><MessageCircle size={16} aria-hidden /> Avisarle por WhatsApp cómo va</a>
                     <div className="flex gap-2">
                       <input className="field" value={upText} maxLength={300} onChange={(e) => setUpText(e.target.value)} placeholder="Ya quedó listo el diseño de la pantalla de citas…" aria-label="Nuevo aviso" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUpdate() } }} />
                       <button type="button" className="btn btn-primary shrink-0" onClick={addUpdate}>Publicar</button>
