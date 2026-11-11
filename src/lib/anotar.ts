@@ -129,6 +129,18 @@ export function entender(raw: string, ctx: Ctx): Entendido {
     return { kind: 'gasto', amount, category, area: AREA_OF[category] ?? 'personal', title: cap(rest || category), date: date ?? ctx.today, label: `Gasto · ${category} · ${money(amount)}` }
   }
 
+  // «Imperio pagó 1500», «me pagó barbería Q 250 ayer», «recibí 500 de Imperio», «cobré Q 300 a barbería»: un pago con monto
+  if (/\b(pago|pagaron|recibi|cobre)\b/.test(t) && /\d/.test(text)) {
+    const num = text.match(/(?:q\s*)?(\d+(?:[.,]\d{1,2})?)/i)
+    if (num) {
+      const amount = Number(num[1].replace(',', '.'))
+      const { date, rest } = takeDate(text.replace(num[0], ' '), ctx.today)
+      const who = norm(rest).replace(/\b(me|pago|pagaron|recibi|cobre|de|del|a|el|la|q|quetzales)\b/g, ' ').replace(/\s+/g, ' ').trim()
+      const hit = who ? ctx.clients.find((c) => norm(c.title).includes(who) || who.includes(norm(c.title)) || (c.client && (norm(c.client).includes(who) || who.includes(norm(c.client))))) : undefined
+      if (hit && amount > 0) return { kind: 'cobro', clientId: hit.id, title: hit.title, amount, date: date ?? ctx.today, label: `Pago · ${hit.title} · ${money(amount)}${date && date !== ctx.today ? ` · ${date}` : ''}` }
+    }
+  }
+
   // cobré barbería
   m = text.match(/^cobr[eé]\s+(?:a\s+|de\s+)?(.+)$/i)
   if (m) {

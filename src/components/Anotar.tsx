@@ -78,13 +78,27 @@ export default function Anotar({ open, initial = '', inboxId = null, onClose, on
         }
       } else if (e.kind === 'cobro') {
         const p = work.projects.find((x) => x.id === e.clientId)
-        const row = p ? monthlyClients([p], work.payments, currentMonth(), new Date())[0] : undefined
-        if (!p || !row || row.owed <= 0) throw new Error(p ? `${p.title} no tiene nada por cobrar.` : 'No encontré al cliente.')
-        const period = row.lateMonths[0] ?? (row.state !== 'paid' ? currentMonth() : null)
-        const setup = !period && row.setupDue > 0
-        const pay = await work.addPayment({ project_id: p.id, amount: setup ? row.setupDue : row.fee, due_date: null, paid_at: today, method: null, note: null, kind: setup ? 'setup' : 'monthly', period: setup ? null : period, account_id: p.account_id ?? (lastAccount() || null) })
-        if (!pay) throw new Error('No pude registrar el cobro.')
-        saved = { label: `Cobro de ${p.title} · ${money(pay.amount)}`, undo: async () => { await work.removePayment(pay.id) } }
+        if (!p) throw new Error('No encontré al cliente.')
+        const row = monthlyClients([p], work.payments, currentMonth(), new Date())[0]
+        const acct = p.account_id ?? (lastAccount() || null)
+        let amount: number, kind: 'monthly' | 'setup' | 'other', period: string | null = null
+        if (e.amount) {
+          // Con monto: si es la mensualidad o la instalación que toca, se anota como tal; si no, es un pago aparte
+          amount = e.amount
+          const m0 = row?.lateMonths[0] ?? (row && row.state !== 'paid' ? currentMonth() : null)
+          if (row && m0 && Math.abs(amount - row.fee) < 0.01) { kind = 'monthly'; period = m0 }
+          else if (row && row.setupDue > 0 && Math.abs(amount - row.setupDue) < 0.01) kind = 'setup'
+          else kind = 'other'
+        } else {
+          if (!row || row.owed <= 0) throw new Error(`${p.title} no tiene nada por cobrar. Escribe el monto: «${p.title} pagó 500».`)
+          period = row.lateMonths[0] ?? (row.state !== 'paid' ? currentMonth() : null)
+          kind = !period && row.setupDue > 0 ? 'setup' : 'monthly'
+          amount = kind === 'setup' ? row.setupDue : row.fee
+          if (kind === 'setup') period = null
+        }
+        const pay = await work.addPayment({ project_id: p.id, amount, due_date: null, paid_at: e.date ?? today, method: null, note: null, kind, period, account_id: acct })
+        if (!pay) throw new Error('No pude registrar el pago.')
+        saved = { label: `Pago de ${p.title} · ${money(pay.amount)}`, undo: async () => { await work.removePayment(pay.id) } }
       } else if (e.kind === 'evento') {
         const { data, error } = await supabase.from('events').insert({ type: 'event', title: e.title, kind: e.eventKind ?? 'other', start_date: e.date ?? today, start_min: e.startMin ?? 9 * 60, repeat: 'none', alerts: [10] }).select('id').single()
         if (error || !data) throw new Error('No pude crear el evento.')

@@ -73,3 +73,17 @@ describe('enlaces', () => {
     expect(youtubeId('https://ejemplo.com')).toBeNull()
   })
 })
+
+describe('pagos de clientes', () => {
+  it('«Imperio pagó 1500» registra un pago con monto', () => {
+    expect(entender('Imperio pagó 1500', ctx)).toMatchObject({ kind: 'cobro', clientId: 'p1', amount: 1500, date: '2026-11-02' })
+    expect(entender('me pagó barbería Q 250.50 ayer', ctx)).toMatchObject({ kind: 'cobro', clientId: 'p1', amount: 250.5, date: '2026-11-01' })
+    expect(entender('recibí 500 de pastelería dulce', ctx)).toMatchObject({ kind: 'cobro', clientId: 'p2', amount: 500 })
+    expect(entender('cobré Q 300 a barbería', ctx)).toMatchObject({ kind: 'cobro', clientId: 'p1', amount: 300 })
+  })
+  it('sin cliente conocido no inventa nada', () => {
+    expect(entender('Pedro pagó 400', ctx).kind).toBe('bandeja')
+    expect(entender('cobré barbería', ctx)).toMatchObject({ kind: 'cobro', clientId: 'p1' })
+    expect(entender('cobré barbería', ctx).amount).toBeUndefined()
+  })
+})

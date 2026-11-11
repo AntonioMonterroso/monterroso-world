@@ -64,7 +64,9 @@ export default function Palette({ open, onClose, onLock, onSignOut }: { open: bo
     const c = t.match(/^cobr(?:ar|é|e)\s+(?:a\s+)?(.+)$/i)
     const text = g ? `Q ${g[1]} ${g[2]}` : c ? `cobré ${c[1]}` : /^(?:ingreso|\+)/i.test(t) ? t.replace(/^ingreso\s+/i, '+Q ') : t
     const e = asNote(text)
-    if (g || c || e.kind !== 'bandeja') orders.push({ id: 'o-anotar', title: `Anotar: ${t}`, sub: c ? 'Cobro · se confirma al guardar' : e.label, type: 'Orden', run: () => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text } })) })
+    const nt = t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    const paid = /\b(pago|pagaron|recibi)\b/.test(nt) && /\d/.test(t)
+    if (g || c || paid || e.kind !== 'bandeja') orders.push({ id: 'o-anotar', title: `Anotar: ${t}`, sub: c || paid ? 'Pago de cliente · se confirma al guardar' : e.label, type: 'Orden', run: () => window.dispatchEvent(new CustomEvent('mw-anotar', { detail: { text } })) })
     if (/^nueva canci[oó]n|^canci[oó]n nueva/i.test(t)) orders.push({ id: 'o-cancion', title: 'Nueva canción', sub: 'Música › Canciones', type: 'Orden', run: () => nav('/app/musica') })
     if (/^nuevo evento|^evento nuevo/i.test(t)) orders.push({ id: 'o-evento', title: 'Nuevo evento', sub: 'Agenda', type: 'Orden', run: () => nav('/app/planear/agenda') })
     return [...orders, ...searchHits([...dynamic, ...statics], t, 12)]
