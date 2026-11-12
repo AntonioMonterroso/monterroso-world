@@ -3,8 +3,8 @@ export type FocusKey = 'dev' | 'music' | 'personal'
 export const profile = {
   name: 'Monterroso',
   email: 'Jocetony02@gmail.com',
-  site: 'https://antoniomonterroso.github.io/',
-  pageUrl: 'https://antoniomonterroso.github.io/monterroso-world/',
+  site: 'https://studiomonterroso.com/',
+  pageUrl: 'https://world.studiomonterroso.com/',
 }
 
 export const focuses: Record<

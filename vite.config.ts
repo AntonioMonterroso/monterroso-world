@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const base = '/monterroso-world/'
+const base = '/'
 
 export default defineConfig({
   base,

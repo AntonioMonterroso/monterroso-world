@@ -8,7 +8,7 @@ import { occursOn, type Recurrence } from './recur.ts'
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
 webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT')!, Deno.env.get('VAPID_PUBLIC_KEY')!, Deno.env.get('VAPID_PRIVATE_KEY')!)
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
-const APP_URL = Deno.env.get('APP_URL') ?? 'https://antoniomonterroso.github.io/monterroso-world/'
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://world.studiomonterroso.com/'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } })

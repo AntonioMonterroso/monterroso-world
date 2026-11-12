@@ -186,7 +186,7 @@ export default function Card() {
                   <div className="min-w-0 text-[clamp(0.7rem,2vw,0.9rem)]">
                     <p className="font-display text-[clamp(1.1rem,3.5vw,1.6rem)]">{f.label}</p>
                     <p className="mt-1 truncate" style={{ color: 'var(--ink-soft)' }}>{profile.email}</p>
-                    <p className="truncate" style={{ color: 'var(--ink-soft)' }}>antoniomonterroso.github.io</p>
+                    <p className="truncate" style={{ color: 'var(--ink-soft)' }}>studiomonterroso.com</p>
                   </div>
                 </div>
               </article>
